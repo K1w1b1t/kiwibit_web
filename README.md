@@ -33,6 +33,25 @@ npm run format
 npm run lint:fix
 ```
 
+## Testes Unitarios (Jest + TypeScript)
+
+```bash
+# Executa toda a suite
+npm run test
+
+# Modo watch
+npm run test:watch
+
+# Gera cobertura em /coverage
+npm run test:cov
+```
+
+Padrao adotado:
+
+- Testes co-localizados com o modulo (`*.spec.ts` no mesmo diretorio do arquivo testado)
+- Foco em comportamento (arrange/act/assert)
+- Isolamento por mocks para dependencias externas (`jest.mock(...)`)
+
 ## Dependências principais (conforme `package.json`)
 
 - next — 16.1.6
@@ -73,7 +92,6 @@ npm run lint:fix
 
 ## Próximos passos
 
-- Implementar sistema de teses unitarios
 - Adicionar `Prisma` e configurar migrations
 - Adicionar `NextAuth` / Auth.js para autenticação
 - Configurar CI/CD (GitHub Actions / Vercel)
