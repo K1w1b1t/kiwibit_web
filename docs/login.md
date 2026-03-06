@@ -7,6 +7,7 @@ Definir uma arquitetura de autenticação e autorização segura, escalável e c
 ---
 
 ## ✅ Requisitos Funcionais (resumo)
+
 - Login de usuários (email/password + OAuth opcional)
 - Logout seguro
 - Sessões persistentes e revogáveis
@@ -18,6 +19,7 @@ Definir uma arquitetura de autenticação e autorização segura, escalável e c
 ---
 
 ## ⚙️ Requisitos Não Funcionais (resumo)
+
 - Alta segurança (práticas do mercado)
 - Baixa complexidade inicial (pronto para MVP)
 - Fácil manutenção e integração com Next.js
@@ -26,6 +28,7 @@ Definir uma arquitetura de autenticação e autorização segura, escalável e c
 ---
 
 ## 🧱 Decisão recomendada (direção)
+
 - Estratégia de autenticação: Sessões HTTP-only (server-side sessions armazenadas em DB).
 - Biblioteca recomendada: NextAuth.js (Auth.js) como implementação inicial, com adaptador para Postgres.
 - Backend: Regras de negócio e autorização implementadas no Next.js (server actions / API routes) e reforçadas com RLS no banco quando usar Supabase/Postgres.
@@ -74,6 +77,7 @@ Justificativa rápida: sessões HTTP-only permitem revogação simples, proteç�
 ## 4) Persistência de Usuário (modelo mínimo)
 
 Tabela `users` (exemplo):
+
 - `id` UUID (PK)
 - `email` TEXT UNIQUE
 - `name` TEXT
@@ -84,6 +88,7 @@ Tabela `users` (exemplo):
 - `created_at`, `updated_at`
 
 Relações principais:
+
 - `posts.authorId` → `users.id`
 - `projects.ownerId` → `users.id`
 - `sessions.userId` → `users.id`
@@ -171,6 +176,7 @@ Observação: sempre gravar `createdBy`/`updatedBy` em entidades que representem
 ---
 
 ## 10) Próximos passos (opções que posso gerar agora)
+
 - Gerar `docs/auth-module.md` detalhando a API do módulo `/lib/auth`.
 - Gerar esqueleto de `/lib/auth` com a interface e um adapter mínimo (NextAuth/Supabase).
 - Gerar `env.example` com variáveis necessárias.
