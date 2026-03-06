@@ -52,11 +52,6 @@ Padrao adotado:
 - Foco em comportamento (arrange/act/assert)
 - Isolamento por mocks para dependencias externas (`jest.mock(...)`)
 
-Exemplo inicial:
-
-- `src/lib/user-service.ts`
-- `src/lib/user-service.spec.ts`
-
 ## Dependências principais (conforme `package.json`)
 
 - next — 16.1.6
