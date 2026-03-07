@@ -1,6 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+let prisma;
 const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
 
 if (!seedAdminPassword) {
@@ -66,6 +64,9 @@ async function main() {
 }
 
 async function runSeed() {
+  const { PrismaClient } = await import('@prisma/client');
+  prisma = new PrismaClient();
+
   try {
     await main();
   } catch (error) {
