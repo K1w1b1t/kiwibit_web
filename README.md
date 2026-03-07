@@ -46,6 +46,36 @@ npm run test:watch
 npm run test:cov
 ```
 
+## Test Framework e Coverage
+
+- Framework de testes: `Jest` com `ts-jest`.
+- Config principal: `jest.config.cjs`.
+- Cobertura gerada em: `coverage/`.
+- Arquivos usados por ferramentas (ex.: SonarQube):
+  - `coverage/lcov.info`
+  - `coverage/coverage-summary.json`
+  - `coverage/clover.xml`
+- Threshold global atual (Jest): `70%` para `branches`, `functions`, `lines` e `statements`.
+
+Para checar localmente:
+
+```bash
+npm run test:cov
+```
+
+No CI de PR (`main` e `release`) sao executados:
+
+- `npm run lint`
+- `npm run format:check`
+- `npm run test:cov`
+- `npm run build`
+
+O workflow publica o artefato `coverage-report` e escreve um resumo da cobertura no Job Summary.
+
+Regra de manutencao:
+
+- Sempre que alterar framework, estrategia de testes ou cobertura, atualizar esta secao do README.
+
 Padrao adotado:
 
 - Testes co-localizados com o modulo (`*.spec.ts` no mesmo diretorio do arquivo testado)
