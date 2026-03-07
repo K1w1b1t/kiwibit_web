@@ -21,8 +21,8 @@ CREATE TYPE "contact_status" AS ENUM (
 
 CREATE TABLE "users" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "name" varchar(160) NOT NULL,
-  "email" varchar(255) UNIQUE NOT NULL,
+  "name" VARCHAR2(160) NOT NULL,
+  "email" VARCHAR2(255) UNIQUE NOT NULL,
   "email_verified" timestamp,
   "image_url" text,
   "role" user_role NOT NULL DEFAULT 'member',
@@ -34,10 +34,10 @@ CREATE TABLE "users" (
 CREATE TABLE "member_profiles" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "user_id" uuid UNIQUE NOT NULL,
-  "display_name" varchar(160) NOT NULL,
+  "display_name" VARCHAR2(160) NOT NULL,
   "bio" text,
   "avatar_url" text,
-  "headline" varchar(180),
+  "headline" VARCHAR2(180),
   "created_at" timestamp NOT NULL DEFAULT (now()),
   "updated_at" timestamp NOT NULL DEFAULT (now())
 );
@@ -45,7 +45,7 @@ CREATE TABLE "member_profiles" (
 CREATE TABLE "member_links" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "member_profile_id" uuid NOT NULL,
-  "label" varchar(80) NOT NULL,
+  "label" VARCHAR2(80) NOT NULL,
   "url" text NOT NULL,
   "position" int NOT NULL DEFAULT 0,
   "created_at" timestamp NOT NULL DEFAULT (now()),
@@ -54,8 +54,8 @@ CREATE TABLE "member_links" (
 
 CREATE TABLE "projects" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "title" varchar(180) NOT NULL,
-  "slug" varchar(180) UNIQUE NOT NULL,
+  "title" VARCHAR2(180) NOT NULL,
+  "slug" VARCHAR2(180) UNIQUE NOT NULL,
   "description" text NOT NULL,
   "repo_url" text,
   "live_url" text,
@@ -70,15 +70,15 @@ CREATE TABLE "project_members" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "project_id" uuid NOT NULL,
   "user_id" uuid NOT NULL,
-  "contribution_role" varchar(80),
+  "contribution_role" VARCHAR2(80),
   "created_at" timestamp NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE "experiences" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "user_id" uuid NOT NULL,
-  "title" varchar(180) NOT NULL,
-  "organization" varchar(180),
+  "title" VARCHAR2(180) NOT NULL,
+  "organization" VARCHAR2(180),
   "description" text,
   "start_date" date,
   "end_date" date,
@@ -90,8 +90,8 @@ CREATE TABLE "experiences" (
 CREATE TABLE "posts" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "author_id" uuid NOT NULL,
-  "title" varchar(220) NOT NULL,
-  "slug" varchar(240) UNIQUE NOT NULL,
+  "title" VARCHAR2(220) NOT NULL,
+  "slug" VARCHAR2(240) UNIQUE NOT NULL,
   "excerpt" text,
   "content" text NOT NULL,
   "cover_image_url" text,
@@ -103,8 +103,8 @@ CREATE TABLE "posts" (
 
 CREATE TABLE "tags" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "name" varchar(60) UNIQUE NOT NULL,
-  "slug" varchar(80) UNIQUE NOT NULL,
+  "name" VARCHAR2(60) UNIQUE NOT NULL,
+  "slug" VARCHAR2(80) UNIQUE NOT NULL,
   "created_at" timestamp NOT NULL DEFAULT (now())
 );
 
@@ -117,8 +117,8 @@ CREATE TABLE "post_tags" (
 
 CREATE TABLE "home_sections" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "section_key" varchar(80) UNIQUE NOT NULL,
-  "title" varchar(180),
+  "section_key" VARCHAR2(80) UNIQUE NOT NULL,
+  "title" VARCHAR2(180),
   "content" text,
   "content_json" json,
   "updated_by_user_id" uuid,
@@ -128,8 +128,8 @@ CREATE TABLE "home_sections" (
 
 CREATE TABLE "contact_submissions" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "name" varchar(160) NOT NULL,
-  "email" varchar(255) NOT NULL,
+  "name" VARCHAR2(160) NOT NULL,
+  "email" VARCHAR2(255) NOT NULL,
   "message" text NOT NULL,
   "webhook_status" contact_status NOT NULL DEFAULT 'pending',
   "webhook_response_code" int,
@@ -139,13 +139,13 @@ CREATE TABLE "contact_submissions" (
 CREATE TABLE "nextauth_accounts" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "user_id" uuid NOT NULL,
-  "type" varchar(60) NOT NULL,
-  "provider" varchar(100) NOT NULL,
-  "provider_account_id" varchar(200) NOT NULL,
+  "type" VARCHAR2(60) NOT NULL,
+  "provider" VARCHAR2(100) NOT NULL,
+  "provider_account_id" VARCHAR2(200) NOT NULL,
   "refresh_token" text,
   "access_token" text,
   "expires_at" int,
-  "token_type" varchar(40),
+  "token_type" VARCHAR2(40),
   "scope" text,
   "id_token" text,
   "session_state" text,
@@ -155,7 +155,7 @@ CREATE TABLE "nextauth_accounts" (
 
 CREATE TABLE "nextauth_sessions" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "session_token" varchar(255) UNIQUE NOT NULL,
+  "session_token" VARCHAR2(255) UNIQUE NOT NULL,
   "user_id" uuid NOT NULL,
   "expires" timestamp NOT NULL,
   "created_at" timestamp NOT NULL DEFAULT (now()),
@@ -163,8 +163,8 @@ CREATE TABLE "nextauth_sessions" (
 );
 
 CREATE TABLE "nextauth_verification_tokens" (
-  "identifier" varchar(255) NOT NULL,
-  "token" varchar(255) UNIQUE NOT NULL,
+  "identifier" VARCHAR2(255) NOT NULL,
+  "token" VARCHAR2(255) UNIQUE NOT NULL,
   "expires" timestamp NOT NULL,
   PRIMARY KEY ("identifier", "token")
 );
