@@ -1,4 +1,6 @@
-let prisma;
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
 
 if (!seedAdminPassword) {
@@ -63,18 +65,11 @@ async function main() {
   });
 }
 
-async function runSeed() {
-  const { PrismaClient } = await import('@prisma/client');
-  prisma = new PrismaClient();
-
-  try {
-    await main();
-  } catch (error) {
-    console.error(error);
-    process.exitCode = 1;
-  } finally {
-    await prisma.$disconnect();
-  }
+try {
+  await main();
+} catch (error) {
+  console.error(error);
+  process.exitCode = 1;
+} finally {
+  await prisma.$disconnect();
 }
-
-runSeed();
