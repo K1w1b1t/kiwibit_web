@@ -1,6 +1,6 @@
 ﻿# Kiwibit — Base Inicial (Next.js + TypeScript)
 
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-43853d?style=for-the-badge&logo=node.js&logoColor=white) ![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white) ![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-43853d?style=for-the-badge&logo=node.js&logoColor=white) ![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white) ![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white) ![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white) ![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen?style=for-the-badge) ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 ## Resumo rápido
 
@@ -45,6 +45,37 @@ npm run test:watch
 # Gera cobertura em /coverage
 npm run test:cov
 ```
+
+## Test Framework e Coverage
+
+- Framework de testes: `Jest` com `ts-jest`.
+- Config principal: `jest.config.cjs`.
+- Cobertura gerada em: `coverage/`.
+- Arquivos usados por ferramentas (ex.: SonarQube):
+  - `coverage/lcov.info`
+  - `coverage/coverage-summary.json`
+  - `coverage/clover.xml`
+- Badge de coverage no topo do README: valor estatico informativo (atualizar manualmente quando necessario).
+- Threshold global atual (Jest): `70%` para `branches`, `functions`, `lines` e `statements`.
+
+Para checar localmente:
+
+```bash
+npm run test:cov
+```
+
+No CI de PR (`main` e `release`) sao executados:
+
+- `npm run lint`
+- `npm run format:check`
+- `npm run test:cov`
+- `npm run build`
+
+O workflow publica o artefato `coverage-report` e escreve um resumo da cobertura no Job Summary.
+
+Regra de manutencao:
+
+- Sempre que alterar framework, estrategia de testes ou cobertura, atualizar esta secao do README.
 
 Padrao adotado:
 

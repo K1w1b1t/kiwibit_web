@@ -8,7 +8,7 @@
     "start": "next start",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test:cov": "jest --coverage --passWithNoTests",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-pattern 'docs/design_examples_disabled/**'",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write .",

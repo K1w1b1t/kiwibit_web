@@ -1,0 +1,57 @@
+name: CI PR (lint, format, test, build)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release
+
+permissions:
+  contents: read
+
+jobs:
+  quality-and-build:
+    name: Lint, Format Check, Test Coverage and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run format check
+        run: npm run format:check
+
+      - name: Run tests with coverage
+        run: npm run test:cov
+
+      - name: Add coverage summary to job output
+        run: |
+          echo "## Test Coverage" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e 'const fs=require("fs");const c=JSON.parse(fs.readFileSync("coverage/coverage-summary.json","utf8")).total;console.log(`- Lines: ${c.lines.pct}%`);console.log(`- Statements: ${c.statements.pct}%`);console.log(`- Functions: ${c.functions.pct}%`);console.log(`- Branches: ${c.branches.pct}%`);' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- coverage/coverage-summary.json not found" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: warn
+
+      - name: Run build
+        run: npm run build
