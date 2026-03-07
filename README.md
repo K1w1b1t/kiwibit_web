@@ -77,6 +77,56 @@ Regra de manutencao:
 
 - Sempre que alterar framework, estrategia de testes ou cobertura, atualizar esta secao do README.
 
+## Migrations (Prisma + Supabase)
+
+Esta base usa Prisma para modelagem e `supabase/migrations` como fonte SQL versionada para deploy.
+
+Como funciona no dia a dia:
+
+1. Suba o banco local do projeto:
+
+```bash
+npm run db:up
+```
+
+2. Garanta que o `DATABASE_URL` em `.env` aponta para o Postgres local (`localhost:5433`).
+
+3. Faça alteracoes em `prisma/schema.prisma`.
+
+4. Gere/aplique migration local:
+
+```bash
+npm run prisma:migrate:dev -- --name <nome-da-migration>
+```
+
+5. Copie o SQL gerado de `prisma/migrations/<timestamp>_<nome>/migration.sql` para `supabase/migrations/<timestamp>_<nome>.sql`.
+
+6. Se precisar de dados iniciais de desenvolvimento:
+
+```bash
+npm run prisma:seed
+```
+
+Como manter bem:
+
+- Nunca editar migration antiga que ja foi aplicada em ambiente remoto.
+- Sempre criar nova migration incremental.
+- Nomear migrations com intencao clara (ex.: `add_user_avatar`, `create_posts_table`).
+- Revisar SQL antes do commit (constraints, FKs e defaults).
+- Commits de migration devem incluir alteracao de schema + SQL correspondente.
+
+Automacao de deploy de migrations:
+
+- O workflow `supabase-migrations.yml` aplica SQL automaticamente em merge para:
+  - `release` (ambiente release)
+  - `main` (ambiente producao)
+- O workflow usa controle de historico em tabela de migrations para nao reaplicar arquivos ja executados.
+
+Segredos necessarios no GitHub:
+
+- `SUPABASE_DB_URL_RELEASE`: string de conexao Postgres do projeto Supabase de release.
+- `SUPABASE_DB_URL_PROD`: string de conexao Postgres do projeto Supabase de producao.
+
 Padrao adotado:
 
 - Testes co-localizados com o modulo (`*.spec.ts` no mesmo diretorio do arquivo testado)
@@ -123,6 +173,4 @@ Padrao adotado:
 
 ## Próximos passos
 
-- Adicionar `Prisma` e configurar migrations
 - Adicionar `NextAuth` / Auth.js para autenticação
-- Configurar CI/CD (GitHub Actions / Vercel)
