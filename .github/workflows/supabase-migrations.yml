@@ -9,14 +9,13 @@ on:
       - 'supabase/migrations/**'
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   migrate-release:
     name: Apply migrations to release
     if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       DATABASE_URL: ${{ secrets.SUPABASE_DB_URL_RELEASE }}
 
@@ -58,6 +57,8 @@ jobs:
     name: Apply migrations to production
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       DATABASE_URL: ${{ secrets.SUPABASE_DB_URL_PROD }}
 

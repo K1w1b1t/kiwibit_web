@@ -1,6 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
+const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+
+if (!seedAdminPassword) {
+  throw new Error('Missing SEED_ADMIN_PASSWORD in environment variables.');
+}
 
 async function main() {
   const admin = await prisma.user.upsert({
@@ -9,8 +14,8 @@ async function main() {
     create: {
       name: 'Admin',
       email: 'admin@kiwibit.dev',
-      // Dev-only placeholder. Replace with a hashed password in production.
-      password: 'change_me',
+      // Dev-only seed password loaded from env. Use a hash in production flows.
+      password: seedAdminPassword,
       role: 'admin',
     },
   });
@@ -60,12 +65,15 @@ async function main() {
   });
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (error) => {
+async function runSeed() {
+  try {
+    await main();
+  } catch (error) {
     console.error(error);
+    process.exitCode = 1;
+  } finally {
     await prisma.$disconnect();
-    process.exit(1);
-  });
+  }
+}
+
+runSeed();
