@@ -172,6 +172,6 @@ Padrao adotado:
 - [docs/infrastructure.md](docs/infrastructure.md)
 - [docs/database/database.png] (docs/database/database.png)
 
-## Próximos passos
+### Próximos passos
 
 - Adicionar `NextAuth` / Auth.js para autenticação
