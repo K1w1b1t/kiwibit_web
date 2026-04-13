@@ -37,7 +37,7 @@ describe('Authentication', () => {
       const csrfRes = await client.get('/api/auth/csrf');
       const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
 
-      const res = await client.postForm('/api/auth/callback/credentials', {
+      await client.postForm('/api/auth/callback/credentials', {
         csrfToken,
         email: ADMIN_EMAIL,
         password: 'wrong-password',

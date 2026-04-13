@@ -18,7 +18,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage --passWithNoTests",
     "test:e2e": "bash scripts/test-e2e.sh",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-pattern 'docs/design_examples_disabled/**'",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-pattern 'docs/design_examples_disabled/**' --ignore-pattern 'coverage/**'",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
