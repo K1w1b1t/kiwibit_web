@@ -366,10 +366,11 @@ Every new feature MUST follow this checklist:
 
 ## 11. Quality Gates — MANDATORY
 
-After every change (code generation, edit, refactor), AI assistants MUST verify that **all four** commands pass before considering the task complete:
+After every change (code generation, edit, refactor), AI assistants MUST verify that **all five** commands pass before considering the task complete:
 
 ```bash
 npm run lint        # ESLint must pass with zero errors
+npm run format
 npm run build       # Next.js production build must succeed
 npm run test        # Jest unit tests must pass
 npm run test:e2e    # End-to-end tests must pass (requires Docker)
