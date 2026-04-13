@@ -18,13 +18,18 @@ cleanup() {
 trap cleanup EXIT
 
 # ── load env ─────────────────────────────────────────────────────────────────
-if [[ ! -f .env ]]; then
-  echo "❌ .env file not found. Copy .env.example to .env and configure it."
+if [[ -f .env.test ]]; then
+  ENV_FILE=".env.test"
+elif [[ -f .env ]]; then
+  ENV_FILE=".env"
+else
+  echo "❌ No .env.test or .env file found. Copy .env.example to .env.test and configure it."
   exit 1
 fi
+echo "📄 Loading environment from ${ENV_FILE}"
 set -a
-# shellcheck source=.env
-source .env
+# shellcheck disable=SC1090
+source "$ENV_FILE"
 set +a
 export NEXTAUTH_URL="$E2E_BASE_URL"
 export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${E2E_DB_PORT}/${POSTGRES_DB}?schema=public"
