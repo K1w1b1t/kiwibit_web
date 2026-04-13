@@ -7,7 +7,12 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  collectCoverageFrom: ['src/lib/**/*.{ts,tsx}', '!src/**/*.d.ts'],
+  collectCoverageFrom: [
+    'src/app/api/**/*.ts',
+    'src/shared/lib/**/*.ts',
+    '!src/**/*.d.ts',
+    '!src/**/*.spec.ts',
+  ],
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   coverageThreshold: {

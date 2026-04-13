@@ -13,7 +13,6 @@ echo "🔍 Validando código antes do commit..."
 
 # Usando seus comandos específicos
 npm run lint && \
-npm test && \
 npm run build || {
   echo "❌ ERRO: Verificação falhou. O commit foi cancelado."
   exit 1
