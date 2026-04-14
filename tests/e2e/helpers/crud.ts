@@ -32,3 +32,17 @@ export async function expectPaginatedList(
   expect(typeof body.total).toBe('number');
   return body;
 }
+
+/** Asserts a public read response returns 200 and the expected id. */
+export async function expectPublicItem(resPromise: Promise<Response>, expectedId: string) {
+  const res = await resPromise;
+  expect(res.status).toBe(200);
+  expect((await res.json() as { id: string }).id).toBe(expectedId);
+}
+
+/** Asserts a delete response returns 200 with success: true. */
+export async function expectDeleteOk(resPromise: Promise<Response>) {
+  const res = await resPromise;
+  expect(res.status).toBe(200);
+  expect((await res.json() as { success: boolean }).success).toBe(true);
+}

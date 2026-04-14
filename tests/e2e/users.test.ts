@@ -1,4 +1,4 @@
-import { useAdminClient, anonClient, expectPaginatedList, UNKNOWN_ID } from './helpers/crud';
+import { useAdminClient, anonClient, expectPaginatedList, expectDeleteOk, UNKNOWN_ID } from './helpers/crud';
 
 const TAG = `e2e-users-${Date.now()}`;
 
@@ -67,11 +67,8 @@ describe('Users CRUD — /api/admin/users', () => {
   });
 
   // ── DELETE ────────────────────────────────────────────────────────────────
-  it('DELETE /api/admin/users/[id] removes the user', async () => {
-    const res = await ref.client.delete(`/api/admin/users/${createdId}`);
-    expect(res.status).toBe(200);
-    expect((await res.json()).success).toBe(true);
-  });
+  it('DELETE /api/admin/users/[id] removes the user', () =>
+    expectDeleteOk(ref.client.delete(`/api/admin/users/${createdId}`)));
 
   it('GET /api/admin/users/[id] returns 404 after deletion', async () => {
     expect((await ref.client.get(`/api/admin/users/${createdId}`)).status).toBe(404);

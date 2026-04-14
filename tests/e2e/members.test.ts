@@ -1,4 +1,4 @@
-import { useAdminClient, anonClient, expectPaginatedList, UNKNOWN_ID } from './helpers/crud';
+import { useAdminClient, anonClient, expectPaginatedList, expectPublicItem, expectDeleteOk, UNKNOWN_ID } from './helpers/crud';
 
 const TAG = `e2e-members-${Date.now()}`;
 
@@ -42,11 +42,8 @@ describe('Members CRUD — /api/admin/members', () => {
     expect((await ref.client.get(`/api/admin/members/${UNKNOWN_ID}`)).status).toBe(404);
   });
 
-  it('GET /api/members/[id] returns the member publicly', async () => {
-    const res = await anonClient().get(`/api/members/${createdId}`);
-    expect(res.status).toBe(200);
-    expect((await res.json()).id).toBe(createdId);
-  });
+  it('GET /api/members/[id] returns the member publicly', () =>
+    expectPublicItem(anonClient().get(`/api/members/${createdId}`), createdId));
 
   // ── UPDATE ────────────────────────────────────────────────────────────────
   it('PUT /api/admin/members/[id] updates bio', async () => {
@@ -61,11 +58,8 @@ describe('Members CRUD — /api/admin/members', () => {
   });
 
   // ── DELETE ────────────────────────────────────────────────────────────────
-  it('DELETE /api/admin/members/[id] removes the member', async () => {
-    const res = await ref.client.delete(`/api/admin/members/${createdId}`);
-    expect(res.status).toBe(200);
-    expect((await res.json()).success).toBe(true);
-  });
+  it('DELETE /api/admin/members/[id] removes the member', () =>
+    expectDeleteOk(ref.client.delete(`/api/admin/members/${createdId}`)));
 
   it('GET /api/admin/members/[id] returns 404 after deletion', async () => {
     expect((await ref.client.get(`/api/admin/members/${createdId}`)).status).toBe(404);

@@ -1,4 +1,4 @@
-import { useAdminClient, anonClient, expectPaginatedList, UNKNOWN_ID } from './helpers/crud';
+import { useAdminClient, anonClient, expectPaginatedList, expectPublicItem, expectDeleteOk, UNKNOWN_ID } from './helpers/crud';
 
 const TAG = `e2e-proj-${Date.now()}`;
 
@@ -48,11 +48,8 @@ describe('Projects CRUD — /api/admin/projects', () => {
     expect((await ref.client.get(`/api/admin/projects/${UNKNOWN_ID}`)).status).toBe(404);
   });
 
-  it('GET /api/projects/[id] returns the project publicly', async () => {
-    const res = await anonClient().get(`/api/projects/${createdId}`);
-    expect(res.status).toBe(200);
-    expect((await res.json()).id).toBe(createdId);
-  });
+  it('GET /api/projects/[id] returns the project publicly', () =>
+    expectPublicItem(anonClient().get(`/api/projects/${createdId}`), createdId));
 
   // ── UPDATE ────────────────────────────────────────────────────────────────
   it('PUT /api/admin/projects/[id] updates the project', async () => {
@@ -72,11 +69,8 @@ describe('Projects CRUD — /api/admin/projects', () => {
   });
 
   // ── DELETE ────────────────────────────────────────────────────────────────
-  it('DELETE /api/admin/projects/[id] removes the project', async () => {
-    const res = await ref.client.delete(`/api/admin/projects/${createdId}`);
-    expect(res.status).toBe(200);
-    expect((await res.json()).success).toBe(true);
-  });
+  it('DELETE /api/admin/projects/[id] removes the project', () =>
+    expectDeleteOk(ref.client.delete(`/api/admin/projects/${createdId}`)));
 
   it('GET /api/admin/projects/[id] returns 404 after deletion', async () => {
     expect((await ref.client.get(`/api/admin/projects/${createdId}`)).status).toBe(404);

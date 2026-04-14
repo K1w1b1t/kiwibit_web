@@ -4,19 +4,6 @@ import { apiError } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
 import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
 
-jest.mock('@/shared/lib/prisma', () => ({
-  prisma: {
-    member: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
-    },
-  },
-}));
-
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 const MEMBER = {

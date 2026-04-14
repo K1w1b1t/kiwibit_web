@@ -6,19 +6,6 @@ import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-jest.mock('@/shared/lib/prisma', () => ({
-  prisma: {
-    user: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
-    },
-  },
-}));
-
 jest.mock('bcryptjs', () => ({
   hash: jest.fn().mockResolvedValue('hashed_pw'),
 }));
