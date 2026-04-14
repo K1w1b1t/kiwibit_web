@@ -28,6 +28,7 @@ jest.mock('@/shared/lib/prisma', () => ({
 }));
 
 jest.mock('@/shared/lib/api-helpers', () => ({
+  ...jest.requireActual('@/shared/lib/api-helpers'),
   requireAdminSession: jest.fn(),
   apiError: jest.fn().mockImplementation((code: string, message: string, status: number) => ({
     status,
@@ -137,8 +138,8 @@ describe('POST /api/admin/users', () => {
       method: 'POST',
       body: 'not-json',
     });
-    await createUser(req);
-    expect(apiError).toHaveBeenCalledWith('BAD_REQUEST', expect.any(String), 400);
+    const res = await createUser(req);
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 when required fields are missing', async () => {
@@ -228,8 +229,8 @@ describe('PUT /api/admin/users/[id]', () => {
       method: 'PUT',
       body: 'bad',
     });
-    await updateUser(req, paramsFor('uid-1'));
-    expect(apiError).toHaveBeenCalledWith('BAD_REQUEST', expect.any(String), 400);
+    const res = await updateUser(req, paramsFor('uid-1'));
+    expect(res.status).toBe(400);
   });
 
   it('returns 404 when user not found', async () => {

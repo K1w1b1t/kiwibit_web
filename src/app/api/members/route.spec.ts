@@ -23,6 +23,7 @@ jest.mock('@/shared/lib/prisma', () => ({
 }));
 
 jest.mock('@/shared/lib/api-helpers', () => ({
+  ...jest.requireActual('@/shared/lib/api-helpers'),
   apiError: jest.fn().mockImplementation((code: string, message: string, status: number) => ({
     status,
     json: () => Promise.resolve({ error: { code, message } }),

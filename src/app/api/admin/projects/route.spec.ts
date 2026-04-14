@@ -26,6 +26,7 @@ jest.mock('@/shared/lib/prisma', () => ({
 }));
 
 jest.mock('@/shared/lib/api-helpers', () => ({
+  ...jest.requireActual('@/shared/lib/api-helpers'),
   requireAdminSession: jest.fn(),
   apiError: jest.fn().mockImplementation((code: string, message: string, status: number) => ({
     status,
@@ -127,8 +128,8 @@ describe('POST /api/admin/projects', () => {
   it('returns 400 when body is invalid JSON', async () => {
     mockAuth();
     const req = new Request('http://localhost/api/admin/projects', { method: 'POST', body: 'bad' });
-    await createProject(req);
-    expect(apiError).toHaveBeenCalledWith('BAD_REQUEST', expect.any(String), 400);
+    const res = await createProject(req);
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 when title is missing', async () => {
@@ -212,8 +213,8 @@ describe('PUT /api/admin/projects/[id]', () => {
       method: 'PUT',
       body: 'bad',
     });
-    await updateProject(req, paramsFor('pid-1'));
-    expect(apiError).toHaveBeenCalledWith('BAD_REQUEST', expect.any(String), 400);
+    const res = await updateProject(req, paramsFor('pid-1'));
+    expect(res.status).toBe(400);
   });
 
   it('returns 404 when project not found', async () => {

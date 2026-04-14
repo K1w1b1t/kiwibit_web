@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminSession, apiError } from '@/shared/lib/api-helpers';
+import { requireAdminSession, apiError, parseJsonBody } from '@/shared/lib/api-helpers';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -22,12 +22,8 @@ export async function PUT(request: Request, { params }: Params) {
 
   const { id } = await params;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return apiError('BAD_REQUEST', 'Invalid JSON body.', 400);
-  }
+  const { body, error } = await parseJsonBody(request);
+  if (error) return error;
 
   const { title, content } = body as Record<string, unknown>;
 

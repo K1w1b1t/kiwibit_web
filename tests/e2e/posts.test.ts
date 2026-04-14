@@ -1,30 +1,19 @@
-import { ApiClient } from './helpers/client';
-import { signInAsAdmin, makeAdminClient } from './helpers/auth';
-import { BASE_URL } from './helpers/constants';
+import { useAdminClient, anonClient, expectPaginatedList, UNKNOWN_ID } from './helpers/crud';
 
 const TAG = `e2e-posts-${Date.now()}`;
 
 describe('Posts CRUD — /api/admin/posts', () => {
-  let client: ApiClient;
+  const ref = useAdminClient();
   let createdId: string;
-
-  beforeAll(async () => {
-    client = makeAdminClient();
-    await signInAsAdmin(client);
-  });
 
   // ── LIST ──────────────────────────────────────────────────────────────────
   it('GET /api/admin/posts returns a paginated list', async () => {
-    const res = await client.get('/api/admin/posts');
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(Array.isArray(body.items)).toBe(true);
-    expect(typeof body.total).toBe('number');
+    await expectPaginatedList(await ref.client.get('/api/admin/posts'));
   });
 
   // ── CREATE ────────────────────────────────────────────────────────────────
   it('POST /api/admin/posts creates a post', async () => {
-    const res = await client.post('/api/admin/posts', {
+    const res = await ref.client.post('/api/admin/posts', {
       title: `E2E Post ${TAG}`,
       content: 'E2E test content body',
     });
@@ -36,18 +25,16 @@ describe('Posts CRUD — /api/admin/posts', () => {
   });
 
   it('POST /api/admin/posts rejects missing title', async () => {
-    const res = await client.post('/api/admin/posts', { content: 'no title' });
-    expect(res.status).toBe(400);
+    expect((await ref.client.post('/api/admin/posts', { content: 'no title' })).status).toBe(400);
   });
 
   it('POST /api/admin/posts rejects missing content', async () => {
-    const res = await client.post('/api/admin/posts', { title: 'no content' });
-    expect(res.status).toBe(400);
+    expect((await ref.client.post('/api/admin/posts', { title: 'no content' })).status).toBe(400);
   });
 
   // ── READ ──────────────────────────────────────────────────────────────────
   it('GET /api/admin/posts/[id] returns the created post', async () => {
-    const res = await client.get(`/api/admin/posts/${createdId}`);
+    const res = await ref.client.get(`/api/admin/posts/${createdId}`);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.id).toBe(createdId);
@@ -55,22 +42,18 @@ describe('Posts CRUD — /api/admin/posts', () => {
   });
 
   it('GET /api/admin/posts/[id] returns 404 for unknown id', async () => {
-    const res = await client.get('/api/admin/posts/00000000-0000-0000-0000-000000000000');
-    expect(res.status).toBe(404);
+    expect((await ref.client.get(`/api/admin/posts/${UNKNOWN_ID}`)).status).toBe(404);
   });
 
-  // Public endpoint
   it('GET /api/posts/[id] returns the post publicly', async () => {
-    const anon = new ApiClient(BASE_URL);
-    const res = await anon.get(`/api/posts/${createdId}`);
+    const res = await anonClient().get(`/api/posts/${createdId}`);
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.id).toBe(createdId);
+    expect((await res.json()).id).toBe(createdId);
   });
 
   // ── UPDATE ────────────────────────────────────────────────────────────────
   it('PUT /api/admin/posts/[id] updates the post', async () => {
-    const res = await client.put(`/api/admin/posts/${createdId}`, {
+    const res = await ref.client.put(`/api/admin/posts/${createdId}`, {
       title: `Updated Post ${TAG}`,
       content: 'Updated E2E content',
     });
@@ -81,29 +64,24 @@ describe('Posts CRUD — /api/admin/posts', () => {
   });
 
   it('GET /api/posts/[id] reflects the updated post', async () => {
-    const anon = new ApiClient(BASE_URL);
-    const res = await anon.get(`/api/posts/${createdId}`);
-    const body = await res.json();
+    const body = await (await anonClient().get(`/api/posts/${createdId}`)).json();
     expect(body.title).toBe(`Updated Post ${TAG}`);
     expect(body.content).toBe('Updated E2E content');
   });
 
   // ── DELETE ────────────────────────────────────────────────────────────────
   it('DELETE /api/admin/posts/[id] removes the post', async () => {
-    const res = await client.delete(`/api/admin/posts/${createdId}`);
+    const res = await ref.client.delete(`/api/admin/posts/${createdId}`);
     expect(res.status).toBe(200);
     expect((await res.json()).success).toBe(true);
   });
 
   it('GET /api/admin/posts/[id] returns 404 after deletion', async () => {
-    const res = await client.get(`/api/admin/posts/${createdId}`);
-    expect(res.status).toBe(404);
+    expect((await ref.client.get(`/api/admin/posts/${createdId}`)).status).toBe(404);
   });
 
   it('GET /api/posts does not include the deleted post', async () => {
-    const anon = new ApiClient(BASE_URL);
-    const res = await anon.get(`/api/posts?search=${TAG}`);
-    const body = await res.json();
+    const body = await (await anonClient().get(`/api/posts?search=${TAG}`)).json();
     expect(body.items).toHaveLength(0);
   });
 });

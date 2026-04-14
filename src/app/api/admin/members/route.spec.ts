@@ -26,6 +26,7 @@ jest.mock('@/shared/lib/prisma', () => ({
 }));
 
 jest.mock('@/shared/lib/api-helpers', () => ({
+  ...jest.requireActual('@/shared/lib/api-helpers'),
   requireAdminSession: jest.fn(),
   apiError: jest.fn().mockImplementation((code: string, message: string, status: number) => ({
     status,
@@ -125,8 +126,8 @@ describe('POST /api/admin/members', () => {
   it('returns 400 when body is invalid JSON', async () => {
     mockAuth();
     const req = new Request('http://localhost/api/admin/members', { method: 'POST', body: 'bad' });
-    await createMember(req);
-    expect(apiError).toHaveBeenCalledWith('BAD_REQUEST', expect.any(String), 400);
+    const res = await createMember(req);
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 when name is missing', async () => {
@@ -204,8 +205,8 @@ describe('PUT /api/admin/members/[id]', () => {
       method: 'PUT',
       body: 'bad',
     });
-    await updateMember(req, paramsFor('mid-1'));
-    expect(apiError).toHaveBeenCalledWith('BAD_REQUEST', expect.any(String), 400);
+    const res = await updateMember(req, paramsFor('mid-1'));
+    expect(res.status).toBe(400);
   });
 
   it('returns 404 when member not found', async () => {

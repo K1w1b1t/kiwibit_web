@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminSession, apiError } from '@/shared/lib/api-helpers';
+import {
+  requireAdminSession,
+  apiError,
+  parsePaginationParams,
+  parseJsonBody,
+  paginatedJson,
+} from '@/shared/lib/api-helpers';
 
 // GET /api/admin/members
 export async function GET(request: Request) {
   const { response } = await requireAdminSession();
   if (response) return response;
 
-  const { searchParams } = new URL(request.url);
-  const page = Math.max(1, Number(searchParams.get('page') ?? 1));
-  const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? 20)));
-  const search = searchParams.get('search') ?? undefined;
-
+  const { page, limit, search } = parsePaginationParams(request);
   const where = search ? { name: { contains: search, mode: 'insensitive' as const } } : {};
 
   const [items, total] = await Promise.all([
@@ -24,7 +26,7 @@ export async function GET(request: Request) {
     prisma.member.count({ where }),
   ]);
 
-  return NextResponse.json({ items, page, limit, total });
+  return paginatedJson(items, page, limit, total);
 }
 
 // POST /api/admin/members
@@ -32,12 +34,8 @@ export async function POST(request: Request) {
   const { response } = await requireAdminSession();
   if (response) return response;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return apiError('BAD_REQUEST', 'Invalid JSON body.', 400);
-  }
+  const { body, error } = await parseJsonBody(request);
+  if (error) return error;
 
   const { userId, name, bio, avatarUrl } = body as Record<string, unknown>;
 
