@@ -1,4 +1,11 @@
-import { useAdminClient, anonClient, expectPaginatedList, expectPublicItem, expectDeleteOk, UNKNOWN_ID } from './helpers/crud';
+import {
+  useAdminClient,
+  anonClient,
+  expectPaginatedList,
+  expectPublicItem,
+  expectDeleteOk,
+  UNKNOWN_ID,
+} from './helpers/crud';
 
 const TAG = `e2e-posts-${Date.now()}`;
 
