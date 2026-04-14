@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # 1. Validar padrão da branch: numero_da_issue-titulo_da_issue
 branch_name=$(git rev-parse --abbrev-ref HEAD)
 branch_regex="^[0-9]+-.+$"
