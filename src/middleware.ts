@@ -2,7 +2,7 @@ import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 import type { UserRole } from '@prisma/client';
 
-const ADMIN_ROLES: UserRole[] = ['admin', 'editor', 'member_manager'];
+const ADMIN_ROLES = new Set<UserRole>(['admin', 'editor', 'member_manager']);
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -19,8 +19,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  const role = token.role as UserRole | undefined;
-  if (!role || !ADMIN_ROLES.includes(role)) {
+  const role = token.role;
+  if (!role || !ADMIN_ROLES.has(role)) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json(
         { error: { code: 'FORBIDDEN', message: 'Insufficient permissions.' } },

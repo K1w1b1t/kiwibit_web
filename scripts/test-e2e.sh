@@ -14,6 +14,7 @@ cleanup() {
     kill "$NEXT_PID" 2>/dev/null || true
   fi
   docker compose -f docker-compose.e2e.yml down --volumes --remove-orphans --timeout 10 2>/dev/null || true
+  return 0
 }
 trap cleanup EXIT
 

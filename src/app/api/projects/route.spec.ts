@@ -2,15 +2,7 @@ import { GET as listProjects } from './route';
 import { GET as getProject } from './[id]/route';
 import { apiError } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
-
-jest.mock('next/server', () => ({
-  NextResponse: {
-    json: jest.fn().mockImplementation((body: unknown, init?: { status?: number }) => ({
-      status: init?.status ?? 200,
-      json: () => Promise.resolve(body),
-    })),
-  },
-}));
+import { makeReq, paramsFor } from '@/shared/test-utils/spec-helpers';
 
 jest.mock('@/shared/lib/prisma', () => ({
   prisma: {
@@ -22,23 +14,7 @@ jest.mock('@/shared/lib/prisma', () => ({
   },
 }));
 
-jest.mock('@/shared/lib/api-helpers', () => ({
-  ...jest.requireActual('@/shared/lib/api-helpers'),
-  apiError: jest.fn().mockImplementation((code: string, message: string, status: number) => ({
-    status,
-    json: () => Promise.resolve({ error: { code, message } }),
-  })),
-}));
-
 // ── helpers ───────────────────────────────────────────────────────────────────
-
-function makeReq(url: string) {
-  return new Request(url);
-}
-
-function paramsFor(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
 
 const PROJECT = {
   id: 'proj-1',

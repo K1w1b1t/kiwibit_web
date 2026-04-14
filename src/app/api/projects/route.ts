@@ -1,28 +1,20 @@
 import { prisma } from '@/shared/lib/prisma';
-import { parsePaginationParams, paginatedJson } from '@/shared/lib/api-helpers';
+import {
+  parsePaginationParams,
+  runPaginatedQuery,
+  PaginatableDelegate,
+} from '@/shared/lib/api-helpers';
 
 // GET /api/projects
 export async function GET(request: Request) {
   const { page, limit, search } = parsePaginationParams(request);
-
-  const where = search
+  const where: Record<string, unknown> = search
     ? {
         OR: [
-          { title: { contains: search, mode: 'insensitive' as const } },
-          { description: { contains: search, mode: 'insensitive' as const } },
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
         ],
       }
     : {};
-
-  const [items, total] = await Promise.all([
-    prisma.project.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.project.count({ where }),
-  ]);
-
-  return paginatedJson(items, page, limit, total);
+  return runPaginatedQuery(prisma.project as unknown as PaginatableDelegate, where, page, limit);
 }

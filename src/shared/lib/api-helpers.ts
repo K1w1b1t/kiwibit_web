@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/shared/lib/auth';
 import type { UserRole } from '@prisma/client';
 
-const ADMIN_ROLES: UserRole[] = ['admin', 'editor', 'member_manager'];
+const ADMIN_ROLES = new Set<UserRole>(['admin', 'editor', 'member_manager']);
 
 export async function requireAdminSession() {
   const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export async function requireAdminSession() {
       ),
     };
   }
-  if (!ADMIN_ROLES.includes(session.user.role)) {
+  if (!ADMIN_ROLES.has(session.user.role)) {
     return {
       session: null,
       response: NextResponse.json(
@@ -53,4 +53,36 @@ export async function parseJsonBody(
 
 export function paginatedJson(items: unknown[], page: number, limit: number, total: number) {
   return NextResponse.json({ items, page, limit, total });
+}
+
+/** Minimal structural interface for Prisma model delegates used in paginated queries. */
+export interface PaginatableDelegate {
+  findMany(args: {
+    where?: Record<string, unknown>;
+    skip?: number;
+    take?: number;
+    orderBy?: Record<string, string>;
+    select?: Record<string, boolean>;
+  }): Promise<Record<string, unknown>[]>;
+  count(args?: { where?: Record<string, unknown> }): Promise<number>;
+}
+
+export async function runPaginatedQuery(
+  model: PaginatableDelegate,
+  where: Record<string, unknown>,
+  page: number,
+  limit: number,
+  extra?: { select?: Record<string, boolean> },
+) {
+  const [items, total] = await Promise.all([
+    model.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      ...(extra?.select && { select: extra.select }),
+    }),
+    model.count({ where }),
+  ]);
+  return paginatedJson(items, page, limit, total);
 }

@@ -1,18 +1,10 @@
 import { GET as listUsers, POST as createUser } from './route';
 import { GET as getUser, PUT as updateUser, DELETE as deleteUser } from './[id]/route';
-import { requireAdminSession, apiError } from '@/shared/lib/api-helpers';
+import { apiError } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
+import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
-
-jest.mock('next/server', () => ({
-  NextResponse: {
-    json: jest.fn().mockImplementation((body: unknown, init?: { status?: number }) => ({
-      status: init?.status ?? 200,
-      json: () => Promise.resolve(body),
-    })),
-  },
-}));
 
 jest.mock('@/shared/lib/prisma', () => ({
   prisma: {
@@ -27,49 +19,11 @@ jest.mock('@/shared/lib/prisma', () => ({
   },
 }));
 
-jest.mock('@/shared/lib/api-helpers', () => ({
-  ...jest.requireActual('@/shared/lib/api-helpers'),
-  requireAdminSession: jest.fn(),
-  apiError: jest.fn().mockImplementation((code: string, message: string, status: number) => ({
-    status,
-    json: () => Promise.resolve({ error: { code, message } }),
-  })),
-}));
-
 jest.mock('bcryptjs', () => ({
   hash: jest.fn().mockResolvedValue('hashed_pw'),
 }));
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-
-const ADMIN_SESSION = {
-  session: {
-    user: { id: 'uid-1', name: 'Admin', email: 'admin@test.com', role: 'admin' as const },
-  },
-  response: null,
-};
-const UNAUTH_RESPONSE = {
-  status: 401,
-  json: () => Promise.resolve({ error: { code: 'UNAUTHORIZED' } }),
-};
-
-function mockAuth(ok = true) {
-  (requireAdminSession as jest.Mock).mockResolvedValue(
-    ok ? ADMIN_SESSION : { session: null, response: UNAUTH_RESPONSE },
-  );
-}
-
-function makeReq(url: string, body?: unknown, method = body ? 'POST' : 'GET') {
-  return new Request(url, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
-}
-
-function paramsFor(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
 
 const USER = {
   id: 'uid-1',

@@ -5,7 +5,8 @@ import {
   apiError,
   parsePaginationParams,
   parseJsonBody,
-  paginatedJson,
+  runPaginatedQuery,
+  PaginatableDelegate,
 } from '@/shared/lib/api-helpers';
 
 // GET /api/admin/users
@@ -14,27 +15,17 @@ export async function GET(request: Request) {
   if (response) return response;
 
   const { page, limit, search } = parsePaginationParams(request);
-  const where = search
+  const where: Record<string, unknown> = search
     ? {
         OR: [
-          { name: { contains: search, mode: 'insensitive' as const } },
-          { email: { contains: search, mode: 'insensitive' as const } },
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
         ],
       }
     : {};
-
-  const [items, total] = await Promise.all([
-    prisma.user.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, email: true, role: true, createdAt: true, updatedAt: true },
-    }),
-    prisma.user.count({ where }),
-  ]);
-
-  return paginatedJson(items, page, limit, total);
+  return runPaginatedQuery(prisma.user as unknown as PaginatableDelegate, where, page, limit, {
+    select: { id: true, name: true, email: true, role: true, createdAt: true, updatedAt: true },
+  });
 }
 
 // POST /api/admin/users

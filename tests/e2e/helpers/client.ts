@@ -9,11 +9,13 @@ export class ApiClient {
 
   private storeCookies(headers: Headers): void {
     // Node 18+ exposes getSetCookie() returning string[]
+    const headersWithGetSetCookie = headers as unknown as { getSetCookie?: () => string[] };
+    const rawSetCookies = headers.get('set-cookie');
     const setCookies: string[] =
-      typeof (headers as unknown as { getSetCookie?: () => string[] }).getSetCookie === 'function'
-        ? (headers as unknown as { getSetCookie: () => string[] }).getSetCookie()
-        : headers.get('set-cookie')
-          ? [headers.get('set-cookie')!]
+      typeof headersWithGetSetCookie.getSetCookie === 'function'
+        ? headersWithGetSetCookie.getSetCookie()
+        : rawSetCookies
+          ? [rawSetCookies]
           : [];
 
     for (const raw of setCookies) {
