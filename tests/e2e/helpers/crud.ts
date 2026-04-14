@@ -46,3 +46,28 @@ export async function expectDeleteOk(resPromise: Promise<Response>) {
   expect(res.status).toBe(200);
   expect(((await res.json()) as { success: boolean }).success).toBe(true);
 }
+/** Asserts a POST returns 201+success, runs fieldCheck on data, and returns the created id. */
+export async function expectCreated(
+  resPromise: Promise<Response>,
+  fieldCheck: (data: Record<string, unknown>) => void,
+): Promise<string> {
+  const res = await resPromise;
+  expect(res.status).toBe(201);
+  const body = (await res.json()) as { success: boolean; data: Record<string, unknown> };
+  expect(body.success).toBe(true);
+  fieldCheck(body.data);
+  return body.data.id as string;
+}
+
+/** Asserts a GET returns 200, the expected id, and optionally runs fieldCheck on the body. */
+export async function expectAdminItem(
+  resPromise: Promise<Response>,
+  expectedId: string,
+  fieldCheck?: (body: Record<string, unknown>) => void,
+): Promise<void> {
+  const res = await resPromise;
+  expect(res.status).toBe(200);
+  const body = (await res.json()) as Record<string, unknown>;
+  expect(body.id).toBe(expectedId);
+  fieldCheck?.(body);
+}

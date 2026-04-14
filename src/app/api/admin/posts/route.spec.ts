@@ -2,7 +2,12 @@ import { GET as listPosts, POST as createPost } from './route';
 import { GET as getPost, PUT as updatePost, DELETE as deletePost } from './[id]/route';
 import { apiError } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
-import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
+import {
+  makeReq,
+  paramsFor,
+  mockAuth,
+  assertPaginatedResponse,
+} from '@/shared/test-utils/spec-helpers';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -28,11 +33,10 @@ describe('GET /api/admin/posts', () => {
     mockAuth();
     (prisma.post.findMany as jest.Mock).mockResolvedValue([POST_RECORD]);
     (prisma.post.count as jest.Mock).mockResolvedValue(1);
-    const res = await listPosts(makeReq('http://localhost/api/admin/posts'));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.items).toHaveLength(1);
-    expect(body.total).toBe(1);
+    await assertPaginatedResponse(await listPosts(makeReq('http://localhost/api/admin/posts')), {
+      items: 1,
+      total: 1,
+    });
   });
 
   it('filters by authorId', async () => {
@@ -59,10 +63,10 @@ describe('GET /api/admin/posts', () => {
     mockAuth();
     (prisma.post.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.post.count as jest.Mock).mockResolvedValue(0);
-    const res = await listPosts(makeReq('http://localhost/api/admin/posts'));
-    const body = await res.json();
-    expect(body.items).toHaveLength(0);
-    expect(body.total).toBe(0);
+    await assertPaginatedResponse(await listPosts(makeReq('http://localhost/api/admin/posts')), {
+      items: 0,
+      total: 0,
+    });
   });
 });
 

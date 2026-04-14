@@ -2,7 +2,12 @@ import { GET as listMembers, POST as createMember } from './route';
 import { GET as getMember, PUT as updateMember, DELETE as deleteMember } from './[id]/route';
 import { apiError } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
-import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
+import {
+  makeReq,
+  paramsFor,
+  mockAuth,
+  assertPaginatedResponse,
+} from '@/shared/test-utils/spec-helpers';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,11 +34,10 @@ describe('GET /api/admin/members', () => {
     mockAuth();
     (prisma.member.findMany as jest.Mock).mockResolvedValue([MEMBER]);
     (prisma.member.count as jest.Mock).mockResolvedValue(1);
-    const res = await listMembers(makeReq('http://localhost/api/admin/members'));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.items).toHaveLength(1);
-    expect(body.total).toBe(1);
+    await assertPaginatedResponse(
+      await listMembers(makeReq('http://localhost/api/admin/members')),
+      { items: 1, total: 1 },
+    );
   });
 
   it('passes search filter', async () => {
@@ -50,10 +54,10 @@ describe('GET /api/admin/members', () => {
     mockAuth();
     (prisma.member.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.member.count as jest.Mock).mockResolvedValue(0);
-    const res = await listMembers(makeReq('http://localhost/api/admin/members'));
-    const body = await res.json();
-    expect(body.items).toHaveLength(0);
-    expect(body.total).toBe(0);
+    await assertPaginatedResponse(
+      await listMembers(makeReq('http://localhost/api/admin/members')),
+      { items: 0, total: 0 },
+    );
   });
 });
 

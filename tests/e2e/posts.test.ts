@@ -4,6 +4,8 @@ import {
   expectPaginatedList,
   expectPublicItem,
   expectDeleteOk,
+  expectCreated,
+  expectAdminItem,
   UNKNOWN_ID,
 } from './helpers/crud';
 
@@ -20,15 +22,13 @@ describe('Posts CRUD — /api/admin/posts', () => {
 
   // ── CREATE ────────────────────────────────────────────────────────────────
   it('POST /api/admin/posts creates a post', async () => {
-    const res = await ref.client.post('/api/admin/posts', {
-      title: `E2E Post ${TAG}`,
-      content: 'E2E test content body',
-    });
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.data.title).toBe(`E2E Post ${TAG}`);
-    createdId = body.data.id;
+    createdId = await expectCreated(
+      ref.client.post('/api/admin/posts', {
+        title: `E2E Post ${TAG}`,
+        content: 'E2E test content body',
+      }),
+      (data) => expect(data.title).toBe(`E2E Post ${TAG}`),
+    );
   });
 
   it('POST /api/admin/posts rejects missing title', async () => {
@@ -40,13 +40,10 @@ describe('Posts CRUD — /api/admin/posts', () => {
   });
 
   // ── READ ──────────────────────────────────────────────────────────────────
-  it('GET /api/admin/posts/[id] returns the created post', async () => {
-    const res = await ref.client.get(`/api/admin/posts/${createdId}`);
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.id).toBe(createdId);
-    expect(body.content).toBe('E2E test content body');
-  });
+  it('GET /api/admin/posts/[id] returns the created post', () =>
+    expectAdminItem(ref.client.get(`/api/admin/posts/${createdId}`), createdId, (body) =>
+      expect(body.content).toBe('E2E test content body'),
+    ));
 
   it('GET /api/admin/posts/[id] returns 404 for unknown id', async () => {
     expect((await ref.client.get(`/api/admin/posts/${UNKNOWN_ID}`)).status).toBe(404);

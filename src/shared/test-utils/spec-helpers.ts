@@ -30,3 +30,15 @@ export function mockAuth(ok = true) {
     ok ? ADMIN_SESSION : { session: null, response: UNAUTH_RESPONSE },
   );
 }
+
+export async function assertPaginatedResponse(
+  res: Response,
+  expected: { items: number; total: number; page?: number },
+): Promise<{ items: unknown[]; total: number; page: number }> {
+  expect(res.status).toBe(200);
+  const body = (await res.json()) as { items: unknown[]; total: number; page: number };
+  expect(body.items).toHaveLength(expected.items);
+  expect(body.total).toBe(expected.total);
+  if (expected.page !== undefined) expect(body.page).toBe(expected.page);
+  return body;
+}

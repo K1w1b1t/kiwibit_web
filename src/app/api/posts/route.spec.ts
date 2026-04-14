@@ -2,7 +2,7 @@ import { GET as listPosts } from './route';
 import { GET as getPost } from './[id]/route';
 import { apiError } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
-import { makeReq, paramsFor } from '@/shared/test-utils/spec-helpers';
+import { makeReq, paramsFor, assertPaginatedResponse } from '@/shared/test-utils/spec-helpers';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -20,12 +20,11 @@ describe('GET /api/posts', () => {
   it('returns paginated list', async () => {
     (prisma.post.findMany as jest.Mock).mockResolvedValue([POST_RECORD]);
     (prisma.post.count as jest.Mock).mockResolvedValue(1);
-    const res = await listPosts(makeReq('http://localhost/api/posts'));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.items).toHaveLength(1);
-    expect(body.total).toBe(1);
-    expect(body.page).toBe(1);
+    await assertPaginatedResponse(await listPosts(makeReq('http://localhost/api/posts')), {
+      items: 1,
+      total: 1,
+      page: 1,
+    });
   });
 
   it('respects page and limit query params', async () => {
@@ -58,10 +57,10 @@ describe('GET /api/posts', () => {
   it('returns empty list when no posts exist', async () => {
     (prisma.post.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.post.count as jest.Mock).mockResolvedValue(0);
-    const res = await listPosts(makeReq('http://localhost/api/posts'));
-    const body = await res.json();
-    expect(body.items).toHaveLength(0);
-    expect(body.total).toBe(0);
+    await assertPaginatedResponse(await listPosts(makeReq('http://localhost/api/posts')), {
+      items: 0,
+      total: 0,
+    });
   });
 });
 

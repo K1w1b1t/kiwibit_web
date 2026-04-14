@@ -4,6 +4,8 @@ import {
   expectPaginatedList,
   expectPublicItem,
   expectDeleteOk,
+  expectCreated,
+  expectAdminItem,
   UNKNOWN_ID,
 } from './helpers/crud';
 
@@ -20,16 +22,14 @@ describe('Projects CRUD — /api/admin/projects', () => {
 
   // ── CREATE ────────────────────────────────────────────────────────────────
   it('POST /api/admin/projects creates a project', async () => {
-    const res = await ref.client.post('/api/admin/projects', {
-      title: `E2E Project ${TAG}`,
-      description: 'E2E test project description',
-      repoUrl: 'https://github.com/example/e2e-project',
-    });
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.data.title).toBe(`E2E Project ${TAG}`);
-    createdId = body.data.id;
+    createdId = await expectCreated(
+      ref.client.post('/api/admin/projects', {
+        title: `E2E Project ${TAG}`,
+        description: 'E2E test project description',
+        repoUrl: 'https://github.com/example/e2e-project',
+      }),
+      (data) => expect(data.title).toBe(`E2E Project ${TAG}`),
+    );
   });
 
   it('POST /api/admin/projects rejects missing title', async () => {
@@ -43,13 +43,10 @@ describe('Projects CRUD — /api/admin/projects', () => {
   });
 
   // ── READ ──────────────────────────────────────────────────────────────────
-  it('GET /api/admin/projects/[id] returns the created project', async () => {
-    const res = await ref.client.get(`/api/admin/projects/${createdId}`);
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.id).toBe(createdId);
-    expect(body.description).toBe('E2E test project description');
-  });
+  it('GET /api/admin/projects/[id] returns the created project', () =>
+    expectAdminItem(ref.client.get(`/api/admin/projects/${createdId}`), createdId, (body) =>
+      expect(body.description).toBe('E2E test project description'),
+    ));
 
   it('GET /api/admin/projects/[id] returns 404 for unknown id', async () => {
     expect((await ref.client.get(`/api/admin/projects/${UNKNOWN_ID}`)).status).toBe(404);
