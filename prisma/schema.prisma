@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  editor
+  member_manager
+  member
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(member)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  posts  Post[]
+  member Member?
+
+  @@map("users")
+}
+
+model Member {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @unique @db.Uuid @map("user_id")
+  name      String
+  bio       String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("members")
+}
+
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  description String
+  repoUrl     String?  @map("repo_url")
+  liveUrl     String?  @map("live_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("projects")
+}
+
+model Post {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  content   String
+  authorId  String   @db.Uuid @map("author_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("posts")
+}

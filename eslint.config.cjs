@@ -1,5 +1,5 @@
 module.exports = [
   {
-    ignores: ['docs/design_examples_disabled/**'],
+    ignores: ['docs/design_examples_disabled/**', 'coverage/**'],
   },
 ];
