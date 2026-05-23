@@ -5,7 +5,7 @@
   "scripts": {
     "prepare": "husky",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
@@ -24,10 +24,13 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@prisma/client": "^6.16.2",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
     "next": "^16.2.2",
     "next-auth": "^4.24.13",
+    "pg": "^8.20.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
@@ -52,7 +55,7 @@
     "jest": "^30.2.0",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
-    "prisma": "^6.12.0",
+    "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "typescript": "^5"
