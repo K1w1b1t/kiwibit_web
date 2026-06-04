@@ -103,7 +103,12 @@ export function AdminMemberForm() {
             </div>
           )}
 
-          <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-4"
+          >
             <div className="animate-fade-up delay-200">
               <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
                 Nome <span aria-hidden="true">*</span>
