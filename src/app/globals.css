@@ -46,6 +46,69 @@ body {
   background-size: 14px 14px;
 }
 
+/* ── form animations ───────────────────────────────────────────────────────── */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+}
+.delay-300 {
+  animation-delay: 0.3s;
+}
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+@keyframes card-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 transparent,
+      0 0 40px 0 rgba(255, 255, 255, 0.03);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 0 60px 4px rgba(255, 255, 255, 0.06);
+  }
+}
+
+.card-glow {
+  animation: card-breathe 5s ease-in-out infinite;
+}
+
+@keyframes input-focus-in {
+  from {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+  to {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.06),
+      0 0 16px 0 rgba(255, 255, 255, 0.04);
+  }
+}
+
+.input-glow:focus {
+  animation: input-focus-in 0.25s ease forwards;
+}
+
 .section-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);

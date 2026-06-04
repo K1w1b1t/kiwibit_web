@@ -57,6 +57,11 @@ echo "🔄 Running database migrations..."
 npx prisma migrate deploy
 echo "✅ Migrations applied"
 
+# ── generate prisma client ────────────────────────────────────────────────────
+echo "⚙️  Generating Prisma Client..."
+npx prisma generate --schema=prisma/schema.prisma
+echo "✅ Prisma Client generated"
+
 # ── start Next.js dev server ──────────────────────────────────────────────────
 echo "🚀 Starting Next.js on port ${E2E_PORT}..."
 PORT=$E2E_PORT npx next dev -p "$E2E_PORT" > /tmp/next-e2e.log 2>&1 &

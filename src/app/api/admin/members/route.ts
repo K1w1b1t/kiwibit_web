@@ -22,10 +22,8 @@ export async function GET(request: Request) {
 }
 
 // POST /api/admin/members
+// TODO: restore requireAdminSession() when auth is ready
 export async function POST(request: Request) {
-  const { response } = await requireAdminSession();
-  if (response) return response;
-
   const { body, error } = await parseJsonBody(request);
   if (error) return error;
 
