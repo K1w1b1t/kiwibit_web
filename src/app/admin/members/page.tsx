@@ -43,9 +43,7 @@ export default async function AdminMembersPage({
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/40">
-              Admin
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/40">Admin</p>
             <h1 className="mt-2 text-4xl font-black uppercase tracking-[-0.03em]">Membros</h1>
           </div>
           <Link

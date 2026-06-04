@@ -68,10 +68,18 @@ export function AdminMembersTable({ members, page: rawPage, total, pageSize }: P
 
       <div className="card-glow overflow-hidden rounded-2xl border border-white/10 bg-[#0e0e0e]">
         <div className="grid grid-cols-[1fr_140px_140px_80px] border-b border-white/10 bg-[#141414] px-4 py-3">
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">Nome</span>
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">Função</span>
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">Atualizado em</span>
-          <span className="text-right text-xs font-medium uppercase tracking-[0.14em] text-white/40">Ações</span>
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">
+            Nome
+          </span>
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">
+            Função
+          </span>
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">
+            Atualizado em
+          </span>
+          <span className="text-right text-xs font-medium uppercase tracking-[0.14em] text-white/40">
+            Ações
+          </span>
         </div>
 
         {members.map((member, index) => (
@@ -93,7 +101,9 @@ export function AdminMembersTable({ members, page: rawPage, total, pageSize }: P
       </div>
 
       <div className="mt-4 flex items-center justify-between text-xs text-white/40">
-        <span>Página {page} de {totalPages}</span>
+        <span>
+          Página {page} de {totalPages}
+        </span>
         <div className="flex gap-2">
           {hasPrev ? (
             <Link
