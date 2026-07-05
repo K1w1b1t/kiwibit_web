@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
@@ -15,7 +16,17 @@ import bcrypt from 'bcryptjs';
  * Optional env: ADMIN_EMAIL (default admin@kiwibit.dev), ADMIN_NAME (default "Admin")
  */
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const connectionString = process.env.DATABASE_URL;
+
+// Supabase's pooler presents a self-signed certificate. Recent `pg` versions
+// treat `sslmode=require` as `verify-full`, which rejects it. When the URL asks
+// for SSL, keep the connection encrypted but skip CA verification.
+const useSsl = /sslmode=(require|verify-ca|verify-full|prefer)/.test(connectionString ?? '');
+
+const pool = new Pool({
+  connectionString,
+  ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
