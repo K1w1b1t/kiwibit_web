@@ -94,10 +94,14 @@ export function AdminMemberForm() {
             className="space-y-4"
           >
             <div className="animate-fade-up delay-200">
-              <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
+              <label
+                htmlFor="new-member-name"
+                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
+              >
                 Nome <span aria-hidden="true">*</span>
               </label>
               <input
+                id="new-member-name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 disabled={isLoading}
@@ -107,10 +111,14 @@ export function AdminMemberForm() {
             </div>
 
             <div className="animate-fade-up delay-300">
-              <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
+              <label
+                htmlFor="new-member-bio"
+                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
+              >
                 Bio
               </label>
               <textarea
+                id="new-member-bio"
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
                 disabled={isLoading}
@@ -121,11 +129,15 @@ export function AdminMemberForm() {
             </div>
 
             <div className="animate-fade-up delay-400">
-              <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
+              <label
+                htmlFor="new-member-avatar"
+                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
+              >
                 Avatar URL
               </label>
               <AvatarPreview url={form.avatarUrl} />
               <input
+                id="new-member-avatar"
                 value={form.avatarUrl}
                 onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
                 disabled={isLoading}

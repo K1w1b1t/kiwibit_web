@@ -112,7 +112,10 @@ export function AdminMemberEditForm({ initial }: { initial: MemberInitial }) {
 
         <div className="card-glow animate-fade-up delay-100 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm">
           {status === 'success' && (
-            <div className="boot-line mb-5 flex items-center gap-2 rounded-xl border border-green-400/30 bg-green-500/10 p-3 text-sm text-green-100">
+            <div
+              aria-live="polite"
+              className="boot-line mb-5 flex items-center gap-2 rounded-xl border border-green-400/30 bg-green-500/10 p-3 text-sm text-green-100"
+            >
               <svg
                 className="check-mark h-4 w-4 flex-none"
                 viewBox="0 0 24 24"
@@ -125,7 +128,10 @@ export function AdminMemberEditForm({ initial }: { initial: MemberInitial }) {
           )}
 
           {status === 'error' && (
-            <div className="animate-error-shake mb-5 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">
+            <div
+              role="alert"
+              className="animate-error-shake mb-5 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100"
+            >
               {message}
             </div>
           )}
@@ -137,10 +143,14 @@ export function AdminMemberEditForm({ initial }: { initial: MemberInitial }) {
             className="space-y-4"
           >
             <div className="animate-fade-up delay-200">
-              <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
+              <label
+                htmlFor="edit-member-name"
+                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
+              >
                 Nome <span aria-hidden="true">*</span>
               </label>
               <input
+                id="edit-member-name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 disabled={isLoading}
@@ -150,10 +160,14 @@ export function AdminMemberEditForm({ initial }: { initial: MemberInitial }) {
             </div>
 
             <div className="animate-fade-up delay-300">
-              <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
+              <label
+                htmlFor="edit-member-bio"
+                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
+              >
                 Bio
               </label>
               <textarea
+                id="edit-member-bio"
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
                 disabled={isLoading}
@@ -164,11 +178,15 @@ export function AdminMemberEditForm({ initial }: { initial: MemberInitial }) {
             </div>
 
             <div className="animate-fade-up delay-400">
-              <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
+              <label
+                htmlFor="edit-member-avatar"
+                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
+              >
                 Avatar URL
               </label>
               <AvatarPreview url={form.avatarUrl} />
               <input
+                id="edit-member-avatar"
                 value={form.avatarUrl}
                 onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
                 disabled={isLoading}
