@@ -1,10 +1,8 @@
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
-import type { UserRole } from '@prisma/client';
 import { LOCALE_COOKIE, defaultLocale, isLocale } from '@/shared/i18n/config';
 import { matchLocale } from '@/shared/i18n/match-locale';
-
-const ADMIN_ROLES = new Set<UserRole>(['admin', 'editor', 'member_manager']);
+import { ADMIN_ROLES } from '@/shared/lib/roles';
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
