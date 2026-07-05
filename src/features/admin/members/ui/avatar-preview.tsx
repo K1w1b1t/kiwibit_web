@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { isValidAvatarUrl } from '@/features/admin/members/model/is-valid-avatar-url';
 
 /** Preview circular ao vivo do avatar. Usado pelos forms de criar e editar. */
 export function AvatarPreview({ url }: { url: string }) {
   const [errored, setErrored] = useState(false);
+  const [prevUrl, setPrevUrl] = useState(url);
 
-  // reseta o estado de erro quando a URL muda
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  // reseta o estado de erro quando a URL muda (durante o render, sem effect)
+  if (url !== prevUrl) {
+    setPrevUrl(url);
     setErrored(false);
-  }, [url]);
+  }
 
   const valid = isValidAvatarUrl(url);
 
@@ -31,7 +32,9 @@ export function AvatarPreview({ url }: { url: string }) {
         </span>
       )}
       {valid && errored && (
-        <span className="text-xs text-red-300/80">Não foi possível carregar a imagem.</span>
+        <span role="status" className="text-xs text-red-300/80">
+          Não foi possível carregar a imagem.
+        </span>
       )}
     </div>
   );
