@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { authErrorMessage } from '@/features/auth/model/auth-error-message';
+import { validateLogin } from '@/features/auth/model/validate-login';
 
 type Status = 'idle' | 'loading' | 'error';
 
@@ -17,6 +18,13 @@ export function LoginForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isLoading) return;
+
+    const validationError = validateLogin(email, password);
+    if (validationError) {
+      setStatus('error');
+      setMessage(validationError);
+      return;
+    }
 
     setStatus('loading');
     setMessage('');
@@ -48,6 +56,7 @@ export function LoginForm() {
 
       {status === 'error' && (
         <div
+          key={message}
           role="alert"
           className="animate-error-shake mt-5 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100"
         >
@@ -56,6 +65,7 @@ export function LoginForm() {
       )}
 
       <form
+        noValidate
         onSubmit={(e) => {
           void handleSubmit(e);
         }}
