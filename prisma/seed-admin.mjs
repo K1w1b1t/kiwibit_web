@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
 /**
@@ -9,11 +11,13 @@ import bcrypt from 'bcryptjs';
  * - Always resets the admin password to ADMIN_PASSWORD (from a secret).
  * - Does NOT insert demo content (projects/posts).
  *
- * Required env: ADMIN_PASSWORD
+ * Required env: ADMIN_PASSWORD, DATABASE_URL
  * Optional env: ADMIN_EMAIL (default admin@kiwibit.dev), ADMIN_NAME (default "Admin")
  */
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@kiwibit.dev';
 const adminName = process.env.ADMIN_NAME ?? 'Admin';
@@ -49,4 +53,5 @@ try {
   process.exitCode = 1;
 } finally {
   await prisma.$disconnect();
+  await pool.end();
 }
