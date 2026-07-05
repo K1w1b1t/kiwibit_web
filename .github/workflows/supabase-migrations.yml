@@ -1,97 +1,104 @@
 name: Supabase Migrations Deploy
 
+# Applies Prisma migrations and ensures the admin user on every push to
+# `release` (staging DB) and `main` (production DB).
+#
+# Secrets are read from GitHub Environments:
+#   Environment "Preview"    (branch release / staging)
+#   Environment "Production" (branch main / production)
+#
+# Per-environment secrets (same names in both environments):
+#   SUPABASE_DB_URL  - DB connection string (Session pooler, port 5432, ?sslmode=require)
+#   ADMIN_PASSWORD   - admin password
+# Optional per-environment secret:
+#   ADMIN_EMAIL      - admin email (defaults to admin@kiwibit.dev)
+
 on:
   push:
     branches:
       - release
       - main
     paths:
-      - 'supabase/migrations/**'
+      - 'prisma/migrations/**'
+      - 'prisma/schema.prisma'
+      - 'prisma/seed-admin.mjs'
+      - '.github/workflows/supabase-migrations.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   migrate-release:
-    name: Apply migrations to release
+    name: Migrate + ensure admin (staging)
     if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    environment: Preview
     env:
-      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL_RELEASE }}
+      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Apply SQL migrations (idempotent)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check required secrets
         run: |
-          set -euo pipefail
+          test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Preview env)"; exit 1; }
+          test -n "$ADMIN_PASSWORD" || { echo "Missing ADMIN_PASSWORD (Preview env)"; exit 1; }
 
-          if [ -z "${DATABASE_URL:-}" ]; then
-            echo "Missing SUPABASE_DB_URL_RELEASE secret"
-            exit 1
-          fi
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "
-            CREATE TABLE IF NOT EXISTS public.schema_migrations (
-              filename text PRIMARY KEY,
-              applied_at timestamptz NOT NULL DEFAULT now()
-            );
-          "
+      - name: Apply migrations
+        run: npx prisma migrate deploy
 
-          for file in $(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | sort); do
-            filename=$(basename "$file")
-            applied=$(psql "$DATABASE_URL" -tAc "SELECT 1 FROM public.schema_migrations WHERE filename = '$filename' LIMIT 1")
-
-            if [ "$applied" = "1" ]; then
-              echo "Skipping already applied migration: $filename"
-              continue
-            fi
-
-            echo "Applying migration: $filename"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$file"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.schema_migrations (filename) VALUES ('$filename');"
-          done
+      - name: Ensure admin user
+        run: npm run prisma:seed:admin
 
   migrate-prod:
-    name: Apply migrations to production
+    name: Migrate + ensure admin (production)
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    environment: Production
     env:
-      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL_PROD }}
+      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Apply SQL migrations (idempotent)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check required secrets
         run: |
-          set -euo pipefail
+          test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Production env)"; exit 1; }
+          test -n "$ADMIN_PASSWORD" || { echo "Missing ADMIN_PASSWORD (Production env)"; exit 1; }
 
-          if [ -z "${DATABASE_URL:-}" ]; then
-            echo "Missing SUPABASE_DB_URL_PROD secret"
-            exit 1
-          fi
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "
-            CREATE TABLE IF NOT EXISTS public.schema_migrations (
-              filename text PRIMARY KEY,
-              applied_at timestamptz NOT NULL DEFAULT now()
-            );
-          "
+      - name: Apply migrations
+        run: npx prisma migrate deploy
 
-          for file in $(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | sort); do
-            filename=$(basename "$file")
-            applied=$(psql "$DATABASE_URL" -tAc "SELECT 1 FROM public.schema_migrations WHERE filename = '$filename' LIMIT 1")
-
-            if [ "$applied" = "1" ]; then
-              echo "Skipping already applied migration: $filename"
-              continue
-            fi
-
-            echo "Applying migration: $filename"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$file"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.schema_migrations (filename) VALUES ('$filename');"
-          done
+      - name: Ensure admin user
+        run: npm run prisma:seed:admin
