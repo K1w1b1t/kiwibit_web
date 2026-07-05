@@ -3,7 +3,11 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
-  testMatch: ['**/*.spec.ts'],
+  testMatch: ['**/*.spec.ts', '**/*.spec.tsx'],
+  transform: {
+    // Sobrepõe o transform do preset: o tsconfig do Next usa jsx "preserve", que não roda em node
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
+  },
   moduleNameMapper: {
     // Specific aliases first — more-specific patterns must precede the generic @/* catch-all
     '^next/server$': '<rootDir>/src/shared/test-utils/next-server.mock.ts',
