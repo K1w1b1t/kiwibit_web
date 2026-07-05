@@ -16,17 +16,41 @@ import bcrypt from 'bcryptjs';
  * Optional env: ADMIN_EMAIL (default admin@kiwibit.dev), ADMIN_NAME (default "Admin")
  */
 
-const connectionString = process.env.DATABASE_URL;
+/**
+ * Builds a pg Pool that works against Supabase.
+ *
+ * Supabase's pooler serves a self-signed certificate. Recent `pg` versions treat
+ * `sslmode=require` (in the connection string) as `verify-full`, which rejects it.
+ * We strip `sslmode` from the URL and configure SSL explicitly instead:
+ * - If DATABASE_SSL_CA is set, verify the chain against that CA (secure).
+ * - Otherwise keep the connection encrypted but skip CA verification.
+ */
+function createPool() {
+  const rawUrl = process.env.DATABASE_URL;
+  if (!rawUrl) {
+    return new Pool();
+  }
 
-// Supabase's pooler presents a self-signed certificate. Recent `pg` versions
-// treat `sslmode=require` as `verify-full`, which rejects it. When the URL asks
-// for SSL, keep the connection encrypted but skip CA verification.
-const useSsl = /sslmode=(require|verify-ca|verify-full|prefer)/.test(connectionString ?? '');
+  const url = new URL(rawUrl);
+  const sslmode = url.searchParams.get('sslmode');
+  const requiresSsl = sslmode !== null && sslmode !== 'disable';
+  if (requiresSsl) {
+    url.searchParams.delete('sslmode');
+  }
 
-const pool = new Pool({
-  connectionString,
-  ssl: useSsl ? { rejectUnauthorized: false } : undefined,
-});
+  const ca = process.env.DATABASE_SSL_CA;
+
+  return new Pool({
+    connectionString: url.toString(),
+    ssl: requiresSsl
+      ? ca
+        ? { ca, rejectUnauthorized: true }
+        : { rejectUnauthorized: false }
+      : undefined,
+  });
+}
+
+const pool = createPool();
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
