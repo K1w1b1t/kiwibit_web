@@ -1,43 +1,27 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  validateMember,
+  type MemberFormValues,
+} from '@/features/admin/members/model/validate-member';
+import { AvatarPreview } from '@/features/admin/members/ui/avatar-preview';
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
-type FormState = {
-  name: string;
-  bio: string;
-  avatarUrl: string;
-};
-
-function emptyForm(): FormState {
+function emptyForm(): MemberFormValues {
   return { name: '', bio: '', avatarUrl: '' };
 }
 
-function validateForm(form: FormState): string | null {
-  if (form.name.trim().length < 2) return 'Nome precisa ter pelo menos 2 caracteres.';
-  if (form.avatarUrl.trim()) {
-    try {
-      const url = new URL(form.avatarUrl.trim());
-      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-        return 'Avatar URL deve ser uma URL http/https válida.';
-      }
-    } catch {
-      return 'Avatar URL inválida.';
-    }
-  }
-  return null;
-}
-
 export function AdminMemberForm() {
-  const [form, setForm] = useState<FormState>(emptyForm());
+  const [form, setForm] = useState<MemberFormValues>(emptyForm());
   const [status, setStatus] = useState<FormStatus>('idle');
   const [message, setMessage] = useState('');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const validationError = validateForm(form);
+    const validationError = validateMember(form);
     if (validationError) {
       setStatus('error');
       setMessage(validationError);
@@ -140,6 +124,7 @@ export function AdminMemberForm() {
               <label className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50">
                 Avatar URL
               </label>
+              <AvatarPreview url={form.avatarUrl} />
               <input
                 value={form.avatarUrl}
                 onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
