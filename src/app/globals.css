@@ -1,8 +1,14 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #020202;
+  --foreground: #f5f5f5;
+  --surface-bg: #020202;
+  --surface-card: rgba(255, 255, 255, 0.05);
+  --surface-border: rgba(255, 255, 255, 0.12);
+  --text-main: #ffffff;
+  --text-soft: rgba(255, 255, 255, 0.82);
+  --text-muted: rgba(255, 255, 255, 0.62);
 }
 
 @theme inline {
@@ -12,15 +18,103 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.07), transparent 30%),
+    radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.04), transparent 22%), var(--surface-bg);
+  color: var(--text-main);
+  font-family: var(--font-geist-sans), Helvetica, sans-serif;
+}
+
+.architectural-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.matrix-grid-texture {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+/* ── form animations ───────────────────────────────────────────────────────── */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+}
+.delay-300 {
+  animation-delay: 0.3s;
+}
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+@keyframes card-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 transparent,
+      0 0 40px 0 rgba(255, 255, 255, 0.03);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 0 60px 4px rgba(255, 255, 255, 0.06);
+  }
+}
+
+.card-glow {
+  animation: card-breathe 5s ease-in-out infinite;
+}
+
+@keyframes input-focus-in {
+  from {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+  to {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.06),
+      0 0 16px 0 rgba(255, 255, 255, 0.04);
+  }
+}
+
+.input-glow:focus {
+  animation: input-focus-in 0.25s ease forwards;
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.45);
 }
