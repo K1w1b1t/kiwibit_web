@@ -3,13 +3,11 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
-
-if (!process.env.SEED_USER_PASSWORD && isProduction) {
+if (!process.env.SEED_USER_PASSWORD) {
   throw new Error('SEED_USER_PASSWORD must be set when seeding a production environment.');
 }
 
-const seedPlainPassword = process.env.SEED_USER_PASSWORD ?? 'DevPass123!';
+const seedPlainPassword = process.env.SEED_USER_PASSWORD;
 
 const usersSeed = [
   {
@@ -212,7 +210,9 @@ async function main() {
   console.log(`Seeded projects: ${projectsSeed.length}`);
   console.log(`Seeded posts: ${postsSeed.length}`);
   if (!process.env.SEED_USER_PASSWORD) {
-    console.log('Seed login password: using default dev password (set SEED_USER_PASSWORD to override).');
+    console.log(
+      'Seed login password: using default dev password (set SEED_USER_PASSWORD to override).',
+    );
   }
 }
 
