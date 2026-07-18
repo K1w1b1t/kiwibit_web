@@ -2,6 +2,13 @@
 
 import Link from 'next/link';
 import { useHighlightedMembers } from '@/features/home/model/use-public-highlights';
+import type { Locale } from '@/shared/i18n/config';
+import type { Dictionary } from '@/shared/i18n/get-dictionary';
+
+interface HomeTeamProps {
+  locale: Locale;
+  dict: Dictionary['team'];
+}
 
 function TeamLoadingState() {
   return (
@@ -30,27 +37,29 @@ function getInitials(name: string): string {
     .join('');
 }
 
-export function HomeTeam() {
+export function HomeTeam({ locale, dict }: HomeTeamProps) {
   const { items, isLoading, error } = useHighlightedMembers(6);
 
   return (
     <section
       id="team"
-      className="scroll-mt-20 bg-[#050505] px-6 py-16 text-white sm:px-10 lg:px-16"
+      className="scroll-mt-20 bg-[#050505] px-6 py-20 text-white sm:px-10 lg:px-16"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60">
-              Members
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+              {dict.eyebrow}
             </p>
-            <h2 className="mt-2 text-4xl font-black uppercase tracking-[-0.03em]">Core Team</h2>
+            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
+              {dict.title}
+            </h2>
           </div>
           <Link
-            href="/team"
+            href={`/${locale}/team`}
             className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
           >
-            View all members
+            {dict.viewAll}
           </Link>
         </div>
 
@@ -58,13 +67,13 @@ export function HomeTeam() {
 
         {!isLoading && error && (
           <div className="rounded-2xl border border-amber-300/40 bg-amber-500/10 p-5 text-sm text-amber-100">
-            Could not load members right now.
+            {dict.error}
           </div>
         )}
 
         {!isLoading && !error && items.length === 0 && (
           <div className="rounded-2xl border border-white/15 bg-white/5 p-8 text-center text-white/75">
-            Team data is not available yet.
+            {dict.empty}
           </div>
         )}
 
@@ -81,18 +90,31 @@ export function HomeTeam() {
                 </div>
                 <h3 className="mt-4 text-xl font-semibold text-white">{member.name}</h3>
                 <p className="mt-2 flex-1 text-sm text-white/70">
-                  {member.bio || 'Profile details will be published soon.'}
+                  {member.bio || dict.labels.noBio}
                 </p>
                 <Link
-                  href={`/team#member-${member.id}`}
+                  href={`/${locale}/team#member-${member.id}`}
                   className="mt-5 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:border-white/80 hover:text-white"
                 >
-                  Open profile
+                  {dict.labels.openProfile}
                 </Link>
               </article>
             ))}
           </div>
         )}
+
+        <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-accent/30 bg-accent-soft p-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-white">{dict.join.title}</h3>
+            <p className="mt-2 max-w-xl text-sm text-white/70">{dict.join.description}</p>
+          </div>
+          <Link
+            href={`/${locale}#contact`}
+            className="inline-flex shrink-0 items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-black transition hover:bg-accent/85"
+          >
+            {dict.join.cta}
+          </Link>
+        </div>
       </div>
     </section>
   );
