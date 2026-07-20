@@ -24,8 +24,7 @@ const pt: Dictionary = {
     },
     projects: {
       title: 'Produtos',
-      description:
-        'Produtos e ferramentas de segurança construídos e mantidos pelo time Kiwibit.',
+      description: 'Produtos e ferramentas de segurança construídos e mantidos pelo time Kiwibit.',
     },
     blog: {
       title: 'Blog',
