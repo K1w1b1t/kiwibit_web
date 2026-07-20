@@ -63,7 +63,7 @@ const pt: Dictionary = {
     titleLead: 'Construímos produtos digitais e',
     titleAccent: 'a segurança por trás deles.',
     description:
-      'Um time que constrói produtos digitais e também protege os seus — consultoria de segurança, pentest e AppSec de quem escreve código todos os dias.',
+      'Um time que constrói produtos digitais e também protege os seus, com consultoria de segurança, pentest e AppSec de quem escreve código todos os dias.',
     primaryCta: 'Conheça os produtos',
     secondaryCta: 'Nossos serviços',
   },
@@ -96,7 +96,7 @@ const pt: Dictionary = {
       {
         title: 'AppSec e Refatoração de Código IA',
         description:
-          'SDLC seguro mais revisão e refatoração de código gerado por IA — deixando o que a IA escreve seguro, legível e pronto para produção, integrado aos pipelines que seu time já usa.',
+          'SDLC seguro, revisão e refatoração de código gerado por IA. Deixamos o que a IA escreve seguro, legível e pronto para produção, integrado aos pipelines que seu time já usa.',
         bullets: ['SDLC seguro', 'Código gerado por IA', 'Automação em CI/CD'],
       },
     ],
@@ -115,7 +115,7 @@ const pt: Dictionary = {
       },
       {
         title: 'Teste',
-        description: 'Testamos a fundo — manualmente e com ferramentas — documentando cada passo.',
+        description: 'Testamos a fundo, manualmente e com ferramentas, documentando cada passo.',
       },
       {
         title: 'Relatório',
@@ -140,7 +140,7 @@ const pt: Dictionary = {
     eyebrow: 'Produtos',
     title: 'Produtos e ferramentas que construímos e mantemos.',
     description:
-      'A gente não só protege software — também constrói. Conheça os produtos e as ferramentas de segurança que desenvolvemos e usamos no dia a dia.',
+      'A gente não só protege software, também constrói. Conheça os produtos e as ferramentas de segurança que desenvolvemos e usamos no dia a dia.',
     cta: 'Conheça os produtos',
   },
 
@@ -157,7 +157,7 @@ const pt: Dictionary = {
     },
     error: 'Não foi possível carregar os projetos agora. Tente novamente em instantes.',
     empty:
-      'Nossos projetos estão sendo publicados — fale com a gente para saber o que estamos construindo.',
+      'Nossos projetos estão sendo publicados. Fale com a gente para saber o que estamos construindo.',
   },
 
   blog: {
@@ -172,7 +172,7 @@ const pt: Dictionary = {
       readSummary: 'Ler resumo',
     },
     error: 'Não foi possível carregar os destaques do blog agora.',
-    empty: 'Primeiros artigos em produção — publicamos o que aprendemos.',
+    empty: 'Primeiros artigos em produção. Publicamos o que aprendemos.',
   },
 
   team: {
@@ -224,13 +224,9 @@ const pt: Dictionary = {
     blurb:
       'Um time que constrói produtos digitais, faz bug bounty e avança práticas de segurança e AppSec.',
     navTitle: 'Navegar',
-    comingSoonTitle: 'Em breve',
-    comingSoon: ['Ferramentas', 'Pesquisa e writeups'],
-    comingSoonBadge: 'em breve',
     legalTitle: 'Legal',
     privacy: 'Política de Privacidade',
     terms: 'Termos de Uso',
-    security: 'security.txt',
     rights: 'Todos os direitos reservados.',
     contactTitle: 'Contato',
   },

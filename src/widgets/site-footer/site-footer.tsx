@@ -25,7 +25,7 @@ export function SiteFooter({ locale, dict, headerDict, year }: SiteFooterProps) 
 
   return (
     <footer className="border-t border-white/10 bg-black px-6 py-14 text-white sm:px-10 lg:px-16">
-      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.6fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3">
             <Image src="/kiwi.png" alt="" width={32} height={32} className="rounded" />
@@ -53,22 +53,6 @@ export function SiteFooter({ locale, dict, headerDict, year }: SiteFooterProps) 
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-            {dict.comingSoonTitle}
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-white/50">
-            {dict.comingSoon.map((item) => (
-              <li key={item} className="flex items-center gap-2">
-                <span>{item}</span>
-                <span className="rounded-full border border-accent/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-accent">
-                  {dict.comingSoonBadge}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
             {dict.legalTitle}
           </p>
           <ul className="mt-4 space-y-2 text-sm text-white/70">
@@ -81,11 +65,6 @@ export function SiteFooter({ locale, dict, headerDict, year }: SiteFooterProps) 
               <Link href={`${base}/terms-of-use`} className="transition hover:text-accent">
                 {dict.terms}
               </Link>
-            </li>
-            <li>
-              <a href="/.well-known/security.txt" className="transition hover:text-accent">
-                {dict.security}
-              </a>
             </li>
           </ul>
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-white/50">

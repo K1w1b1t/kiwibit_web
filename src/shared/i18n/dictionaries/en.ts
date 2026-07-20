@@ -61,7 +61,7 @@ const en = {
     titleLead: 'We build digital products and',
     titleAccent: 'the security behind them.',
     description:
-      'A team that ships digital products and secures yours too — security consulting, pentest and AppSec from people who write code every day.',
+      'A team that ships digital products and secures yours too, with security consulting, pentest and AppSec from people who write code every day.',
     primaryCta: 'Explore our products',
     secondaryCta: 'Our services',
   },
@@ -94,7 +94,7 @@ const en = {
       {
         title: 'AppSec & AI Code Refactoring',
         description:
-          'Secure SDLC plus review and refactoring of AI-generated code — making what AI ships secure, readable and production-ready, embedded into the pipelines your team already uses.',
+          'Secure SDLC, review and refactoring of AI-generated code. We make what AI ships secure, readable and production-ready, embedded into the pipelines your team already uses.',
         bullets: ['Secure SDLC', 'AI-generated code', 'CI/CD automation'],
       },
     ],
@@ -112,7 +112,7 @@ const en = {
       },
       {
         title: 'Test',
-        description: 'We test in depth — manually and with tooling — and document every step.',
+        description: 'We test in depth, manually and with tooling, documenting every step.',
       },
       {
         title: 'Report',
@@ -137,7 +137,7 @@ const en = {
     eyebrow: 'Products',
     title: 'Products and tools we build and maintain.',
     description:
-      'We don’t just secure software — we build it too. Explore the products and security tools we develop and use every day.',
+      'We don’t just secure software, we build it too. Explore the products and security tools we develop and use every day.',
     cta: 'Explore our products',
   },
 
@@ -154,7 +154,7 @@ const en = {
     },
     error: 'Could not load projects right now. Please try again in a few moments.',
     empty:
-      'Our projects are being published — get in touch to hear what we are currently building.',
+      'Our projects are being published. Get in touch to hear what we are currently building.',
   },
 
   blog: {
@@ -169,7 +169,7 @@ const en = {
       readSummary: 'Read summary',
     },
     error: 'Could not load blog highlights right now.',
-    empty: 'First articles in production — we publish what we learn.',
+    empty: 'First articles in production. We publish what we learn.',
   },
 
   team: {
@@ -221,13 +221,9 @@ const en = {
     blurb:
       'A team that builds digital products, does bug bounty and advances security and AppSec practices.',
     navTitle: 'Navigate',
-    comingSoonTitle: 'Coming soon',
-    comingSoon: ['Tools', 'Research & writeups'],
-    comingSoonBadge: 'soon',
     legalTitle: 'Legal',
     privacy: 'Privacy Policy',
     terms: 'Terms of Use',
-    security: 'security.txt',
     rights: 'All rights reserved.',
     contactTitle: 'Contact',
   },
