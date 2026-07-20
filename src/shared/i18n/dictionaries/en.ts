@@ -153,8 +153,7 @@ const en = {
       noDescription: 'Description coming soon.',
     },
     error: 'Could not load projects right now. Please try again in a few moments.',
-    empty:
-      'Our projects are being published. Get in touch to hear what we are currently building.',
+    empty: 'Our projects are being published. Get in touch to hear what we are currently building.',
   },
 
   blog: {
