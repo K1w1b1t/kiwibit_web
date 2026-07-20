@@ -1,6 +1,6 @@
 const en = {
   meta: {
-    defaultTitle: 'Kiwibit — Security Consulting, Pentest & AppSec',
+    defaultTitle: 'Kiwibit | Digital products, security & AppSec',
     defaultDescription:
       'Kiwibit is a cybersecurity team offering information security consulting, penetration testing and AppSec for products that cannot fail.',
     keywords: [

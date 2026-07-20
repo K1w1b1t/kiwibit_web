@@ -2,7 +2,7 @@ import type { Dictionary } from './en';
 
 const pt: Dictionary = {
   meta: {
-    defaultTitle: 'Kiwibit — Consultoria de Segurança, Pentest e AppSec',
+    defaultTitle: 'Kiwibit | Produtos digitais, segurança e AppSec',
     defaultDescription:
       'A Kiwibit é um time de cibersegurança que oferece consultoria de segurança da informação, pentest e AppSec para produtos que não podem falhar.',
     keywords: [
