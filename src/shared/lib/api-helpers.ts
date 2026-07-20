@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/shared/lib/auth';
+import { reportServerError } from '@/shared/lib/discord';
 import type { UserRole } from '@prisma/client';
 
 const ADMIN_ROLES = new Set<UserRole>(['admin', 'editor', 'member_manager']);
@@ -29,6 +30,10 @@ export async function requireAdminSession() {
 }
 
 export function apiError(code: string, message: string, status: number) {
+  if (status >= 500) {
+    // Fire-and-forget: never block the response on error reporting.
+    void reportServerError({ source: 'apiError', code, message, status }).catch(() => {});
+  }
   return NextResponse.json({ error: { code, message } }, { status });
 }
 

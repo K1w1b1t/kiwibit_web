@@ -2,6 +2,14 @@
 
 import Link from 'next/link';
 import { useHighlightedPosts } from '@/features/home/model/use-public-highlights';
+import type { Locale } from '@/shared/i18n/config';
+import { htmlLang } from '@/shared/i18n/config';
+import type { Dictionary } from '@/shared/i18n/get-dictionary';
+
+interface HomeBlogProps {
+  locale: Locale;
+  dict: Dictionary['blog'];
+}
 
 function BlogLoadingState() {
   return (
@@ -22,29 +30,29 @@ function BlogLoadingState() {
   );
 }
 
-export function HomeBlog() {
+export function HomeBlog({ locale, dict }: HomeBlogProps) {
   const { items, isLoading, error } = useHighlightedPosts(4);
 
   return (
     <section
       id="blog"
-      className="scroll-mt-20 bg-[#030303] px-6 py-16 text-slate-100 sm:px-10 lg:px-16"
+      className="scroll-mt-20 bg-[#030303] px-6 py-20 text-slate-100 sm:px-10 lg:px-16"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60">
-              Content
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+              {dict.eyebrow}
             </p>
-            <h2 className="mt-2 text-4xl font-black uppercase tracking-[-0.03em]">
-              Blog Highlights
+            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
+              {dict.title}
             </h2>
           </div>
           <Link
-            href="/blog"
+            href={`/${locale}/blog`}
             className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
           >
-            View all posts
+            {dict.viewAll}
           </Link>
         </div>
 
@@ -52,13 +60,14 @@ export function HomeBlog() {
 
         {!isLoading && error && (
           <div className="rounded-2xl border border-amber-300/40 bg-amber-500/10 p-5 text-sm text-amber-100">
-            Could not load blog highlights right now.
+            {dict.error}
           </div>
         )}
 
         {!isLoading && !error && items.length === 0 && (
-          <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-8 text-center text-slate-300">
-            No blog highlights published yet.
+          <div className="rounded-2xl border border-white/12 bg-white/[0.03] p-10 text-center">
+            <p className="font-mono text-sm text-accent">[ soon ]</p>
+            <p className="mt-3 text-lg text-white/80">{dict.empty}</p>
           </div>
         )}
 
@@ -70,17 +79,22 @@ export function HomeBlog() {
                 id={`post-${post.id}`}
                 className="flex h-full flex-col rounded-2xl border border-slate-700/70 bg-slate-900/70 p-5"
               >
-                <p className="text-xs uppercase tracking-[0.16em] text-white/60">Article</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-accent">
+                  {dict.labels.article}
+                </p>
                 <h3 className="mt-3 text-lg font-semibold">{post.title}</h3>
-                <p className="mt-3 text-sm text-slate-300">Author ID: {post.authorId}</p>
+                <p className="mt-3 text-sm text-slate-300">
+                  {dict.labels.author}: {post.authorId}
+                </p>
                 <p className="mt-1 text-xs text-slate-400">
-                  Updated {new Date(post.updatedAt).toLocaleDateString('en-US')}
+                  {dict.labels.updated}{' '}
+                  {new Date(post.updatedAt).toLocaleDateString(htmlLang[locale])}
                 </p>
                 <Link
-                  href={`/blog#post-${post.id}`}
+                  href={`/${locale}/blog#post-${post.id}`}
                   className="mt-6 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:border-white/80"
                 >
-                  Read summary
+                  {dict.labels.readSummary}
                 </Link>
               </article>
             ))}

@@ -32,25 +32,52 @@ Lower layers MUST NOT import from upper layers. `shared` MUST NOT import from an
 
 ```
 src/
+  proxy.ts                    # Next 16 middleware (file named proxy.ts):
+                              #   locale negotiation (/ → /pt|/en) + admin gating
+  instrumentation.ts          # onRequestError → Discord 5xx reporting
   app/
+    [locale]/                 # Public site (SSG, pt + en) — root layout owns <html>
+      layout.tsx              #   header/footer, metadata, JSON-LD, generateStaticParams
+      page.tsx                #   home: Hero → ProjectsTeaser → Services → Method
+                              #        → Blog → Team → Contact
+      {projects,blog,team}/   #   public list pages
+      {privacy-policy,terms-of-use}/  # LGPD legal pages
+      opengraph-image.tsx     #   next/og OG image (per locale)
+    (internal)/               # Admin route group — own <html> + AuthProvider
+      admin/members/          #   protected CRUD screens
     api/
       auth/[...nextauth]/     # NextAuth handler
       admin/{users,members,projects,posts}/  # Protected CRUD
       {members,posts,projects}/             # Public read-only
-  middleware.ts               # Protects /admin/* and /api/admin/*
-  shared/lib/
-    prisma.ts                 # Prisma Client singleton
-    auth.ts                   # NextAuth authOptions
-    api-helpers.ts            # requireAdminSession(), apiError()
-  shared/types/next-auth.d.ts # Session/JWT type augmentation
-  features/auth/
-    auth-provider.tsx         # <AuthProvider> wrapping SessionProvider
-    use-auth.ts               # useAuth() hook
+      contact/                # Public POST → Discord webhook (no DB)
+    robots.ts · sitemap.ts    # SEO
+  shared/
+    i18n/                     # config, match-locale, get-dictionary, dictionaries/{en,pt}
+    config/company.ts         # public company identity (name, CNPJ, city)
+    ui/{section-heading,pill-link}.tsx
+    lib/
+      prisma.ts               # Prisma Client singleton
+      auth.ts                 # NextAuth authOptions
+      api-helpers.ts          # requireAdminSession(), apiError() (5xx → Discord)
+      discord.ts · rate-limit.ts · seo.ts
+    types/next-auth.d.ts      # Session/JWT type augmentation
+  features/
+    auth/                     # auth-provider.tsx, use-auth.ts
+    contact/                  # validate-contact, use-contact-form, contact-form
+    locale-switch/            # locale-switcher.tsx
 tests/e2e/
   setup/{global-setup,global-teardown}.ts
   helpers/{client,auth,constants}.ts
-  {auth,users,members,projects,posts}.test.ts
+  {auth,users,members,projects,posts,contact,locale-redirect}.test.ts
 ```
+
+**i18n**: hand-rolled (no next-intl). Locale comes only from the `[locale]` URL
+param — never call `cookies()`/`headers()` under `[locale]` (keeps SSG). Strings
+flow via props (dictionary slices), no context. Add a key to `dictionaries/en.ts`
+first (source of `Dictionary` type), then `pt.ts` (compile-time key parity).
+
+**Env**: `NEXT_PUBLIC_SITE_URL`, `DISCORD_CONTACT_WEBHOOK_URL`,
+`DISCORD_ERROR_WEBHOOK_URL` (see `.env.example`).
 
 ---
 
@@ -59,7 +86,7 @@ tests/e2e/
 - JWT stored in httpOnly cookie (`sameSite: lax`, `secure` in production only).
 - `NEXTAUTH_SECRET` and `NEXTAUTH_URL` must be present in env.
 - Roles: `admin` · `editor` · `member_manager` → access admin routes. `member` → no admin access.
-- **Middleware** (`src/middleware.ts`): unauthenticated API → `401 JSON`; wrong role → `403 JSON`; unauthenticated page → redirect `/login`.
+- **Proxy** (`src/proxy.ts`, Next 16's renamed middleware): unauthenticated admin API → `401 JSON`; wrong role → `403 JSON`; unauthenticated admin page → redirect `/` (no `/login` page exists yet). Also handles locale negotiation for public routes.
 - **Server guard**: always call `requireAdminSession()` at the top of every admin route handler.
 - **Client**: use `useAuth()` from `src/features/auth/use-auth.ts`.
 
