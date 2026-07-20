@@ -10,18 +10,19 @@ const en = {
       'application security',
       'appsec',
       'information security consulting',
-      'code review',
+      'ai code refactoring',
+      'digital products',
       'bug bounty',
       'kiwibit',
     ],
     home: {
-      title: 'Security consulting, pentest & AppSec',
+      title: 'Digital products & security consulting',
       description:
-        'Offensive security, penetration testing and application security for teams that ship software they cannot afford to get breached.',
+        'We build digital products and secure yours: security consulting, pentest and AppSec from a team that writes code every day.',
     },
     projects: {
-      title: 'Projects',
-      description: 'Real products and security tooling built and maintained by the Kiwibit team.',
+      title: 'Products',
+      description: 'Products and security tooling built and maintained by the Kiwibit team.',
     },
     blog: {
       title: 'Blog',
@@ -56,12 +57,12 @@ const en = {
   },
 
   hero: {
-    eyebrow: 'Offensive security · AppSec',
-    titleLead: 'Security that thinks like',
-    titleAccent: 'an attacker.',
+    eyebrow: 'Products · Offensive security · AppSec',
+    titleLead: 'We build digital products and',
+    titleAccent: 'the security behind them.',
     description:
-      'Information security consulting, penetration testing and AppSec for products that cannot fail. We build real software too — so we secure it the way engineers actually work.',
-    primaryCta: 'Talk to us',
+      'A team that ships digital products and secures yours too — security consulting, pentest and AppSec from people who write code every day.',
+    primaryCta: 'Explore our products',
     secondaryCta: 'Our services',
   },
 
@@ -91,10 +92,10 @@ const en = {
         bullets: ['Web & API', 'Infrastructure', 'Reproducible reporting'],
       },
       {
-        title: 'AppSec & Code Review',
+        title: 'AppSec & AI Code Refactoring',
         description:
-          'Secure SDLC, manual code review and security automation embedded into the pipelines your team already uses.',
-        bullets: ['Secure SDLC', 'Manual code review', 'CI/CD automation'],
+          'Secure SDLC plus review and refactoring of AI-generated code — making what AI ships secure, readable and production-ready, embedded into the pipelines your team already uses.',
+        bullets: ['Secure SDLC', 'AI-generated code', 'CI/CD automation'],
       },
     ],
   },
@@ -124,7 +125,7 @@ const en = {
     ],
     principlesTitle: 'Principles we work by',
     principles: [
-      'We build real projects',
+      'We build our own products',
       'We publish what we learn',
       'Quality over quantity',
       'We automate whenever possible',
@@ -133,17 +134,17 @@ const en = {
   },
 
   projectsTeaser: {
-    eyebrow: 'Portfolio',
-    title: 'We build and maintain real products.',
+    eyebrow: 'Products',
+    title: 'Products and tools we build and maintain.',
     description:
-      'Security from a team that also writes code every day. Explore the projects we develop and maintain in the open.',
-    cta: 'View projects',
+      'We don’t just secure software — we build it too. Explore the products and security tools we develop and use every day.',
+    cta: 'Explore our products',
   },
 
   projects: {
     eyebrow: 'Highlights',
-    title: 'Projects',
-    subtitle: 'Real products and security tooling, built and maintained in the open.',
+    title: 'Products',
+    subtitle: 'Products and security tooling, built and maintained in the open.',
     viewAll: 'View all projects',
     labels: {
       project: 'Project',
@@ -174,7 +175,7 @@ const en = {
   team: {
     eyebrow: 'The people behind it',
     title: 'Our team',
-    subtitle: 'A cybersecurity team building real products and advancing AppSec practices.',
+    subtitle: 'A team that builds products and advances security and AppSec practices.',
     viewAll: 'View all members',
     labels: {
       openProfile: 'Open profile',
@@ -218,7 +219,7 @@ const en = {
 
   footer: {
     blurb:
-      'A cybersecurity team that builds real products, does bug bounty and advances AppSec practices.',
+      'A team that builds digital products, does bug bounty and advances security and AppSec practices.',
     navTitle: 'Navigate',
     comingSoonTitle: 'Coming soon',
     comingSoon: ['Tools', 'Research & writeups'],

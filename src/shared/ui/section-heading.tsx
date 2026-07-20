@@ -23,7 +23,7 @@ export function SectionHeading({
         isCentered ? 'items-center text-center' : 'sm:flex-row sm:items-end sm:justify-between'
       }`}
     >
-      <div className={isCentered ? 'max-w-2xl' : 'max-w-2xl'}>
+      <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">{eyebrow}</p>
         <h2 className="mt-3 text-3xl font-black uppercase leading-[0.95] tracking-[-0.03em] sm:text-4xl">
           {title}

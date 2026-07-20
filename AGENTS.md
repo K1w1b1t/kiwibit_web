@@ -38,7 +38,7 @@ src/
   app/
     [locale]/                 # Public site (SSG, pt + en) — root layout owns <html>
       layout.tsx              #   header/footer, metadata, JSON-LD, generateStaticParams
-      page.tsx                #   home: Hero → Services → Method → ProjectsTeaser
+      page.tsx                #   home: Hero → ProjectsTeaser → Services → Method
                               #        → Blog → Team → Contact
       {projects,blog,team}/   #   public list pages
       {privacy-policy,terms-of-use}/  # LGPD legal pages

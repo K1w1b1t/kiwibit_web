@@ -27,7 +27,7 @@ export function HomeHero({ locale, dict, radarDict }: HomeHeroProps) {
           </h1>
           <p className="mt-6 max-w-2xl text-base text-white/75 sm:text-lg">{dict.description}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <PillLink href={`${base}#contact`} variant="accent">
+            <PillLink href={`${base}#products`} variant="accent">
               {dict.primaryCta}
             </PillLink>
             <PillLink href={`${base}#services`} variant="outline">

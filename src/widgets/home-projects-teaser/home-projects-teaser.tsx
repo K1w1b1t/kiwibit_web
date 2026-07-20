@@ -9,7 +9,10 @@ interface HomeProjectsTeaserProps {
 
 export function HomeProjectsTeaser({ locale, dict }: HomeProjectsTeaserProps) {
   return (
-    <section className="scroll-mt-20 bg-[#050505] px-6 py-20 text-white sm:px-10 lg:px-16">
+    <section
+      id="products"
+      className="scroll-mt-20 bg-[#050505] px-6 py-20 text-white sm:px-10 lg:px-16"
+    >
       <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/12 bg-gradient-to-br from-white/[0.06] to-transparent p-8 sm:p-12">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
           {dict.eyebrow}

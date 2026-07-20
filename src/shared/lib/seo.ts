@@ -6,8 +6,11 @@ const FALLBACK_SITE_URL = 'https://www.kiwibit.com.br';
 
 /** Absolute site origin, without trailing slash. */
 export function siteUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_SITE_URL;
-  return raw.replace(/\/+$/, '');
+  let raw = process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_SITE_URL;
+  while (raw.endsWith('/')) {
+    raw = raw.slice(0, -1);
+  }
+  return raw;
 }
 
 /** Builds an absolute URL for a given path (path must start with '/'). */

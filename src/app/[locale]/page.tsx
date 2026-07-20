@@ -45,9 +45,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <HomeHero locale={locale} dict={dict.hero} radarDict={dict.radar} />
+      <HomeProjectsTeaser locale={locale} dict={dict.projectsTeaser} />
       <HomeServices dict={dict.services} />
       <HomeMethod dict={dict.method} />
-      <HomeProjectsTeaser locale={locale} dict={dict.projectsTeaser} />
       <HomeBlog locale={locale} dict={dict.blog} />
       <HomeTeam locale={locale} dict={dict.team} />
       <HomeContact dict={dict.contact} />

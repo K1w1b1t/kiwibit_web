@@ -29,8 +29,8 @@ export function PrivacyPolicyEn() {
           <li>The content of the message you send</li>
         </ul>
         <p>
-          We do not use tracking or advertising cookies. We only use one functional cookie (
-          <code>NEXT_LOCALE</code>) to remember your language preference.
+          We do not use tracking or advertising cookies. We only use one functional cookie
+          (<code>NEXT_LOCALE</code>) to remember your language preference.
         </p>
       </section>
 

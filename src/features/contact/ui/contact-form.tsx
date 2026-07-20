@@ -149,7 +149,7 @@ export function ContactForm({ dict }: ContactFormProps) {
           <a href={`mailto:${CONTACT_EMAIL}`} className="text-accent underline">
             {CONTACT_EMAIL}
           </a>
-          .
+          {'.'}
         </p>
       )}
 

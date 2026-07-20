@@ -12,19 +12,20 @@ const pt: Dictionary = {
       'segurança de aplicações',
       'appsec',
       'consultoria de segurança da informação',
-      'code review',
+      'refatoração de código gerado por ia',
+      'produtos digitais',
       'bug bounty',
       'kiwibit',
     ],
     home: {
-      title: 'Consultoria de segurança, pentest e AppSec',
+      title: 'Produtos digitais e consultoria de segurança',
       description:
-        'Segurança ofensiva, teste de intrusão e segurança de aplicações para times que não podem correr o risco de um vazamento.',
+        'Construímos produtos digitais e protegemos os seus: consultoria de segurança, pentest e AppSec de quem escreve código todos os dias.',
     },
     projects: {
-      title: 'Projetos',
+      title: 'Produtos',
       description:
-        'Produtos reais e ferramentas de segurança construídos e mantidos pelo time Kiwibit.',
+        'Produtos e ferramentas de segurança construídos e mantidos pelo time Kiwibit.',
     },
     blog: {
       title: 'Blog',
@@ -59,12 +60,12 @@ const pt: Dictionary = {
   },
 
   hero: {
-    eyebrow: 'Segurança ofensiva · AppSec',
-    titleLead: 'Segurança que pensa como',
-    titleAccent: 'um atacante.',
+    eyebrow: 'Produtos · Segurança ofensiva · AppSec',
+    titleLead: 'Construímos produtos digitais e',
+    titleAccent: 'a segurança por trás deles.',
     description:
-      'Consultoria de segurança da informação, pentest e AppSec para produtos que não podem falhar. Também construímos software de verdade — e protegemos do jeito que engenheiros realmente trabalham.',
-    primaryCta: 'Fale com a gente',
+      'Um time que constrói produtos digitais e também protege os seus — consultoria de segurança, pentest e AppSec de quem escreve código todos os dias.',
+    primaryCta: 'Conheça os produtos',
     secondaryCta: 'Nossos serviços',
   },
 
@@ -94,10 +95,10 @@ const pt: Dictionary = {
         bullets: ['Web e APIs', 'Infraestrutura', 'Relatório reproduzível'],
       },
       {
-        title: 'AppSec e Code Review',
+        title: 'AppSec e Refatoração de Código IA',
         description:
-          'SDLC seguro, revisão manual de código e automação de segurança integradas aos pipelines que seu time já usa.',
-        bullets: ['SDLC seguro', 'Revisão manual de código', 'Automação em CI/CD'],
+          'SDLC seguro mais revisão e refatoração de código gerado por IA — deixando o que a IA escreve seguro, legível e pronto para produção, integrado aos pipelines que seu time já usa.',
+        bullets: ['SDLC seguro', 'Código gerado por IA', 'Automação em CI/CD'],
       },
     ],
   },
@@ -128,7 +129,7 @@ const pt: Dictionary = {
     ],
     principlesTitle: 'Princípios que nos guiam',
     principles: [
-      'Construímos projetos reais',
+      'Construímos nossos próprios produtos',
       'Publicamos o que aprendemos',
       'Qualidade acima de quantidade',
       'Automatizamos sempre que possível',
@@ -137,17 +138,17 @@ const pt: Dictionary = {
   },
 
   projectsTeaser: {
-    eyebrow: 'Portfólio',
-    title: 'Construímos e mantemos produtos reais.',
+    eyebrow: 'Produtos',
+    title: 'Produtos e ferramentas que construímos e mantemos.',
     description:
-      'Segurança de quem também escreve código todos os dias. Conheça os projetos que desenvolvemos e mantemos de forma aberta.',
-    cta: 'Ver projetos',
+      'A gente não só protege software — também constrói. Conheça os produtos e as ferramentas de segurança que desenvolvemos e usamos no dia a dia.',
+    cta: 'Conheça os produtos',
   },
 
   projects: {
     eyebrow: 'Destaques',
-    title: 'Projetos',
-    subtitle: 'Produtos reais e ferramentas de segurança, construídos e mantidos de forma aberta.',
+    title: 'Produtos',
+    subtitle: 'Produtos e ferramentas de segurança, construídos e mantidos de forma aberta.',
     viewAll: 'Ver todos os projetos',
     labels: {
       project: 'Projeto',
@@ -178,7 +179,7 @@ const pt: Dictionary = {
   team: {
     eyebrow: 'Quem está por trás',
     title: 'Nosso time',
-    subtitle: 'Um time de cibersegurança que constrói produtos reais e avança práticas de AppSec.',
+    subtitle: 'Um time que constrói produtos e avança práticas de segurança e AppSec.',
     viewAll: 'Ver todos os membros',
     labels: {
       openProfile: 'Abrir perfil',
@@ -222,7 +223,7 @@ const pt: Dictionary = {
 
   footer: {
     blurb:
-      'Um time de cibersegurança que constrói produtos reais, faz bug bounty e avança práticas de AppSec.',
+      'Um time que constrói produtos digitais, faz bug bounty e avança práticas de segurança e AppSec.',
     navTitle: 'Navegar',
     comingSoonTitle: 'Em breve',
     comingSoon: ['Ferramentas', 'Pesquisa e writeups'],
