@@ -9,11 +9,15 @@
   --text-main: #ffffff;
   --text-soft: rgba(255, 255, 255, 0.82);
   --text-muted: rgba(255, 255, 255, 0.62);
+  --accent: #4ade80;
+  --accent-soft: rgba(74, 222, 128, 0.16);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -117,4 +121,69 @@ body {
 .text-outline {
   color: transparent;
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.45);
+}
+
+/* ── threat radar ────────────────────────────────────────────────────────────── */
+
+@keyframes radar-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep {
+  transform-origin: 50% 50%;
+  animation: radar-sweep 6s linear infinite;
+}
+
+@keyframes radar-ping {
+  0%,
+  92% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+.radar-ping {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: radar-ping 6s linear infinite;
+}
+
+@keyframes accent-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.accent-pulse {
+  animation: accent-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar-sweep,
+  .radar-ping,
+  .accent-pulse,
+  .animate-fade-up,
+  .card-glow {
+    animation: none !important;
+  }
+  .radar-ping {
+    opacity: 0.9;
+  }
 }

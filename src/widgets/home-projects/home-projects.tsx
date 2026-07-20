@@ -2,6 +2,13 @@
 
 import Link from 'next/link';
 import { useFeaturedProjects } from '@/features/home/model/use-public-highlights';
+import type { Locale } from '@/shared/i18n/config';
+import type { Dictionary } from '@/shared/i18n/get-dictionary';
+
+interface HomeProjectsProps {
+  locale: Locale;
+  dict: Dictionary['projects'];
+}
 
 function ProjectsLoadingState() {
   return (
@@ -22,29 +29,29 @@ function ProjectsLoadingState() {
   );
 }
 
-export function HomeProjects() {
+export function HomeProjects({ locale, dict }: HomeProjectsProps) {
   const { items, isLoading, error } = useFeaturedProjects(6);
 
   return (
     <section
       id="projects"
-      className="matrix-grid-texture scroll-mt-20 bg-[#050505] px-6 py-16 text-white sm:px-10 lg:px-16"
+      className="matrix-grid-texture scroll-mt-20 bg-[#050505] px-6 py-20 text-white sm:px-10 lg:px-16"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60">
-              Highlights
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+              {dict.eyebrow}
             </p>
-            <h2 className="mt-2 text-4xl font-black uppercase tracking-[-0.03em]">
-              Featured Projects
+            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
+              {dict.title}
             </h2>
           </div>
           <Link
-            href="/projects"
+            href={`/${locale}/projects`}
             className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
           >
-            View all projects
+            {dict.viewAll}
           </Link>
         </div>
 
@@ -52,13 +59,13 @@ export function HomeProjects() {
 
         {!isLoading && error && (
           <div className="rounded-2xl border border-amber-300/40 bg-amber-500/10 p-5 text-sm text-amber-100">
-            Could not load projects right now. Please try again in a few moments.
+            {dict.error}
           </div>
         )}
 
         {!isLoading && !error && items.length === 0 && (
           <div className="rounded-2xl border border-white/15 bg-white/5 p-8 text-center text-white/75">
-            No featured projects available yet.
+            {dict.empty}
           </div>
         )}
 
@@ -70,10 +77,12 @@ export function HomeProjects() {
                 id={`project-${project.id}`}
                 className="flex h-full flex-col rounded-2xl border border-white/15 bg-white/5 p-5"
               >
-                <p className="text-xs uppercase tracking-[0.16em] text-white/60">Project</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-accent">
+                  {dict.labels.project}
+                </p>
                 <h3 className="mt-3 text-xl font-semibold text-white">{project.title}</h3>
                 <p className="mt-2 flex-1 text-sm text-white/70">
-                  {project.description || 'No description provided.'}
+                  {project.description || dict.labels.noDescription}
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {project.liveUrl && (
@@ -83,7 +92,7 @@ export function HomeProjects() {
                       rel="noreferrer"
                       className="rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-black"
                     >
-                      Live
+                      {dict.labels.live}
                     </a>
                   )}
                   {project.repoUrl && (
@@ -93,7 +102,7 @@ export function HomeProjects() {
                       rel="noreferrer"
                       className="rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/85"
                     >
-                      Repository
+                      {dict.labels.repository}
                     </a>
                   )}
                 </div>
