@@ -21,8 +21,7 @@ async function guardAdmin(req: NextRequest, pathname: string): Promise<NextRespo
         { status: 401 },
       );
     }
-    // No dedicated /login page exists yet — send unauthenticated visitors home.
-    return NextResponse.redirect(new URL('/', req.url));
+    return NextResponse.redirect(new URL('/login', req.url));
   }
 
   const role = token.role;
@@ -76,6 +75,8 @@ export const config = {
   matcher: [
     '/admin/:path*',
     '/api/admin/:path*',
-    '/((?!api|admin|_next/static|_next/image|favicon.ico|\\.well-known|.*\\..*).*)',
+    // `login` is excluded below: it is an internal (non-localized) page, so locale
+    // negotiation must not rewrite /login to /pt/login.
+    '/((?!api|admin|login|_next/static|_next/image|favicon.ico|\\.well-known|.*\\..*).*)',
   ],
 };
