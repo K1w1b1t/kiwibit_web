@@ -79,6 +79,9 @@ body {
 .delay-400 {
   animation-delay: 0.4s;
 }
+.delay-500 {
+  animation-delay: 0.5s;
+}
 
 @keyframes card-breathe {
   0%,
@@ -111,6 +114,23 @@ body {
 
 .input-glow:focus {
   animation: input-focus-in 0.25s ease forwards;
+}
+
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.check-mark path {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: check-draw 0.4s ease 0.15s forwards;
 }
 
 .section-divider {
@@ -292,5 +312,9 @@ body {
   .boot-line {
     animation: none;
     opacity: 1;
+  }
+  .check-mark path {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }
