@@ -116,11 +116,7 @@ export function AdminMemberEditForm({ initial }: { initial: MemberInitial }) {
               aria-live="polite"
               className="boot-line mb-5 flex items-center gap-2 rounded-xl border border-green-400/30 bg-green-500/10 p-3 text-sm text-green-100"
             >
-              <svg
-                className="check-mark h-4 w-4 flex-none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
+              <svg className="check-mark h-4 w-4 flex-none" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 12.5l5 5 11-12" />
               </svg>
               <span>{message}</span>
