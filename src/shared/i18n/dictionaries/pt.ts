@@ -229,6 +229,7 @@ const pt: Dictionary = {
     terms: 'Termos de Uso',
     rights: 'Todos os direitos reservados.',
     contactTitle: 'Contato',
+    login: 'Entrar',
   },
 
   legal: {

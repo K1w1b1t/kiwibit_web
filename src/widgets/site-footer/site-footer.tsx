@@ -79,8 +79,17 @@ export function SiteFooter({ locale, dict, headerDict, year }: SiteFooterProps) 
         </div>
       </div>
 
-      <div className="mx-auto mt-12 max-w-6xl border-t border-white/10 pt-6 text-xs text-white/40">
-        © {year} {headerDict.brand}. {dict.rights}
+      <div className="mx-auto mt-12 flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/40">
+        <p>
+          © {year} {headerDict.brand}. {dict.rights}
+        </p>
+        {/* Internal area — not locale-prefixed: /login is excluded from locale negotiation. */}
+        <Link
+          href="/login"
+          className="font-semibold uppercase tracking-[0.12em] transition hover:text-accent"
+        >
+          {dict.login}
+        </Link>
       </div>
     </footer>
   );
