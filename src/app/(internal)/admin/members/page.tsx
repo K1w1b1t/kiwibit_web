@@ -1,7 +1,7 @@
 // src/app/admin/members/page.tsx
-// TODO: restore auth check when login flow is ready
 import Link from 'next/link';
 import { prisma } from '@/shared/lib/prisma';
+import { requireAdminPageSession } from '@/shared/lib/page-auth';
 import { AdminMembersTable } from '@/features/admin/members/ui/admin-members-table';
 
 const VALID_LIMITS = [10, 20, 50] as const;
@@ -17,6 +17,8 @@ export default async function AdminMembersPage({
 }: {
   searchParams: Promise<{ page?: string; limit?: string }>;
 }) {
+  await requireAdminPageSession();
+
   const { page: pageParam, limit: limitParam } = await searchParams;
   const pageSize = parseLimit(limitParam);
   const page = Math.max(1, Number(pageParam ?? 1) || 1);

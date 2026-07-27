@@ -2,9 +2,7 @@ import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/shared/lib/auth';
 import { reportServerError } from '@/shared/lib/discord';
-import type { UserRole } from '@prisma/client';
-
-const ADMIN_ROLES = new Set<UserRole>(['admin', 'editor', 'member_manager']);
+import { ADMIN_ROLES } from '@/shared/lib/roles';
 
 export async function requireAdminSession() {
   const session = await getServerSession(authOptions);
