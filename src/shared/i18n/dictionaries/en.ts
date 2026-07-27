@@ -225,6 +225,7 @@ const en = {
     terms: 'Terms of Use',
     rights: 'All rights reserved.',
     contactTitle: 'Contact',
+    login: 'Sign in',
   },
 
   legal: {

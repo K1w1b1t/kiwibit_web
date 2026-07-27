@@ -44,6 +44,7 @@ src/
       {privacy-policy,terms-of-use}/  # LGPD legal pages
       opengraph-image.tsx     #   next/og OG image (per locale)
     (internal)/               # Admin route group — own <html> + AuthProvider
+      login/                  #   credentials sign-in (terminal visual)
       admin/members/          #   protected CRUD screens
     api/
       auth/[...nextauth]/     # NextAuth handler
@@ -86,7 +87,7 @@ first (source of `Dictionary` type), then `pt.ts` (compile-time key parity).
 - JWT stored in httpOnly cookie (`sameSite: lax`, `secure` in production only).
 - `NEXTAUTH_SECRET` and `NEXTAUTH_URL` must be present in env.
 - Roles: `admin` · `editor` · `member_manager` → access admin routes. `member` → no admin access.
-- **Proxy** (`src/proxy.ts`, Next 16's renamed middleware): unauthenticated admin API → `401 JSON`; wrong role → `403 JSON`; unauthenticated admin page → redirect `/` (no `/login` page exists yet). Also handles locale negotiation for public routes.
+- **Proxy** (`src/proxy.ts`, Next 16's renamed middleware): unauthenticated admin API → `401 JSON`; wrong role → `403 JSON`; unauthenticated admin page → redirect `/login`. Also handles locale negotiation for public routes — `/login` is excluded from it, since internal pages are not localized.
 - **Server guard**: always call `requireAdminSession()` at the top of every admin route handler.
 - **Client**: use `useAuth()` from `src/features/auth/use-auth.ts`.
 
