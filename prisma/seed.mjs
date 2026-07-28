@@ -3,11 +3,14 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-if (!process.env.SEED_USER_PASSWORD) {
-  throw new Error('SEED_USER_PASSWORD must be set when seeding a production environment.');
-}
+// `SEED_ADMIN_PASSWORD` is accepted as an alias because that is the name
+// documented in .env.example / .env; without it, `npm run prisma:seed` always
+// threw for anyone following the documented setup.
+const seedPlainPassword = process.env.SEED_USER_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD;
 
-const seedPlainPassword = process.env.SEED_USER_PASSWORD;
+if (!seedPlainPassword) {
+  throw new Error('SEED_USER_PASSWORD (or SEED_ADMIN_PASSWORD) must be set before seeding.');
+}
 
 const usersSeed = [
   {
@@ -209,11 +212,7 @@ async function main() {
   console.log(`Seeded members: ${usersSeed.length}`);
   console.log(`Seeded projects: ${projectsSeed.length}`);
   console.log(`Seeded posts: ${postsSeed.length}`);
-  if (!process.env.SEED_USER_PASSWORD) {
-    console.log(
-      'Seed login password: using default dev password (set SEED_USER_PASSWORD to override).',
-    );
-  }
+  console.log('Seed login password: taken from SEED_USER_PASSWORD / SEED_ADMIN_PASSWORD.');
 }
 
 try {
