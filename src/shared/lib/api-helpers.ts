@@ -64,26 +64,37 @@ export interface PaginatableDelegate {
     where?: Record<string, unknown>;
     skip?: number;
     take?: number;
-    orderBy?: Record<string, string>;
-    select?: Record<string, boolean>;
+    orderBy?: OrderBy;
+    select?: Record<string, unknown>;
+    include?: Record<string, unknown>;
   }): Promise<Record<string, unknown>[]>;
   count(args?: { where?: Record<string, unknown> }): Promise<number>;
 }
+
+/** A single sort or a list of sorts, as Prisma accepts. */
+export type OrderBy = Record<string, unknown> | Record<string, unknown>[];
 
 export async function runPaginatedQuery(
   model: PaginatableDelegate,
   where: Record<string, unknown>,
   page: number,
   limit: number,
-  extra?: { select?: Record<string, boolean> },
+  extra?: {
+    select?: Record<string, unknown>;
+    /** Relations to load — the helper used to support `select` only. */
+    include?: Record<string, unknown>;
+    /** Overrides the default `createdAt desc` (e.g. `publishedAt desc`). */
+    orderBy?: OrderBy;
+  },
 ) {
   const [items, total] = await Promise.all([
     model.findMany({
       where,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: extra?.orderBy ?? { createdAt: 'desc' },
       ...(extra?.select && { select: extra.select }),
+      ...(extra?.include && { include: extra.include }),
     }),
     model.count({ where }),
   ]);

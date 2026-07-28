@@ -1,3 +1,5 @@
+import { EMAIL_REGEX } from '@/shared/lib/email';
+
 export interface ContactInput {
   name: string;
   email: string;
@@ -12,8 +14,6 @@ export type ContactFieldErrors = Partial<Record<ContactField, true>>;
 export type ContactValidationResult =
   | { valid: true; data: ContactInput }
   | { valid: false; fieldErrors: ContactFieldErrors };
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const CONTACT_LIMITS = {
   nameMin: 2,
