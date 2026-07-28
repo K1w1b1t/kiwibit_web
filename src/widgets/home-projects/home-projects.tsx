@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useFeaturedProjects } from '@/features/home/model/use-public-highlights';
 import type { Locale } from '@/shared/i18n/config';
 import type { Dictionary } from '@/shared/i18n/get-dictionary';
+import { ProjectCover } from './project-cover';
 
 interface HomeProjectsProps {
   locale: Locale;
@@ -77,6 +78,11 @@ export function HomeProjects({ locale, dict }: HomeProjectsProps) {
                 id={`project-${project.id}`}
                 className="flex h-full flex-col rounded-2xl border border-white/15 bg-white/5 p-5"
               >
+                <ProjectCover
+                  images={project.images ?? []}
+                  projectTitle={project.title}
+                  href={`/${locale}/projects/${project.id}`}
+                />
                 <p className="text-xs uppercase tracking-[0.16em] text-accent">
                   {dict.labels.project}
                 </p>

@@ -155,6 +155,12 @@ const pt: Dictionary = {
       repository: 'Repositório',
       noDescription: 'Descrição em breve.',
     },
+    // Nomes acessíveis do carrossel na página do projeto.
+    carousel: {
+      previous: 'Imagem anterior',
+      next: 'Próxima imagem',
+      goTo: 'Ir para a imagem',
+    },
     error: 'Não foi possível carregar os projetos agora. Tente novamente em instantes.',
     empty:
       'Nossos projetos estão sendo publicados. Fale com a gente para saber o que estamos construindo.',
