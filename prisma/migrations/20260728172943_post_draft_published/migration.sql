@@ -12,4 +12,10 @@ ADD COLUMN     "status" "PostStatus" NOT NULL DEFAULT 'draft';
 -- would silently disappear from the public blog the moment this migration is
 -- applied. Existing rows were publicly visible, so they are published, and
 -- their creation time is the best available publication time.
-UPDATE "posts" SET "status" = 'published', "published_at" = "created_at";
+--
+-- The WHERE clause is a no-op: the column was just created with
+-- `NOT NULL DEFAULT 'draft'`, so every pre-existing row already matches it. It
+-- is spelled out so the statement is not an unbounded UPDATE.
+UPDATE "posts"
+SET "status" = 'published', "published_at" = "created_at"
+WHERE "status" = 'draft';
