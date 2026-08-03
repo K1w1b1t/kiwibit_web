@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminSession, apiError, parseJsonBody } from '@/shared/lib/api-helpers';
+import {
+  requireAdminSession,
+  apiError,
+  parseJsonBody,
+  failureResponse,
+} from '@/shared/lib/api-helpers';
+import { validateUpdateProjectImageBody } from '@/features/admin/projects/model/validate-project-image-body';
 import { deleteObjects } from '@/shared/lib/storage';
 
 type Params = { params: Promise<{ id: string; imageId: string }> };
@@ -23,14 +29,13 @@ export async function PUT(request: Request, { params }: Params) {
   const { body, error } = await parseJsonBody(request);
   if (error) return error;
 
-  const { alt, isCover } = body as Record<string, unknown>;
+  const parsed = validateUpdateProjectImageBody(body);
+  if (parsed.failure) return failureResponse(parsed.failure);
 
-  if (alt !== undefined && alt !== null && typeof alt !== 'string') {
-    return apiError('BAD_REQUEST', 'alt must be a string or null.', 400);
-  }
-  if (isCover !== undefined && typeof isCover !== 'boolean') {
-    return apiError('BAD_REQUEST', 'isCover must be a boolean.', 400);
-  }
+  const { alt, isCover } = parsed.data;
+  // Absent `alt` must stay absent: an explicit `alt: undefined` would still be a
+  // key in the update payload.
+  const altData = alt === undefined ? {} : { alt };
 
   const existing = await prisma.projectImage.findUnique({ where: { id: imageId } });
   // Scoping to the route's project id stops one project from editing another's.
@@ -46,17 +51,14 @@ export async function PUT(request: Request, { params }: Params) {
       }),
       prisma.projectImage.update({
         where: { id: imageId },
-        data: {
-          isCover: true,
-          ...(alt !== undefined && { alt: typeof alt === 'string' ? alt.trim() || null : null }),
-        },
+        data: { isCover: true, ...altData },
       }),
     ]);
   } else {
     await prisma.projectImage.update({
       where: { id: imageId },
       data: {
-        ...(alt !== undefined && { alt: typeof alt === 'string' ? alt.trim() || null : null }),
+        ...altData,
         // Unsetting the only cover is refused implicitly: isCover=false is only
         // applied when another image is promoted.
         ...(isCover === false && !existing.isCover && { isCover: false }),

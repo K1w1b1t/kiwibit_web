@@ -35,6 +35,43 @@ export function apiError(code: string, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
+/** The error a validator wants the route to return, in `apiError` terms. */
+export type ApiFailure = { code: string; message: string; status: number };
+
+/**
+ * Outcome of a request-body validator: either the parsed input or the failure to
+ * hand back. Route handlers keep a single branch per validator call instead of
+ * one per field, which is what kept the admin handlers over the complexity
+ * budget.
+ */
+export type Validated<T> = { data: T; failure: null } | { data: null; failure: ApiFailure };
+
+export function valid<T>(data: T): Validated<T> {
+  return { data, failure: null };
+}
+
+export function failure(code: string, message: string, status: number): ApiFailure {
+  return { code, message, status };
+}
+
+export function invalid<T>(code: string, message: string, status: number): Validated<T> {
+  return { data: null, failure: failure(code, message, status) };
+}
+
+/** Lifts a bare failure from a field-checking pass into a validator result. */
+export function rejected<T>(problem: ApiFailure): Validated<T> {
+  return { data: null, failure: problem };
+}
+
+export function failureResponse({ code, message, status }: ApiFailure) {
+  return apiError(code, message, status);
+}
+
+/** Rejects non-strings and whitespace-only strings alike. */
+export function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() !== '';
+}
+
 export function parsePaginationParams(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, Number(searchParams.get('page') ?? 1));

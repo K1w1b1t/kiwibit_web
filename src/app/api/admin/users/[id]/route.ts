@@ -1,12 +1,40 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminSession, apiError, parseJsonBody } from '@/shared/lib/api-helpers';
-import { isUserRole, isPrivilegedRole } from '@/shared/lib/roles';
-import { isValidEmail } from '@/shared/lib/email';
-import { checkPassword, PASSWORD_HASH_ROUNDS } from '@/shared/lib/password';
+import {
+  requireAdminSession,
+  apiError,
+  parseJsonBody,
+  failureResponse,
+  valid,
+  type Validated,
+} from '@/shared/lib/api-helpers';
+import {
+  validateUpdateUserFields,
+  validateUserPassword,
+} from '@/features/admin/users/model/validate-user-body';
+import { PASSWORD_HASH_ROUNDS } from '@/shared/lib/password';
 import { isUniqueConstraintError } from '@/shared/lib/prisma-errors';
 
 type Params = { params: Promise<{ id: string }> };
+
+/** Demoting or deleting the last admin locks everyone out of the admin area. */
+async function isLastAdmin() {
+  return (await prisma.user.count({ where: { role: 'admin' } })) <= 1;
+}
+
+/**
+ * An absent password means "keep the current one". Kept in the route rather than
+ * the model layer so `bcryptjs` never becomes reachable from a client bundle.
+ */
+async function hashPasswordIfPresent(password: unknown): Promise<Validated<string | undefined>> {
+  if (password === undefined) return valid(undefined);
+
+  const checked = validateUserPassword(password);
+  if (checked.failure) return checked;
+
+  const { hash } = await import('bcryptjs');
+  return valid(await hash(checked.data, PASSWORD_HASH_ROUNDS));
+}
 
 const USER_SELECT = {
   id: true,
@@ -42,52 +70,27 @@ export async function PUT(request: Request, { params }: Params) {
   const { body, error } = await parseJsonBody(request);
   if (error) return error;
 
-  const { name, email, role, password } = body as Record<string, unknown>;
-
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'User not found.', 404);
 
-  if (name !== undefined && (typeof name !== 'string' || name.trim() === '')) {
-    return apiError('BAD_REQUEST', 'name must be a non-empty string.', 400);
-  }
-  if (email !== undefined && !isValidEmail(email)) {
-    return apiError('BAD_REQUEST', 'email must be a valid address.', 400);
+  const fields = validateUpdateUserFields(body, session.user.role);
+  if (fields.failure) return failureResponse(fields.failure);
+
+  const demotesAnAdmin =
+    existing.role === 'admin' && fields.data.role !== undefined && fields.data.role !== 'admin';
+  if (demotesAnAdmin && (await isLastAdmin())) {
+    return apiError('CONFLICT', 'Cannot demote the last admin.', 409);
   }
 
-  if (role !== undefined) {
-    if (!isUserRole(role)) {
-      return apiError('BAD_REQUEST', 'role must be a valid user role.', 400);
-    }
-    if (isPrivilegedRole(role) && session.user.role !== 'admin') {
-      return apiError('FORBIDDEN', 'Only admins can assign privileged roles.', 403);
-    }
-    // Demoting the last admin locks everyone out of the admin area.
-    if (existing.role === 'admin' && role !== 'admin') {
-      const admins = await prisma.user.count({ where: { role: 'admin' } });
-      if (admins <= 1) {
-        return apiError('CONFLICT', 'Cannot demote the last admin.', 409);
-      }
-    }
-  }
-
-  let hashedPassword: string | undefined;
-  if (password !== undefined) {
-    const passwordCheck = checkPassword(password);
-    if (!passwordCheck.valid) {
-      return apiError('BAD_REQUEST', passwordCheck.message, 400);
-    }
-    const { hash } = await import('bcryptjs');
-    hashedPassword = await hash(password as string, PASSWORD_HASH_ROUNDS);
-  }
+  const hashed = await hashPasswordIfPresent((body as Record<string, unknown>).password);
+  if (hashed.failure) return failureResponse(hashed.failure);
 
   try {
     const updated = await prisma.user.update({
       where: { id },
       data: {
-        ...(typeof name === 'string' && { name: name.trim() }),
-        ...(typeof email === 'string' && { email: email.trim() }),
-        ...(role !== undefined && isUserRole(role) && { role }),
-        ...(hashedPassword !== undefined && { password: hashedPassword }),
+        ...fields.data,
+        ...(hashed.data !== undefined && { password: hashed.data }),
       },
       select: { ...USER_SELECT },
     });
@@ -116,11 +119,8 @@ export async function DELETE(_req: Request, { params }: Params) {
     return apiError('BAD_REQUEST', 'You cannot delete your own account.', 400);
   }
 
-  if (existing.role === 'admin') {
-    const admins = await prisma.user.count({ where: { role: 'admin' } });
-    if (admins <= 1) {
-      return apiError('CONFLICT', 'Cannot delete the last admin.', 409);
-    }
+  if (existing.role === 'admin' && (await isLastAdmin())) {
+    return apiError('CONFLICT', 'Cannot delete the last admin.', 409);
   }
 
   await prisma.user.delete({ where: { id } });

@@ -6,14 +6,12 @@ import {
   parsePaginationParams,
   parseJsonBody,
   runPaginatedQuery,
+  failureResponse,
   PaginatableDelegate,
 } from '@/shared/lib/api-helpers';
-import { isHttpUrl } from '@/shared/lib/url';
+import { validateCreateMemberBody } from '@/features/admin/members/model/validate-member-body';
 import { isForeignKeyError, isUniqueConstraintError } from '@/shared/lib/prisma-errors';
-import { isValidEmail } from '@/shared/lib/email';
-import { checkPassword, PASSWORD_HASH_ROUNDS } from '@/shared/lib/password';
-import { isPrivilegedRole, isUserRole } from '@/shared/lib/roles';
-import type { UserRole } from '@prisma/client';
+import { PASSWORD_HASH_ROUNDS } from '@/shared/lib/password';
 
 // GET /api/admin/members
 export async function GET(request: Request) {
@@ -37,64 +35,12 @@ export async function POST(request: Request) {
   const { body, error } = await parseJsonBody(request);
   if (error) return error;
 
-  const { userId, name, bio, avatarUrl, avatarPath, account } = body as Record<string, unknown>;
+  const parsed = validateCreateMemberBody(body, session.user.role);
+  if (parsed.failure) return failureResponse(parsed.failure);
 
-  if (typeof name !== 'string' || name.trim() === '') {
-    return apiError('BAD_REQUEST', 'name is required.', 400);
-  }
-  if (userId !== undefined && typeof userId !== 'string') {
-    return apiError('BAD_REQUEST', 'userId must be a string.', 400);
-  }
-  // Validated server-side too: a client-only URL check is not a check.
-  if (typeof avatarUrl === 'string' && avatarUrl !== '' && !isHttpUrl(avatarUrl)) {
-    return apiError('BAD_REQUEST', 'avatarUrl must be an http(s) URL.', 400);
-  }
-
-  // Optionally create the member's system account in the same request. Left
-  // optional on purpose: `Member.userId` is nullable, so a public team member
-  // does not have to be able to sign in.
-  let accountData: { email: string; password: string; role: UserRole } | null = null;
-  if (account !== undefined && account !== null) {
-    if (typeof account !== 'object') {
-      return apiError('BAD_REQUEST', 'account must be an object.', 400);
-    }
-    if (typeof userId === 'string') {
-      return apiError('BAD_REQUEST', 'Provide either userId or account, not both.', 400);
-    }
-
-    const { email, password, role } = account as Record<string, unknown>;
-
-    if (!isValidEmail(email)) {
-      return apiError('BAD_REQUEST', 'account.email must be a valid address.', 400);
-    }
-    const passwordCheck = checkPassword(password);
-    if (!passwordCheck.valid) {
-      return apiError('BAD_REQUEST', `account.${passwordCheck.message}`, 400);
-    }
-    const requestedRole = role === undefined ? 'member' : role;
-    if (!isUserRole(requestedRole)) {
-      return apiError('BAD_REQUEST', 'account.role must be a valid user role.', 400);
-    }
-    if (isPrivilegedRole(requestedRole) && session.user.role !== 'admin') {
-      return apiError('FORBIDDEN', 'Only admins can assign privileged roles.', 403);
-    }
-
-    accountData = {
-      email: (email as string).trim(),
-      password: password as string,
-      role: requestedRole,
-    };
-  }
+  const { member: memberData, account: accountData } = parsed.data;
 
   try {
-    const memberData = {
-      ...(typeof userId === 'string' && { userId }),
-      name: name.trim(),
-      ...(typeof bio === 'string' && { bio }),
-      ...(typeof avatarUrl === 'string' && { avatarUrl }),
-      ...(typeof avatarPath === 'string' && { avatarPath }),
-    };
-
     if (!accountData) {
       const member = await prisma.member.create({ data: memberData });
       return NextResponse.json({ success: true, data: member }, { status: 201 });
