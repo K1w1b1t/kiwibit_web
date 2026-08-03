@@ -7,9 +7,9 @@ import { AdminPostsTable } from '@/features/admin/posts/ui/admin-posts-table';
 
 export default async function AdminPostsPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ page?: string; limit?: string }>;
-}) {
+}>) {
   await requireAdminPageSession();
 
   const { page: pageParam, limit: limitParam } = await searchParams;

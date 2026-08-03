@@ -46,7 +46,7 @@ function toFormValues(initial?: UserInitial): UserFormValues {
   };
 }
 
-export function AdminUserForm({ initial, canAssignPrivileged }: Props) {
+export function AdminUserForm({ initial, canAssignPrivileged }: Readonly<Props>) {
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<UserFormValues>(() => toFormValues(initial));
   const [revealPassword, setRevealPassword] = useState(false);

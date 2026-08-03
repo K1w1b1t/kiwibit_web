@@ -20,7 +20,7 @@ type Props = {
  * requests/month, and the Vercel edge cache is what keeps origin reads
  * negligible.
  */
-export function ProjectCover({ images, projectTitle, href }: Props) {
+export function ProjectCover({ images, projectTitle, href }: Readonly<Props>) {
   const cover = images.find((image) => image.isCover) ?? images[0];
   if (!cover) return null;
 

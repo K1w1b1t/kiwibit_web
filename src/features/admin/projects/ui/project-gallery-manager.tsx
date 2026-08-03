@@ -33,7 +33,7 @@ const MAX_IMAGES = 24;
  * Every mutation applies optimistically and rolls back to the previous array if
  * the request fails — which is why `reorder-images` never mutates in place.
  */
-export function ProjectGalleryManager({ projectId, initialImages }: Props) {
+export function ProjectGalleryManager({ projectId, initialImages }: Readonly<Props>) {
   const [images, setImages] = useState<GalleryImage[]>(() => sortImages(initialImages));
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');

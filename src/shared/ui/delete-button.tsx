@@ -18,7 +18,12 @@ type Props = {
  * Delete action with confirmation. Until now the DELETE endpoints existed but
  * nothing in the UI could reach them.
  */
-export function DeleteButton({ endpoint, resourceLabel, redirectTo, label = 'Excluir' }: Props) {
+export function DeleteButton({
+  endpoint,
+  resourceLabel,
+  redirectTo,
+  label = 'Excluir',
+}: Readonly<Props>) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);

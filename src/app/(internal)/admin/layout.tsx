@@ -9,7 +9,7 @@ import { AdminShell } from '@/widgets/admin-shell/admin-shell';
  * is not a substitute for the per-page guard, since a page can be rendered by
  * other means and AGENTS.md § 4 mandates the server guard at the entrypoint.
  */
-export default async function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
   await requireAdminPageSession();
 
   return <AdminShell>{children}</AdminShell>;

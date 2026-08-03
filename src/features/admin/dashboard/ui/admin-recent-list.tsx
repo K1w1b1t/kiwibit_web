@@ -10,7 +10,7 @@ type Props = {
   delayClass?: string;
 };
 
-function Row({ item }: { item: DashboardItem }) {
+function Row({ item }: Readonly<{ item: DashboardItem }>) {
   const content = (
     <>
       <span className="flex min-w-0 items-center gap-2">
@@ -45,7 +45,7 @@ export function AdminRecentList({
   emptyMessage,
   seeAllHref,
   delayClass = '',
-}: Props) {
+}: Readonly<Props>) {
   return (
     <section
       className={`card-glow animate-fade-up ${delayClass} overflow-hidden rounded-2xl border border-white/10 bg-[#0e0e0e]`}

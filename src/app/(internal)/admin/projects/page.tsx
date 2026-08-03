@@ -7,9 +7,9 @@ import { AdminProjectsTable } from '@/features/admin/projects/ui/admin-projects-
 
 export default async function AdminProjectsPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ page?: string; limit?: string }>;
-}) {
+}>) {
   await requireAdminPageSession();
 
   const { page: pageParam, limit: limitParam } = await searchParams;

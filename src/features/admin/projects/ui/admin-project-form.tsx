@@ -36,7 +36,7 @@ function toFormValues(initial?: ProjectInitial): ProjectFormValues {
   };
 }
 
-export function AdminProjectForm({ initial }: Props) {
+export function AdminProjectForm({ initial }: Readonly<Props>) {
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<ProjectFormValues>(() => toFormValues(initial));
 

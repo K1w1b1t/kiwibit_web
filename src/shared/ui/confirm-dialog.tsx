@@ -27,7 +27,7 @@ export function ConfirmDialog({
   isBusy = false,
   onConfirm,
   onCancel,
-}: Props) {
+}: Readonly<Props>) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {

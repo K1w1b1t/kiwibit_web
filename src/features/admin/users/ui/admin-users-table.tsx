@@ -60,7 +60,7 @@ const COLUMNS: ReadonlyArray<Column<UserRow>> = [
   },
 ];
 
-export function AdminUsersTable({ users, page, total, pageSize }: Props) {
+export function AdminUsersTable({ users, page, total, pageSize }: Readonly<Props>) {
   if (users.length === 0) {
     return (
       <EmptyState

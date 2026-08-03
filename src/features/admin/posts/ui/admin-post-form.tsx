@@ -50,7 +50,7 @@ const STATUS_OPTIONS = POST_STATUSES.map((status) => ({
   label: POST_STATUS_LABELS[status],
 }));
 
-export function AdminPostForm({ initial }: Props) {
+export function AdminPostForm({ initial }: Readonly<Props>) {
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<PostFormValues>(() => toFormValues(initial));
 

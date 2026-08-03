@@ -7,7 +7,7 @@ import { DeleteButton } from '@/shared/ui/delete-button';
 
 type Params = { params: Promise<{ id: string }> };
 
-export default async function EditPostPage({ params }: Params) {
+export default async function EditPostPage({ params }: Readonly<Params>) {
   await requireAdminPageSession();
 
   const { id } = await params;

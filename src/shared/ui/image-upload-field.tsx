@@ -45,7 +45,7 @@ export function ImageUploadField({
   disabled = false,
   error,
   shape = 'wide',
-}: Props) {
+}: Readonly<Props>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');

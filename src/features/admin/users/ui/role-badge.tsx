@@ -9,7 +9,7 @@ const TONES: Record<UserRole, string> = {
   member: 'border-white/15 text-white/50',
 };
 
-export function RoleBadge({ role }: { role: UserRole }) {
+export function RoleBadge({ role }: Readonly<{ role: UserRole }>) {
   return (
     <span
       className={cn(

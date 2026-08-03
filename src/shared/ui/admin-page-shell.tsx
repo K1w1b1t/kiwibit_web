@@ -32,7 +32,7 @@ export function AdminPageShell({
   action,
   width = 'wide',
   children,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className="px-6 py-12 sm:px-10 lg:px-16">
       <div className={WIDTHS[width]}>

@@ -7,9 +7,9 @@ import { AdminUsersTable } from '@/features/admin/users/ui/admin-users-table';
 
 export default async function AdminUsersPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ page?: string; limit?: string }>;
-}) {
+}>) {
   await requireAdminPageSession();
 
   const { page: pageParam, limit: limitParam } = await searchParams;

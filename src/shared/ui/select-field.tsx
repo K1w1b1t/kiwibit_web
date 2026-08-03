@@ -5,6 +5,7 @@ import {
   FIELD_ERROR_CLASS,
   FIELD_HINT_CLASS,
   FIELD_LABEL_CLASS,
+  fieldDescribedBy,
 } from '@/shared/ui/field-classes';
 
 export type SelectOption = {
@@ -33,7 +34,7 @@ export function SelectField({
   hint,
   className,
   ...props
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className={className}>
       <label htmlFor={id} className={FIELD_LABEL_CLASS}>
@@ -42,7 +43,7 @@ export function SelectField({
       <select
         id={id}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+        aria-describedby={fieldDescribedBy(id, error, hint)}
         className={cn(FIELD_CONTROL_CLASS, 'appearance-none', error && 'border-amber-300/40')}
         {...props}
       >

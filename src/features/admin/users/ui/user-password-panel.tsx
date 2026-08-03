@@ -17,7 +17,7 @@ type Props = {
  * Keeping it apart means saving a name change can never accidentally rewrite the
  * password, and the generated value can be displayed once for copying.
  */
-export function UserPasswordPanel({ userId, userEmail }: Props) {
+export function UserPasswordPanel({ userId, userEmail }: Readonly<Props>) {
   const [generated, setGenerated] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');

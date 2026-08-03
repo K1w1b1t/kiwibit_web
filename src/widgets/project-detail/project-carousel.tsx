@@ -23,7 +23,7 @@ type Props = {
  * Storage requests/month, and the Vercel edge cache keeps origin reads
  * negligible.
  */
-export function ProjectCarousel({ images, projectTitle, labels }: Props) {
+export function ProjectCarousel({ images, projectTitle, labels }: Readonly<Props>) {
   const [index, setIndex] = useState(() => {
     const coverIndex = images.findIndex((image) => image.isCover);
     return coverIndex >= 0 ? coverIndex : 0;

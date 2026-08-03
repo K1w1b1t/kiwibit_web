@@ -8,7 +8,7 @@ type Props = {
  * not interrupt), errors are assertive and shake once — matching the recipes
  * that used to be copy-pasted into each form.
  */
-export function FormStatus({ status, message }: Props) {
+export function FormStatus({ status, message }: Readonly<Props>) {
   if (!message || (status !== 'success' && status !== 'error')) return null;
 
   if (status === 'success') {

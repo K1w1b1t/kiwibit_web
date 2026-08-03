@@ -21,7 +21,7 @@ function buildHref(page: number, limit: number, extra?: Record<string, string>):
 }
 
 /** Page-size selector rendered above a list. */
-export function PageSizeSelector({ pageSize, total, extraParams }: Omit<Props, 'page'>) {
+export function PageSizeSelector({ pageSize, total, extraParams }: Readonly<Omit<Props, 'page'>>) {
   return (
     <div className="mb-3 flex items-center gap-1 text-xs text-white/40">
       <span className="mr-1">Por página:</span>
@@ -46,7 +46,7 @@ export function PageSizeSelector({ pageSize, total, extraParams }: Omit<Props, '
 }
 
 /** Prev/next controls rendered below a list. */
-export function Pagination({ page, total, pageSize, extraParams }: Props) {
+export function Pagination({ page, total, pageSize, extraParams }: Readonly<Props>) {
   const totalPages = countTotalPages(total, pageSize);
   const current = Math.min(Math.max(1, page), totalPages);
   const hasPrev = current > 1;

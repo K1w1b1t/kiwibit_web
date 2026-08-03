@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-export default async function ProjectDetailPage({ params }: Params) {
+export default async function ProjectDetailPage({ params }: Readonly<Params>) {
   const { locale, id } = await params;
   if (!isLocale(locale)) return null;
 

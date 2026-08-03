@@ -26,7 +26,7 @@ export function ProjectGalleryItem({
   onMoveDown,
   onSetCover,
   onDelete,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <li className="flex items-center gap-4 rounded-xl border border-white/10 bg-black/30 p-3">
       <ImagePreview url={image.url} alt={image.alt ?? ''} shape="thumb" />

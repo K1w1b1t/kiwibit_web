@@ -93,7 +93,7 @@ const COLUMNS: ReadonlyArray<Column<PostRow>> = [
   },
 ];
 
-export function AdminPostsTable({ posts, page, total, pageSize }: Props) {
+export function AdminPostsTable({ posts, page, total, pageSize }: Readonly<Props>) {
   if (posts.length === 0) {
     return (
       <EmptyState

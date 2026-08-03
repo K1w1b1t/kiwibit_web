@@ -43,7 +43,7 @@ function toFormValues(initial?: MemberInitial): MemberFormValues {
  * were ~85% identical; the only real differences are the HTTP verb, the payload
  * shape (`undefined` vs `null` for cleared optionals) and the labels.
  */
-export function AdminMemberForm({ initial }: Props) {
+export function AdminMemberForm({ initial }: Readonly<Props>) {
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<MemberFormValues>(() => toFormValues(initial));
 

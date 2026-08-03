@@ -29,7 +29,7 @@ const HEAD_CELL = 'px-4 py-3 text-xs font-medium uppercase tracking-[0.14em] tex
  * Row navigation is expressed as an actions column by the caller rather than
  * baked in here.
  */
-export function DataTable<T>({ columns, rows, rowKey, emptyState }: Props<T>) {
+export function DataTable<T>({ columns, rows, rowKey, emptyState }: Readonly<Props<T>>) {
   if (rows.length === 0 && emptyState) return <>{emptyState}</>;
 
   return (

@@ -70,7 +70,7 @@ const COLUMNS: ReadonlyArray<Column<ProjectRow>> = [
   },
 ];
 
-export function AdminProjectsTable({ projects, page, total, pageSize }: Props) {
+export function AdminProjectsTable({ projects, page, total, pageSize }: Readonly<Props>) {
   if (projects.length === 0) {
     return (
       <EmptyState

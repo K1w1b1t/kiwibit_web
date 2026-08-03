@@ -33,7 +33,7 @@ type Props = {
  * The relation stays optional 1:1 — a member is a public team profile, which does
  * not require the ability to sign in.
  */
-export function MemberAccountPanel({ memberId, account, canAssignPrivileged }: Props) {
+export function MemberAccountPanel({ memberId, account, canAssignPrivileged }: Readonly<Props>) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');

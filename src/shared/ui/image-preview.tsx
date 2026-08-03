@@ -30,7 +30,7 @@ export function ImagePreview({
   alt = '',
   shape = 'avatar',
   emptyLabel = 'Sem imagem',
-}: Props) {
+}: Readonly<Props>) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const trimmed = url.trim();
   const errored = failedUrl !== null && failedUrl === trimmed;
