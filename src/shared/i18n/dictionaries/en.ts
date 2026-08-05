@@ -188,8 +188,12 @@ const en = {
     subtitle: 'A team that builds products and advances security and AppSec practices.',
     viewAll: 'View all members',
     labels: {
-      openProfile: 'Open profile',
+      viewFullProfile: 'View full profile',
       noBio: 'Profile details will be published soon.',
+    },
+    member: {
+      backToAll: 'All members',
+      suggestions: 'Meet the rest of the team',
     },
     error: 'Could not load members right now.',
     empty: 'Team profiles are being published soon.',

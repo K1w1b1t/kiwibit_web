@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useHighlightedMembers } from '@/features/home/model/use-public-highlights';
 import type { Locale } from '@/shared/i18n/config';
 import type { Dictionary } from '@/shared/i18n/get-dictionary';
+import { MemberAvatar } from '@/shared/ui/member-avatar';
 
 interface HomeTeamProps {
   locale: Locale;
@@ -27,14 +28,6 @@ function TeamLoadingState() {
       ))}
     </div>
   );
-}
-
-function getInitials(name: string): string {
-  const tokens = name.trim().split(/\s+/);
-  return tokens
-    .slice(0, 2)
-    .map((token) => token[0]?.toUpperCase() ?? '')
-    .join('');
 }
 
 export function HomeTeam({ locale, dict }: HomeTeamProps) {
@@ -85,18 +78,21 @@ export function HomeTeam({ locale, dict }: HomeTeamProps) {
                 id={`member-${member.id}`}
                 className="flex h-full flex-col rounded-2xl border border-white/15 bg-white/5 p-5"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black text-sm font-semibold text-white">
-                  {getInitials(member.name)}
-                </div>
+                <MemberAvatar
+                  name={member.name}
+                  url={member.avatarUrl}
+                  className="h-14 w-14"
+                  textClassName="text-sm"
+                />
                 <h3 className="mt-4 text-xl font-semibold text-white">{member.name}</h3>
-                <p className="mt-2 flex-1 text-sm text-white/70">
+                <p className="mt-2 flex-1 text-sm text-white/70 line-clamp-3">
                   {member.bio || dict.labels.noBio}
                 </p>
                 <Link
-                  href={`/${locale}/team#member-${member.id}`}
+                  href={`/${locale}/team/${member.id}`}
                   className="mt-5 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:border-white/80 hover:text-white"
                 >
-                  {dict.labels.openProfile}
+                  {dict.labels.viewFullProfile}
                 </Link>
               </article>
             ))}
