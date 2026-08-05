@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useHighlightedPosts } from '@/features/home/model/use-public-highlights';
 import type { Locale } from '@/shared/i18n/config';
@@ -79,6 +80,18 @@ export function HomeBlog({ locale, dict }: HomeBlogProps) {
                 id={`post-${post.id}`}
                 className="flex h-full flex-col rounded-2xl border border-slate-700/70 bg-slate-900/70 p-5"
               >
+                {post.coverImageUrl && (
+                  <div className="relative mb-4 aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                    {/* No dimensions are stored, so a fixed aspect box plus `fill` is used. */}
+                    <Image
+                      src={post.coverImageUrl}
+                      alt={post.coverImageAlt ?? post.title}
+                      fill
+                      sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  </div>
+                )}
                 <p className="text-xs uppercase tracking-[0.16em] text-accent">
                   {dict.labels.article}
                 </p>

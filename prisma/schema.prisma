@@ -29,13 +29,16 @@ model User {
 }
 
 model Member {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String?  @unique @db.Uuid @map("user_id")
-  name      String
-  bio       String?
-  avatarUrl String?  @map("avatar_url")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @unique @map("user_id") @db.Uuid
+  name       String
+  bio        String?
+  avatarUrl  String?  @map("avatar_url")
+  /// Bucket key for an uploaded avatar. NULL means the URL is externally hosted
+  /// (pasted by hand) and MUST NOT be deleted from the bucket.
+  avatarPath String?  @map("avatar_path")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -51,16 +54,58 @@ model Project {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  images ProjectImage[]
+
   @@map("projects")
 }
 
+/// Carousel image for a project.
+///
+/// Ordering is `position`: dense and 0-based, rewritten wholesale inside a
+/// transaction on every reorder/delete, so no unique constraint is needed.
+/// Exactly one row per project should have `isCover = true` — enforced in the
+/// application layer (clear-then-set in a transaction), because a FK to the
+/// cover cannot express "and that image belongs to this project" and would add
+/// a two-table FK cycle to the existing cascade.
+model ProjectImage {
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  url         String
+  /// Object key inside the storage bucket, needed to delete the object.
+  storagePath String   @map("storage_path")
+  alt         String?
+  position    Int      @default(0)
+  isCover     Boolean  @default(false) @map("is_cover")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, position])
+  @@map("project_images")
+}
+
+enum PostStatus {
+  draft
+  published
+}
+
 model Post {
-  id        String   @id @default(uuid()) @db.Uuid
-  title     String
-  content   String
-  authorId  String   @db.Uuid @map("author_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String     @id @default(uuid()) @db.Uuid
+  title          String
+  content        String
+  authorId       String     @map("author_id") @db.Uuid
+  /// Only `published` rows are exposed by the public GET /api/posts.
+  status         PostStatus @default(draft)
+  /// Set the first time a post is published; kept on unpublish.
+  publishedAt    DateTime?  @map("published_at")
+  /// Single cover image. Three denormalized columns instead of a shared media
+  /// table: `runPaginatedQuery` cannot `include`, and a strict 1:1 needs no join.
+  coverImageUrl  String?    @map("cover_image_url")
+  coverImagePath String?    @map("cover_image_path")
+  coverImageAlt  String?    @map("cover_image_alt")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 

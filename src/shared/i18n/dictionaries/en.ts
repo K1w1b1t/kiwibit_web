@@ -152,6 +152,12 @@ const en = {
       repository: 'Repository',
       noDescription: 'Description coming soon.',
     },
+    // Accessible names for the image carousel on a project's own page.
+    carousel: {
+      previous: 'Previous image',
+      next: 'Next image',
+      goTo: 'Go to image',
+    },
     error: 'Could not load projects right now. Please try again in a few moments.',
     empty: 'Our projects are being published. Get in touch to hear what we are currently building.',
   },

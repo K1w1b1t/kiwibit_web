@@ -10,6 +10,8 @@ const POST_RECORD = {
   id: 'post-1',
   title: 'Hello World',
   authorId: 'uid-1',
+  status: 'published',
+  publishedAt: new Date(),
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -80,5 +82,45 @@ describe('GET /api/posts/[id]', () => {
     const body = await res.json();
     expect(body.id).toBe('post-1');
     expect(body.title).toBe('Hello World');
+  });
+
+  it('trata rascunho como 404 para não revelar que o id existe', async () => {
+    (prisma.post.findUnique as jest.Mock).mockResolvedValue({
+      ...POST_RECORD,
+      status: 'draft',
+      publishedAt: null,
+    });
+    await getPost(makeReq('http://localhost/api/posts/post-1'), paramsFor('post-1'));
+    expect(apiError).toHaveBeenCalledWith('NOT_FOUND', expect.any(String), 404);
+  });
+});
+
+// ── filtro de publicação ──────────────────────────────────────────────────────
+
+describe('GET /api/posts — visibilidade', () => {
+  it('filtra somente publicados', async () => {
+    (prisma.post.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.post.count as jest.Mock).mockResolvedValue(0);
+    await listPosts(makeReq('http://localhost/api/posts'));
+    expect(prisma.post.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ status: 'published' }) }),
+    );
+  });
+
+  it('ordena por data de publicação', async () => {
+    (prisma.post.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.post.count as jest.Mock).mockResolvedValue(0);
+    await listPosts(makeReq('http://localhost/api/posts'));
+    const args = (prisma.post.findMany as jest.Mock).mock.calls[0][0];
+    expect(args.orderBy).toEqual([{ publishedAt: 'desc' }, { createdAt: 'desc' }]);
+  });
+
+  it('não expõe o conteúdo nem o status na listagem pública', async () => {
+    (prisma.post.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.post.count as jest.Mock).mockResolvedValue(0);
+    await listPosts(makeReq('http://localhost/api/posts'));
+    const args = (prisma.post.findMany as jest.Mock).mock.calls[0][0];
+    expect(args.select.content).toBeUndefined();
+    expect(args.select.status).toBeUndefined();
   });
 });
