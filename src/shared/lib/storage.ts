@@ -83,11 +83,16 @@ export async function putObject(
   try {
     const response = await makeClient(config).fetch(writeUrl(config, key), {
       method: 'PUT',
-      // `BodyInit` does not accept a bare Uint8Array in this TS lib; the
-      // underlying buffer is the same bytes.
-      body: body.buffer as ArrayBuffer,
+      // A Blob carries its own size, so the runtime always emits a
+      // `Content-Length` header. Passing a bare ArrayBuffer lets some
+      // undici versions (e.g. Vercel's) fall back to chunked transfer
+      // encoding, which OCI's S3 endpoint rejects with `411 Length Required`.
+      body: new Blob([body.buffer as ArrayBuffer], { type: contentType }),
       headers: {
         'content-type': contentType,
+        // aws4fetch cannot hash a Blob body, so we must declare the payload
+        // as unsigned; the request stays authenticated over TLS via SigV4.
+        'x-amz-content-sha256': 'UNSIGNED-PAYLOAD',
         // Uploaded objects are immutable: the key embeds a UUID, so a new file
         // is always a new key and can be cached hard.
         'cache-control': 'public, max-age=31536000, immutable',
