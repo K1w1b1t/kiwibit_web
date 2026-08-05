@@ -152,6 +152,12 @@ const en = {
       repository: 'Repository',
       noDescription: 'Description coming soon.',
     },
+    // Accessible names for the image carousel on a project's own page.
+    carousel: {
+      previous: 'Previous image',
+      next: 'Next image',
+      goTo: 'Go to image',
+    },
     error: 'Could not load projects right now. Please try again in a few moments.',
     empty: 'Our projects are being published. Get in touch to hear what we are currently building.',
   },
@@ -165,7 +171,12 @@ const en = {
       article: 'Article',
       author: 'Author',
       updated: 'Updated',
-      readSummary: 'Read summary',
+      readMore: 'Read article',
+    },
+    post: {
+      backToAll: 'All posts',
+      by: 'By',
+      suggestions: 'Suggested reading',
     },
     error: 'Could not load blog highlights right now.',
     empty: 'First articles in production. We publish what we learn.',
@@ -177,8 +188,12 @@ const en = {
     subtitle: 'A team that builds products and advances security and AppSec practices.',
     viewAll: 'View all members',
     labels: {
-      openProfile: 'Open profile',
+      viewFullProfile: 'View full profile',
       noBio: 'Profile details will be published soon.',
+    },
+    member: {
+      backToAll: 'All members',
+      suggestions: 'Meet the rest of the team',
     },
     error: 'Could not load members right now.',
     empty: 'Team profiles are being published soon.',

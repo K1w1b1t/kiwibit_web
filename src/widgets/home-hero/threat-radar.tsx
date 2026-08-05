@@ -96,7 +96,7 @@ export function ThreatRadar({ dict }: ThreatRadarProps) {
         role="img"
         aria-label={dict.label}
         onPointerMove={handlePointerMove}
-        className="mt-4 aspect-square w-full touch-none"
+        className="mt-4 aspect-square w-full touch-pan-y"
       >
         <defs>
           <linearGradient id="radar-beam" x1="0" y1="0" x2="1" y2="0">

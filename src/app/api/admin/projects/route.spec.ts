@@ -231,6 +231,7 @@ describe('DELETE /api/admin/projects/[id]', () => {
   it('deletes project and returns success', async () => {
     mockAuth();
     (prisma.project.findUnique as jest.Mock).mockResolvedValue(PROJECT);
+    (prisma.projectImage.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.project.delete as jest.Mock).mockResolvedValue(PROJECT);
     const res = await deleteProject(
       makeReq('http://localhost/api/admin/projects/pid-1', undefined, 'DELETE'),
@@ -239,5 +240,31 @@ describe('DELETE /api/admin/projects/[id]', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+
+  it('lê as chaves do bucket ANTES de apagar — as imagens somem por cascade', async () => {
+    mockAuth();
+    (prisma.project.findUnique as jest.Mock).mockResolvedValue(PROJECT);
+    (prisma.projectImage.findMany as jest.Mock).mockResolvedValue([
+      { storagePath: 'projects/a.png' },
+    ]);
+    (prisma.project.delete as jest.Mock).mockResolvedValue(PROJECT);
+
+    const order: string[] = [];
+    (prisma.projectImage.findMany as jest.Mock).mockImplementation(() => {
+      order.push('findImages');
+      return Promise.resolve([{ storagePath: 'projects/a.png' }]);
+    });
+    (prisma.project.delete as jest.Mock).mockImplementation(() => {
+      order.push('deleteProject');
+      return Promise.resolve(PROJECT);
+    });
+
+    await deleteProject(
+      makeReq('http://localhost/api/admin/projects/pid-1', undefined, 'DELETE'),
+      paramsFor('pid-1'),
+    );
+
+    expect(order).toEqual(['findImages', 'deleteProject']);
   });
 });

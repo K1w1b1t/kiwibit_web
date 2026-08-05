@@ -5,12 +5,21 @@ export type PaginatedResponse<T> = {
   total: number;
 };
 
+export type HomeProjectImage = {
+  id: string;
+  url: string;
+  alt: string | null;
+  isCover: boolean;
+};
+
 export type HomeProject = {
   id: string;
   title: string;
   description: string;
   repoUrl: string | null;
   liveUrl: string | null;
+  /** Ordered by display position; empty for projects without images. */
+  images: HomeProjectImage[];
   createdAt: string;
   updatedAt: string;
 };
@@ -19,6 +28,11 @@ export type HomePost = {
   id: string;
   title: string;
   authorId: string;
+  /** Loaded via a relation select; the author name is shown, never the id. */
+  author: { name: string } | null;
+  coverImageUrl: string | null;
+  coverImageAlt: string | null;
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -4,10 +4,16 @@ import Link from 'next/link';
 import { useHighlightedMembers } from '@/features/home/model/use-public-highlights';
 import type { Locale } from '@/shared/i18n/config';
 import type { Dictionary } from '@/shared/i18n/get-dictionary';
+import { MemberAvatar } from '@/shared/ui/member-avatar';
 
 interface HomeTeamProps {
   locale: Locale;
   dict: Dictionary['team'];
+  /**
+   * The team page states the heading in its own hero and *is* the "all members"
+   * destination, so it opts out of both to avoid repeating them on screen.
+   */
+  showHeader?: boolean;
 }
 
 function TeamLoadingState() {
@@ -29,15 +35,7 @@ function TeamLoadingState() {
   );
 }
 
-function getInitials(name: string): string {
-  const tokens = name.trim().split(/\s+/);
-  return tokens
-    .slice(0, 2)
-    .map((token) => token[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
-export function HomeTeam({ locale, dict }: HomeTeamProps) {
+export function HomeTeam({ locale, dict, showHeader = true }: HomeTeamProps) {
   const { items, isLoading, error } = useHighlightedMembers(6);
 
   return (
@@ -46,22 +44,24 @@ export function HomeTeam({ locale, dict }: HomeTeamProps) {
       className="scroll-mt-20 bg-[#050505] px-6 py-20 text-white sm:px-10 lg:px-16"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-              {dict.eyebrow}
-            </p>
-            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
-              {dict.title}
-            </h2>
+        {showHeader && (
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+                {dict.eyebrow}
+              </p>
+              <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
+                {dict.title}
+              </h2>
+            </div>
+            <Link
+              href={`/${locale}/team`}
+              className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
+            >
+              {dict.viewAll}
+            </Link>
           </div>
-          <Link
-            href={`/${locale}/team`}
-            className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
-          >
-            {dict.viewAll}
-          </Link>
-        </div>
+        )}
 
         {isLoading && <TeamLoadingState />}
 
@@ -85,18 +85,21 @@ export function HomeTeam({ locale, dict }: HomeTeamProps) {
                 id={`member-${member.id}`}
                 className="flex h-full flex-col rounded-2xl border border-white/15 bg-white/5 p-5"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black text-sm font-semibold text-white">
-                  {getInitials(member.name)}
-                </div>
+                <MemberAvatar
+                  name={member.name}
+                  url={member.avatarUrl}
+                  className="h-14 w-14"
+                  textClassName="text-sm"
+                />
                 <h3 className="mt-4 text-xl font-semibold text-white">{member.name}</h3>
-                <p className="mt-2 flex-1 text-sm text-white/70">
+                <p className="mt-2 flex-1 text-sm text-white/70 line-clamp-3">
                   {member.bio || dict.labels.noBio}
                 </p>
                 <Link
-                  href={`/${locale}/team#member-${member.id}`}
+                  href={`/${locale}/team/${member.id}`}
                   className="mt-5 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:border-white/80 hover:text-white"
                 >
-                  {dict.labels.openProfile}
+                  {dict.labels.viewFullProfile}
                 </Link>
               </article>
             ))}

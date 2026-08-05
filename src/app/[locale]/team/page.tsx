@@ -41,7 +41,7 @@ export default async function TeamPage({ params }: { params: Promise<{ locale: s
           <p className="mt-4 max-w-3xl text-white/70">{dict.team.subtitle}</p>
         </div>
       </section>
-      <HomeTeam locale={locale} dict={dict.team} />
+      <HomeTeam locale={locale} dict={dict.team} showHeader={false} />
     </main>
   );
 }

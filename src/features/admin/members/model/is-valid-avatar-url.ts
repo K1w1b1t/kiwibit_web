@@ -1,11 +1,6 @@
-/** Retorna true apenas para uma URL http/https válida e não vazia. */
-export function isValidAvatarUrl(raw: string): boolean {
-  const value = raw.trim();
-  if (!value) return false;
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
+/**
+ * Kept as a named re-export so the member form's import path stays stable while
+ * the implementation lives in `shared/lib` — the API routes need it too, and
+ * `shared` must not import from `features`.
+ */
+export { isHttpUrl as isValidAvatarUrl } from '@/shared/lib/url';

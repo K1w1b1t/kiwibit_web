@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminSession, apiError, parseJsonBody } from '@/shared/lib/api-helpers';
+import {
+  requireAdminSession,
+  apiError,
+  parseJsonBody,
+  failureResponse,
+} from '@/shared/lib/api-helpers';
+import {
+  validateUpdatePostBody,
+  toPostUpdateData,
+} from '@/features/admin/posts/model/validate-post-body';
+import { deleteObjects } from '@/shared/lib/storage';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -25,18 +35,23 @@ export async function PUT(request: Request, { params }: Params) {
   const { body, error } = await parseJsonBody(request);
   if (error) return error;
 
-  const { title, content } = body as Record<string, unknown>;
-
   const existing = await prisma.post.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'Post not found.', 404);
 
+  const parsed = validateUpdatePostBody(body);
+  if (parsed.failure) return failureResponse(parsed.failure);
+
   const updated = await prisma.post.update({
     where: { id },
-    data: {
-      ...(typeof title === 'string' && { title }),
-      ...(typeof content === 'string' && { content }),
-    },
+    data: toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
   });
+
+  // The cover was replaced or cleared: drop the object that is no longer
+  // referenced, but only after the row committed.
+  const previousPath = existing.coverImagePath;
+  if (previousPath && previousPath !== updated.coverImagePath) {
+    await deleteObjects([previousPath]);
+  }
 
   return NextResponse.json({ success: true, data: updated });
 }
@@ -51,5 +66,12 @@ export async function DELETE(_req: Request, { params }: Params) {
   if (!existing) return apiError('NOT_FOUND', 'Post not found.', 404);
 
   await prisma.post.delete({ where: { id } });
+
+  // DB first, then best-effort object cleanup. A null path means the cover was a
+  // pasted external URL and is not ours to delete.
+  if (existing.coverImagePath) {
+    await deleteObjects([existing.coverImagePath]);
+  }
+
   return NextResponse.json({ success: true });
 }

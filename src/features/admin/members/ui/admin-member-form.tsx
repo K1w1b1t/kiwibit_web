@@ -2,162 +2,138 @@
 
 import { useState } from 'react';
 import {
+  EMPTY_MEMBER_FIELD_ERRORS,
   validateMember,
+  type MemberFieldErrors,
   type MemberFormValues,
 } from '@/features/admin/members/model/validate-member';
-import { AvatarPreview } from '@/features/admin/members/ui/avatar-preview';
+import {
+  toCreateMemberPayload,
+  toUpdateMemberPayload,
+} from '@/features/admin/members/model/member-payload';
+import { useResourceForm } from '@/shared/hooks/use-resource-form';
+import { Button } from '@/shared/ui/button';
+import { FormStatus } from '@/shared/ui/form-status';
+import { ImageUploadField } from '@/shared/ui/image-upload-field';
+import { TextAreaField } from '@/shared/ui/text-area-field';
+import { TextField } from '@/shared/ui/text-field';
 
-type FormStatus = 'idle' | 'loading' | 'success' | 'error';
+export type MemberInitial = {
+  id: string;
+  name: string;
+  bio: string | null;
+  avatarUrl: string | null;
+  avatarPath: string | null;
+};
 
-function emptyForm(): MemberFormValues {
-  return { name: '', bio: '', avatarUrl: '' };
+type Props = {
+  /** Absent means create; present means edit. */
+  initial?: MemberInitial;
+};
+
+function toFormValues(initial?: MemberInitial): MemberFormValues {
+  return {
+    name: initial?.name ?? '',
+    bio: initial?.bio ?? '',
+    avatarUrl: initial?.avatarUrl ?? '',
+    avatarPath: initial?.avatarPath ?? '',
+  };
 }
 
-export function AdminMemberForm() {
-  const [form, setForm] = useState<MemberFormValues>(emptyForm());
-  const [status, setStatus] = useState<FormStatus>('idle');
-  const [message, setMessage] = useState('');
+/**
+ * One form for create and edit. The two used to be separate components that
+ * were ~85% identical; the only real differences are the HTTP verb, the payload
+ * shape (`undefined` vs `null` for cleared optionals) and the labels.
+ */
+export function AdminMemberForm({ initial }: Readonly<Props>) {
+  const isEdit = initial !== undefined;
+  const [form, setForm] = useState<MemberFormValues>(() => toFormValues(initial));
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const { status, message, fieldErrors, isSubmitting, submit } = useResourceForm<
+    MemberFormValues,
+    unknown,
+    MemberFieldErrors
+  >({
+    validate: validateMember,
+    toPayload: isEdit ? toUpdateMemberPayload : toCreateMemberPayload,
+    method: isEdit ? 'PUT' : 'POST',
+    endpoint: isEdit ? `/api/admin/members/${initial.id}` : '/api/admin/members',
+    successMessage: isEdit ? 'Alterações salvas.' : 'Membro criado com sucesso.',
+    emptyFieldErrors: EMPTY_MEMBER_FIELD_ERRORS,
+    // Create clears the form for the next entry; edit keeps what was typed.
+    onSuccess: isEdit ? undefined : () => setForm(toFormValues()),
+  });
 
-    const validationError = validateMember(form);
-    if (validationError) {
-      setStatus('error');
-      setMessage(validationError);
-      return;
-    }
-
-    setStatus('loading');
-    setMessage('');
-
-    try {
-      const response = await fetch('/api/admin/members', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          bio: form.bio.trim() || undefined,
-          avatarUrl: form.avatarUrl.trim() || undefined,
-        }),
-      });
-
-      const data = (await response.json()) as {
-        success?: boolean;
-        data?: { id: string };
-        error?: { message: string };
-      };
-
-      if (!response.ok) {
-        setStatus('error');
-        setMessage(data.error?.message ?? 'Erro ao criar membro.');
-        return;
-      }
-
-      setStatus('success');
-      setMessage('Membro criado com sucesso.');
-      setForm(emptyForm());
-    } catch {
-      setStatus('error');
-      setMessage('Erro de conexão. Tente novamente.');
-    }
+  function update<K extends keyof MemberFormValues>(field: K, value: MemberFormValues[K]) {
+    setForm((current) => ({ ...current, [field]: value }));
   }
 
-  const isLoading = status === 'loading';
+  const idPrefix = isEdit ? 'edit-member' : 'new-member';
 
   return (
-    <div className="architectural-grid flex min-h-screen items-center justify-center bg-[#050505] px-6 py-16 text-white sm:px-10 lg:px-16">
-      <div className="w-full max-w-xl">
-        <div className="animate-fade-up mb-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/40">Admin</p>
-          <h1 className="mt-2 text-4xl font-black uppercase tracking-[-0.03em]">Novo Membro</h1>
-          <div className="mt-3 h-px w-12 bg-white/20" />
+    <div className="card-glow animate-fade-up delay-100 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm">
+      <FormStatus status={status} message={message} />
+
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit(form);
+        }}
+        className="space-y-4"
+      >
+        <TextField
+          id={`${idPrefix}-name`}
+          label="Nome"
+          required
+          value={form.name}
+          onChange={(event) => update('name', event.target.value)}
+          disabled={isSubmitting}
+          placeholder="Nome completo"
+          error={fieldErrors.name}
+          className="animate-fade-up delay-200"
+        />
+
+        <TextAreaField
+          id={`${idPrefix}-bio`}
+          label="Bio"
+          value={form.bio}
+          onChange={(event) => update('bio', event.target.value)}
+          disabled={isSubmitting}
+          placeholder="Breve descrição sobre o membro"
+          error={fieldErrors.bio}
+          className="animate-fade-up delay-300"
+        />
+
+        <div className="animate-fade-up delay-400">
+          <ImageUploadField
+            id={`${idPrefix}-avatar`}
+            label="Avatar"
+            scope="members"
+            shape="avatar"
+            disabled={isSubmitting}
+            error={fieldErrors.avatarUrl}
+            value={{ url: form.avatarUrl, path: form.avatarPath }}
+            onChange={(next) =>
+              setForm((current) => ({
+                ...current,
+                avatarUrl: next.url,
+                avatarPath: next.path,
+              }))
+            }
+          />
         </div>
 
-        <div className="card-glow animate-fade-up delay-100 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm">
-          {status === 'success' && (
-            <div className="mb-5 rounded-xl border border-green-400/30 bg-green-500/10 p-3 text-sm text-green-100">
-              {message}
-            </div>
-          )}
-
-          {status === 'error' && (
-            <div className="mb-5 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">
-              {message}
-            </div>
-          )}
-
-          <form
-            onSubmit={(e) => {
-              void handleSubmit(e);
-            }}
-            className="space-y-4"
+        <div className="animate-fade-up delay-500 pt-2">
+          <Button
+            type="submit"
+            isLoading={isSubmitting}
+            loadingLabel={isEdit ? 'Salvando...' : 'Criando...'}
           >
-            <div className="animate-fade-up delay-200">
-              <label
-                htmlFor="new-member-name"
-                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
-              >
-                Nome <span aria-hidden="true">*</span>
-              </label>
-              <input
-                id="new-member-name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                disabled={isLoading}
-                placeholder="Nome completo"
-                className="input-glow w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/20 transition-colors duration-200 focus:border-white/25 focus:outline-none disabled:opacity-50"
-              />
-            </div>
-
-            <div className="animate-fade-up delay-300">
-              <label
-                htmlFor="new-member-bio"
-                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
-              >
-                Bio
-              </label>
-              <textarea
-                id="new-member-bio"
-                value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                disabled={isLoading}
-                rows={4}
-                placeholder="Breve descrição sobre o membro"
-                className="input-glow w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/20 transition-colors duration-200 focus:border-white/25 focus:outline-none disabled:opacity-50"
-              />
-            </div>
-
-            <div className="animate-fade-up delay-400">
-              <label
-                htmlFor="new-member-avatar"
-                className="mb-1 block text-xs uppercase tracking-[0.18em] text-white/50"
-              >
-                Avatar URL
-              </label>
-              <AvatarPreview url={form.avatarUrl} />
-              <input
-                id="new-member-avatar"
-                value={form.avatarUrl}
-                onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
-                disabled={isLoading}
-                placeholder="https://..."
-                className="input-glow w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/20 transition-colors duration-200 focus:border-white/25 focus:outline-none disabled:opacity-50"
-              />
-            </div>
-
-            <div className="animate-fade-up delay-400 pt-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="rounded-full bg-white px-8 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-white/90 disabled:opacity-50"
-              >
-                {isLoading ? 'Criando...' : 'Criar membro'}
-              </button>
-            </div>
-          </form>
+            {isEdit ? 'Salvar alterações' : 'Criar membro'}
+          </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
