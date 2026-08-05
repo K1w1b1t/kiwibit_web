@@ -10,6 +10,11 @@ import type { Dictionary } from '@/shared/i18n/get-dictionary';
 interface HomeBlogProps {
   locale: Locale;
   dict: Dictionary['blog'];
+  /**
+   * The blog page states the heading in its own hero and *is* the "all posts"
+   * destination, so it opts out of both to avoid repeating them on screen.
+   */
+  showHeader?: boolean;
 }
 
 function BlogLoadingState() {
@@ -31,7 +36,7 @@ function BlogLoadingState() {
   );
 }
 
-export function HomeBlog({ locale, dict }: HomeBlogProps) {
+export function HomeBlog({ locale, dict, showHeader = true }: HomeBlogProps) {
   const { items, isLoading, error } = useHighlightedPosts(4);
 
   return (
@@ -40,22 +45,24 @@ export function HomeBlog({ locale, dict }: HomeBlogProps) {
       className="scroll-mt-20 bg-[#030303] px-6 py-20 text-slate-100 sm:px-10 lg:px-16"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-              {dict.eyebrow}
-            </p>
-            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
-              {dict.title}
-            </h2>
+        {showHeader && (
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+                {dict.eyebrow}
+              </p>
+              <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
+                {dict.title}
+              </h2>
+            </div>
+            <Link
+              href={`/${locale}/blog`}
+              className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
+            >
+              {dict.viewAll}
+            </Link>
           </div>
-          <Link
-            href={`/${locale}/blog`}
-            className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
-          >
-            {dict.viewAll}
-          </Link>
-        </div>
+        )}
 
         {isLoading && <BlogLoadingState />}
 
