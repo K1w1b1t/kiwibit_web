@@ -1,5 +1,6 @@
 import https from 'node:https';
 import { AwsClient } from 'aws4fetch';
+import { runAfterResponse } from '@/shared/lib/after-response';
 import { reportServerError } from '@/shared/lib/discord';
 
 /**
@@ -162,11 +163,13 @@ export async function deleteObjects(keys: readonly string[]): Promise<boolean> {
   }
 
   if (!allOk) {
-    void reportServerError({
-      source: 'storage.deleteObjects',
-      code: 'ORPHANED_OBJECT',
-      message: `Failed to delete storage object(s): ${usable.join(', ')}`,
-    });
+    runAfterResponse(() =>
+      reportServerError({
+        source: 'storage.deleteObjects',
+        code: 'ORPHANED_OBJECT',
+        message: `Failed to delete storage object(s): ${usable.join(', ')}`,
+      }),
+    );
   }
 
   return allOk;

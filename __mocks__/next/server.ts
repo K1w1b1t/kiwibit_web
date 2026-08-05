@@ -4,3 +4,11 @@ export const NextResponse = {
     json: () => Promise.resolve(body),
   })),
 };
+
+/**
+ * Runs the callback immediately: there is no request lifecycle to defer to in
+ * unit tests, and specs assert on the side effects synchronously.
+ */
+export const after = jest.fn().mockImplementation((work: () => unknown) => {
+  void work();
+});

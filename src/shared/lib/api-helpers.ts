@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { runAfterResponse } from '@/shared/lib/after-response';
 import { authOptions } from '@/shared/lib/auth';
 import { reportServerError } from '@/shared/lib/discord';
 import { ADMIN_ROLES } from '@/shared/lib/roles';
@@ -29,8 +30,9 @@ export async function requireAdminSession() {
 
 export function apiError(code: string, message: string, status: number) {
   if (status >= 500) {
-    // Fire-and-forget: never block the response on error reporting.
-    void reportServerError({ source: 'apiError', code, message, status }).catch(() => {});
+    // Reported after the response so the webhook is not killed mid-flight when
+    // the serverless instance is frozen, and without delaying the response.
+    runAfterResponse(() => reportServerError({ source: 'apiError', code, message, status }));
   }
   return NextResponse.json({ error: { code, message } }, { status });
 }
