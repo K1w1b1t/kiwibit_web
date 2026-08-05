@@ -20,6 +20,7 @@ export default async function EditMemberPage({ params }: Params) {
       name: true,
       bio: true,
       avatarUrl: true,
+      avatarPath: true,
       // The screen must always show whether an account is associated.
       user: { select: { id: true, email: true, role: true } },
     },

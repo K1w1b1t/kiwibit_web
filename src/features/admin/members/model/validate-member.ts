@@ -4,6 +4,8 @@ export type MemberFormValues = {
   name: string;
   bio: string;
   avatarUrl: string;
+  /** Bucket key when the avatar was uploaded; empty for a pasted URL. */
+  avatarPath: string;
 };
 
 export type MemberField = 'name' | 'bio' | 'avatarUrl';
@@ -30,6 +32,7 @@ export function validateMember(values: MemberFormValues): MemberValidationResult
   const name = values.name.trim();
   const bio = values.bio.trim();
   const avatarUrl = values.avatarUrl.trim();
+  const avatarPath = values.avatarPath.trim();
 
   const fieldErrors: MemberFieldErrors = {};
 
@@ -51,5 +54,5 @@ export function validateMember(values: MemberFormValues): MemberValidationResult
     return { valid: false, fieldErrors };
   }
 
-  return { valid: true, data: { name, bio, avatarUrl } };
+  return { valid: true, data: { name, bio, avatarUrl, avatarPath } };
 }

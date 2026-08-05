@@ -11,6 +11,7 @@ export type MemberUpdateInput = {
   name?: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  avatarPath?: string | null;
 };
 
 /** `avatarUrl` is checked server-side too — a client-only URL check is not a check. */
@@ -20,7 +21,7 @@ function invalidAvatarUrl(avatarUrl: unknown): boolean {
 
 /** Server-side shape check for `PUT /api/admin/members/[id]`. */
 export function validateUpdateMemberBody(body: unknown): Validated<MemberUpdateInput> {
-  const { userId, name, bio, avatarUrl } = body as Record<string, unknown>;
+  const { userId, name, bio, avatarUrl, avatarPath } = body as Record<string, unknown>;
 
   if (name !== undefined && !isNonEmptyString(name)) {
     return invalid('BAD_REQUEST', 'name must be a non-empty string.', 400);
@@ -35,6 +36,9 @@ export function validateUpdateMemberBody(body: unknown): Validated<MemberUpdateI
     ...(bio !== undefined && { bio: typeof bio === 'string' ? bio : null }),
     ...(avatarUrl !== undefined && {
       avatarUrl: typeof avatarUrl === 'string' ? avatarUrl : null,
+    }),
+    ...(avatarPath !== undefined && {
+      avatarPath: typeof avatarPath === 'string' ? avatarPath : null,
     }),
   });
 }
