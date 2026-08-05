@@ -175,7 +175,12 @@ const pt: Dictionary = {
       article: 'Artigo',
       author: 'Autor',
       updated: 'Atualizado',
-      readSummary: 'Ler resumo',
+      readMore: 'Ler artigo',
+    },
+    post: {
+      backToAll: 'Todos os posts',
+      by: 'Por',
+      suggestions: 'Sugestões de leitura',
     },
     error: 'Não foi possível carregar os destaques do blog agora.',
     empty: 'Primeiros artigos em produção. Publicamos o que aprendemos.',

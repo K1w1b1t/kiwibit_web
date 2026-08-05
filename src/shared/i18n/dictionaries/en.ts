@@ -171,7 +171,12 @@ const en = {
       article: 'Article',
       author: 'Author',
       updated: 'Updated',
-      readSummary: 'Read summary',
+      readMore: 'Read article',
+    },
+    post: {
+      backToAll: 'All posts',
+      by: 'By',
+      suggestions: 'Suggested reading',
     },
     error: 'Could not load blog highlights right now.',
     empty: 'First articles in production. We publish what we learn.',
