@@ -1,7 +1,12 @@
 import { toCreateMemberPayload, toUpdateMemberPayload } from './member-payload';
 
-const filled = { name: '  Ana  ', bio: '  dev  ', avatarUrl: '  https://x.com/a.png  ' };
-const empty = { name: 'Ana', bio: '   ', avatarUrl: '' };
+const filled = {
+  name: '  Ana  ',
+  bio: '  dev  ',
+  avatarUrl: '  https://x.com/a.png  ',
+  avatarPath: '  members/a.png  ',
+};
+const empty = { name: 'Ana', bio: '   ', avatarUrl: '', avatarPath: '' };
 
 describe('toCreateMemberPayload', () => {
   it('faz trim dos campos preenchidos', () => {
@@ -9,6 +14,7 @@ describe('toCreateMemberPayload', () => {
       name: 'Ana',
       bio: 'dev',
       avatarUrl: 'https://x.com/a.png',
+      avatarPath: 'members/a.png',
     });
   });
 
@@ -16,6 +22,7 @@ describe('toCreateMemberPayload', () => {
     const payload = toCreateMemberPayload(empty);
     expect(payload.bio).toBeUndefined();
     expect(payload.avatarUrl).toBeUndefined();
+    expect(payload.avatarPath).toBeUndefined();
   });
 });
 
@@ -25,6 +32,7 @@ describe('toUpdateMemberPayload', () => {
       name: 'Ana',
       bio: 'dev',
       avatarUrl: 'https://x.com/a.png',
+      avatarPath: 'members/a.png',
     });
   });
 
@@ -32,11 +40,13 @@ describe('toUpdateMemberPayload', () => {
     const payload = toUpdateMemberPayload(empty);
     expect(payload.bio).toBeNull();
     expect(payload.avatarUrl).toBeNull();
+    expect(payload.avatarPath).toBeNull();
   });
 
   it('nunca usa undefined, que deixaria a coluna intacta', () => {
     const payload = toUpdateMemberPayload(empty);
     expect(payload.bio).not.toBeUndefined();
     expect(payload.avatarUrl).not.toBeUndefined();
+    expect(payload.avatarPath).not.toBeUndefined();
   });
 });

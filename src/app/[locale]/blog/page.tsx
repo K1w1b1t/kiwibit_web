@@ -41,7 +41,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
           <p className="mt-4 max-w-3xl text-white/70">{dict.blog.subtitle}</p>
         </div>
       </section>
-      <HomeBlog locale={locale} dict={dict.blog} />
+      <HomeBlog locale={locale} dict={dict.blog} showHeader={false} />
     </main>
   );
 }

@@ -28,6 +28,8 @@ export type HomePost = {
   id: string;
   title: string;
   authorId: string;
+  /** Loaded via a relation select; the author name is shown, never the id. */
+  author: { name: string } | null;
   coverImageUrl: string | null;
   coverImageAlt: string | null;
   publishedAt: string | null;

@@ -175,7 +175,12 @@ const pt: Dictionary = {
       article: 'Artigo',
       author: 'Autor',
       updated: 'Atualizado',
-      readSummary: 'Ler resumo',
+      readMore: 'Ler artigo',
+    },
+    post: {
+      backToAll: 'Todos os posts',
+      by: 'Por',
+      suggestions: 'Sugestões de leitura',
     },
     error: 'Não foi possível carregar os destaques do blog agora.',
     empty: 'Primeiros artigos em produção. Publicamos o que aprendemos.',
@@ -187,8 +192,12 @@ const pt: Dictionary = {
     subtitle: 'Um time que constrói produtos e avança práticas de segurança e AppSec.',
     viewAll: 'Ver todos os membros',
     labels: {
-      openProfile: 'Abrir perfil',
+      viewFullProfile: 'Ver perfil completo',
       noBio: 'Os detalhes do perfil serão publicados em breve.',
+    },
+    member: {
+      backToAll: 'Todos os membros',
+      suggestions: 'Conheça o resto do time',
     },
     error: 'Não foi possível carregar os membros agora.',
     empty: 'Os perfis do time serão publicados em breve.',

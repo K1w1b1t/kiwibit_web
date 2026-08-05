@@ -1,12 +1,13 @@
 import { MEMBER_LIMITS, validateMember } from './validate-member';
 
-const base = { name: 'Ana', bio: '', avatarUrl: '' };
+const base = { name: 'Ana', bio: '', avatarUrl: '', avatarPath: '' };
 
 describe('validateMember', () => {
   it('aceita nome válido sem avatar', () => {
     const result = validateMember(base);
     expect(result.valid).toBe(true);
-    if (result.valid) expect(result.data).toEqual({ name: 'Ana', bio: '', avatarUrl: '' });
+    if (result.valid)
+      expect(result.data).toEqual({ name: 'Ana', bio: '', avatarUrl: '', avatarPath: '' });
   });
 
   it.each(['A', '  ', ''])('exige nome com pelo menos 2 caracteres: %s', (name) => {
@@ -43,6 +44,7 @@ describe('validateMember', () => {
       name: '  Ana  ',
       bio: '  dev  ',
       avatarUrl: '  https://x.com/a.png  ',
+      avatarPath: '  members/a.png  ',
     });
     expect(result.valid).toBe(true);
     if (result.valid) {
@@ -50,12 +52,13 @@ describe('validateMember', () => {
         name: 'Ana',
         bio: 'dev',
         avatarUrl: 'https://x.com/a.png',
+        avatarPath: 'members/a.png',
       });
     }
   });
 
   it('acumula erros de campos diferentes', () => {
-    const result = validateMember({ name: 'A', bio: '', avatarUrl: 'nope' });
+    const result = validateMember({ name: 'A', bio: '', avatarUrl: 'nope', avatarPath: '' });
     expect(result.valid).toBe(false);
     if (!result.valid) {
       expect(result.fieldErrors.name).toBeTruthy();

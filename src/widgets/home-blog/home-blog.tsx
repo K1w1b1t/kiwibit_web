@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+import { PostCover } from '@/shared/ui/post-cover';
 import { useHighlightedPosts } from '@/features/home/model/use-public-highlights';
 import type { Locale } from '@/shared/i18n/config';
 import { htmlLang } from '@/shared/i18n/config';
@@ -10,6 +10,11 @@ import type { Dictionary } from '@/shared/i18n/get-dictionary';
 interface HomeBlogProps {
   locale: Locale;
   dict: Dictionary['blog'];
+  /**
+   * The blog page states the heading in its own hero and *is* the "all posts"
+   * destination, so it opts out of both to avoid repeating them on screen.
+   */
+  showHeader?: boolean;
 }
 
 function BlogLoadingState() {
@@ -31,7 +36,7 @@ function BlogLoadingState() {
   );
 }
 
-export function HomeBlog({ locale, dict }: HomeBlogProps) {
+export function HomeBlog({ locale, dict, showHeader = true }: HomeBlogProps) {
   const { items, isLoading, error } = useHighlightedPosts(4);
 
   return (
@@ -40,22 +45,24 @@ export function HomeBlog({ locale, dict }: HomeBlogProps) {
       className="scroll-mt-20 bg-[#030303] px-6 py-20 text-slate-100 sm:px-10 lg:px-16"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-              {dict.eyebrow}
-            </p>
-            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
-              {dict.title}
-            </h2>
+        {showHeader && (
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+                {dict.eyebrow}
+              </p>
+              <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.03em] sm:text-4xl">
+                {dict.title}
+              </h2>
+            </div>
+            <Link
+              href={`/${locale}/blog`}
+              className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
+            >
+              {dict.viewAll}
+            </Link>
           </div>
-          <Link
-            href={`/${locale}/blog`}
-            className="rounded-full border border-white/25 px-5 py-2 text-sm font-medium uppercase tracking-[0.1em] text-white/80 transition hover:border-white/70 hover:text-white"
-          >
-            {dict.viewAll}
-          </Link>
-        </div>
+        )}
 
         {isLoading && <BlogLoadingState />}
 
@@ -80,34 +87,28 @@ export function HomeBlog({ locale, dict }: HomeBlogProps) {
                 id={`post-${post.id}`}
                 className="flex h-full flex-col rounded-2xl border border-slate-700/70 bg-slate-900/70 p-5"
               >
-                {post.coverImageUrl && (
-                  <div className="relative mb-4 aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                    {/* No dimensions are stored, so a fixed aspect box plus `fill` is used. */}
-                    <Image
-                      src={post.coverImageUrl}
-                      alt={post.coverImageAlt ?? post.title}
-                      fill
-                      sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
-                      className="object-cover"
-                    />
-                  </div>
-                )}
+                <PostCover
+                  url={post.coverImageUrl}
+                  alt={post.coverImageAlt ?? post.title}
+                  sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+                  className="mb-4 aspect-[16/9] w-full rounded-xl border border-white/10"
+                />
                 <p className="text-xs uppercase tracking-[0.16em] text-accent">
                   {dict.labels.article}
                 </p>
                 <h3 className="mt-3 text-lg font-semibold">{post.title}</h3>
                 <p className="mt-3 text-sm text-slate-300">
-                  {dict.labels.author}: {post.authorId}
+                  {dict.labels.author}: {post.author?.name ?? '—'}
                 </p>
                 <p className="mt-1 text-xs text-slate-400">
                   {dict.labels.updated}{' '}
                   {new Date(post.updatedAt).toLocaleDateString(htmlLang[locale])}
                 </p>
                 <Link
-                  href={`/${locale}/blog#post-${post.id}`}
+                  href={`/${locale}/blog/${post.id}`}
                   className="mt-6 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:border-white/80"
                 >
-                  {dict.labels.readSummary}
+                  {dict.labels.readMore}
                 </Link>
               </article>
             ))}

@@ -1,4 +1,6 @@
+import https from 'node:https';
 import { AwsClient } from 'aws4fetch';
+import { runAfterResponse } from '@/shared/lib/after-response';
 import { reportServerError } from '@/shared/lib/discord';
 
 /**
@@ -72,6 +74,34 @@ function makeClient(config: StorageConfig): AwsClient {
 
 export type PutResult = { ok: true; url: string; key: string } | { ok: false; message: string };
 
+/**
+ * Sends a signed request with Node's own `https` module instead of `fetch`.
+ *
+ * Vercel's Node runtime wraps the global `fetch` in an instrumentation layer
+ * that, for this route, drops the `Content-Length` header and streams the
+ * body as chunked transfer encoding — which OCI's S3 endpoint rejects with
+ * `411 Length Required`. This was reproducible only in that runtime, not
+ * locally, since the wrapper is what's responsible for it. Going straight to
+ * `https.request()` bypasses that layer entirely, so the `Content-Length` we
+ * set below is the one that reaches the socket.
+ */
+function sendSigned(url: URL, method: string, headers: Headers, body: Uint8Array | null) {
+  return new Promise<number>((resolve, reject) => {
+    const headerObject: Record<string, string> = {};
+    headers.forEach((value, name) => {
+      headerObject[name] = value;
+    });
+
+    const req = https.request(url, { method, headers: headerObject }, (res) => {
+      res.resume(); // Drain the response body; only the status matters here.
+      res.on('end', () => resolve(res.statusCode ?? 0));
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.end(body ? Buffer.from(body.buffer, body.byteOffset, body.byteLength) : undefined);
+  });
+}
+
 export async function putObject(
   key: string,
   body: Uint8Array,
@@ -81,21 +111,21 @@ export async function putObject(
   if (!config) return { ok: false, message: 'Storage is not configured.' };
 
   try {
-    const response = await makeClient(config).fetch(writeUrl(config, key), {
+    const signed = await makeClient(config).sign(writeUrl(config, key), {
       method: 'PUT',
-      // `BodyInit` does not accept a bare Uint8Array in this TS lib; the
-      // underlying buffer is the same bytes.
-      body: body.buffer as ArrayBuffer,
       headers: {
         'content-type': contentType,
+        'content-length': String(body.byteLength),
         // Uploaded objects are immutable: the key embeds a UUID, so a new file
         // is always a new key and can be cached hard.
         'cache-control': 'public, max-age=31536000, immutable',
       },
     });
 
-    if (!response.ok) {
-      return { ok: false, message: `Storage rejected the upload (${response.status}).` };
+    const status = await sendSigned(new URL(signed.url), 'PUT', signed.headers, body);
+
+    if (status < 200 || status >= 300) {
+      return { ok: false, message: `Storage rejected the upload (${status}).` };
     }
 
     return { ok: true, url: publicUrl(key), key };
@@ -133,11 +163,13 @@ export async function deleteObjects(keys: readonly string[]): Promise<boolean> {
   }
 
   if (!allOk) {
-    void reportServerError({
-      source: 'storage.deleteObjects',
-      code: 'ORPHANED_OBJECT',
-      message: `Failed to delete storage object(s): ${usable.join(', ')}`,
-    });
+    runAfterResponse(() =>
+      reportServerError({
+        source: 'storage.deleteObjects',
+        code: 'ORPHANED_OBJECT',
+        message: `Failed to delete storage object(s): ${usable.join(', ')}`,
+      }),
+    );
   }
 
   return allOk;

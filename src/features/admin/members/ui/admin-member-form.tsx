@@ -14,7 +14,7 @@ import {
 import { useResourceForm } from '@/shared/hooks/use-resource-form';
 import { Button } from '@/shared/ui/button';
 import { FormStatus } from '@/shared/ui/form-status';
-import { ImagePreview } from '@/shared/ui/image-preview';
+import { ImageUploadField } from '@/shared/ui/image-upload-field';
 import { TextAreaField } from '@/shared/ui/text-area-field';
 import { TextField } from '@/shared/ui/text-field';
 
@@ -23,6 +23,7 @@ export type MemberInitial = {
   name: string;
   bio: string | null;
   avatarUrl: string | null;
+  avatarPath: string | null;
 };
 
 type Props = {
@@ -35,6 +36,7 @@ function toFormValues(initial?: MemberInitial): MemberFormValues {
     name: initial?.name ?? '',
     bio: initial?.bio ?? '',
     avatarUrl: initial?.avatarUrl ?? '',
+    avatarPath: initial?.avatarPath ?? '',
   };
 }
 
@@ -104,17 +106,21 @@ export function AdminMemberForm({ initial }: Readonly<Props>) {
         />
 
         <div className="animate-fade-up delay-400">
-          <div className="mb-2">
-            <ImagePreview url={form.avatarUrl} emptyLabel="Sem avatar" />
-          </div>
-          <TextField
+          <ImageUploadField
             id={`${idPrefix}-avatar`}
-            label="Avatar URL"
-            value={form.avatarUrl}
-            onChange={(event) => update('avatarUrl', event.target.value)}
+            label="Avatar"
+            scope="members"
+            shape="avatar"
             disabled={isSubmitting}
-            placeholder="https://..."
             error={fieldErrors.avatarUrl}
+            value={{ url: form.avatarUrl, path: form.avatarPath }}
+            onChange={(next) =>
+              setForm((current) => ({
+                ...current,
+                avatarUrl: next.url,
+                avatarPath: next.path,
+              }))
+            }
           />
         </div>
 

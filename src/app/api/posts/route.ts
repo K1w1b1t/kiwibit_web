@@ -20,6 +20,8 @@ export async function GET(request: Request) {
       id: true,
       title: true,
       authorId: true,
+      // The public blog shows the author's name, never the raw id.
+      author: { select: { name: true } },
       coverImageUrl: true,
       coverImageAlt: true,
       publishedAt: true,

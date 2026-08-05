@@ -4,12 +4,14 @@ export type CreateMemberPayload = {
   name: string;
   bio?: string;
   avatarUrl?: string;
+  avatarPath?: string;
 };
 
 export type UpdateMemberPayload = {
   name: string;
   bio: string | null;
   avatarUrl: string | null;
+  avatarPath: string | null;
 };
 
 /**
@@ -24,6 +26,7 @@ export function toCreateMemberPayload(values: MemberFormValues): CreateMemberPay
     name: values.name.trim(),
     bio: values.bio.trim() || undefined,
     avatarUrl: values.avatarUrl.trim() || undefined,
+    avatarPath: values.avatarPath.trim() || undefined,
   };
 }
 
@@ -40,5 +43,6 @@ export function toUpdateMemberPayload(values: MemberFormValues): UpdateMemberPay
     name: values.name.trim(),
     bio: values.bio.trim() || null,
     avatarUrl: values.avatarUrl.trim() || null,
+    avatarPath: values.avatarPath.trim() || null,
   };
 }
