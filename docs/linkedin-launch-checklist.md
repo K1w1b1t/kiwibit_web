@@ -169,21 +169,21 @@ Recomendacao de servicos:
 
 ## 5. Mapeamento completo do que preencher
 
-| Campo | Texto pronto | Observacao |
-| --- | --- | --- |
-| Page name | Kiwibit | Nome oficial |
-| Headline | Seguranca ofensiva com foco em estudos, pesquisa e analise pratica. | Texto principal |
-| About | Texto do item 4.3 | Versao longa |
-| Website | https://kiwibit.com.br | Sem barra final |
-| Industry | Computer and Network Security | Categoria do LinkedIn |
-| Company size | Faixa real do time | Escolher com cuidado |
-| Headquarters | Sao Jose dos Campos, SP, Brasil | Padronizar com o site |
-| Company type | Privately Held | Tipo organizacional |
-| Founded | Ano real da marca | Preencher depois |
-| Specialties | Lista do item 4.10 | 5 a 8 itens |
-| CTA button | Visitar site | Ou Saiba mais |
-| Cover image text | Texto do item 4.12 | Legivel no mobile |
-| Featured posts | Blog, writeup, institucional | Apenas 3 grupos |
+| Campo            | Texto pronto                                                        | Observacao            |
+| ---------------- | ------------------------------------------------------------------- | --------------------- |
+| Page name        | Kiwibit                                                             | Nome oficial          |
+| Headline         | Seguranca ofensiva com foco em estudos, pesquisa e analise pratica. | Texto principal       |
+| About            | Texto do item 4.3                                                   | Versao longa          |
+| Website          | https://kiwibit.com.br                                              | Sem barra final       |
+| Industry         | Computer and Network Security                                       | Categoria do LinkedIn |
+| Company size     | Faixa real do time                                                  | Escolher com cuidado  |
+| Headquarters     | Sao Jose dos Campos, SP, Brasil                                     | Padronizar com o site |
+| Company type     | Privately Held                                                      | Tipo organizacional   |
+| Founded          | Ano real da marca                                                   | Preencher depois      |
+| Specialties      | Lista do item 4.10                                                  | 5 a 8 itens           |
+| CTA button       | Visitar site                                                        | Ou Saiba mais         |
+| Cover image text | Texto do item 4.12                                                  | Legivel no mobile     |
+| Featured posts   | Blog, writeup, institucional                                        | Apenas 3 grupos       |
 
 ## 6. Midias que voce precisa produzir
 
@@ -227,6 +227,17 @@ Recomendacao de servicos:
 4. Tenha os textos do About, slogan e especialidades em uma nota.
 5. Separe pelo menos 3 posts iniciais.
 
+### 7.1.1 Onde clicar para criar a pagina
+
+1. Abra o LinkedIn em `linkedin.com` e faca login com sua conta pessoal.
+2. No canto superior direito da pagina inicial, clique em `For Business` ou no menu de aplicativos da conta.
+3. No menu que abrir, procure a opcao `Create a Company Page` ou `Create Page`.
+4. Se essa opcao nao aparecer, abra diretamente `linkedin.com/company/setup/new`.
+5. Na tela de criacao, selecione `Company`.
+6. Avance para o formulario da pagina da empresa.
+
+Se voce nao achar o caminho pelo menu superior, o atalho mais confiavel e o link direto de criacao acima.
+
 ### 7.2 Criar a Company Page
 
 1. Entre no LinkedIn com sua conta pessoal.
@@ -243,21 +254,21 @@ Recomendacao de servicos:
 
 ### 7.2.1 Onde cada informacao vai
 
-| Informacao | Onde preencher no LinkedIn |
-| --- | --- |
+| Informacao     | Onde preencher no LinkedIn        |
+| -------------- | --------------------------------- |
 | Nome da pagina | Campo de page name / company name |
-| URL publica | Campo de page URL, se solicitado |
-| Industria | Campo de industry |
-| Tamanho | Campo de company size |
-| Tipo | Campo de company type |
-| Slogan | Campo de headline / tagline |
-| About | Campo de description / about |
-| Site | Campo de website |
-| Sede | Campo de location / headquarters |
-| Especialidades | Campo de specialties |
-| CTA | Campo de call to action |
-| Logo | Avatar da pagina |
-| Banner | Cover image / background |
+| URL publica    | Campo de page URL, se solicitado  |
+| Industria      | Campo de industry                 |
+| Tamanho        | Campo de company size             |
+| Tipo           | Campo de company type             |
+| Slogan         | Campo de headline / tagline       |
+| About          | Campo de description / about      |
+| Site           | Campo de website                  |
+| Sede           | Campo de location / headquarters  |
+| Especialidades | Campo de specialties              |
+| CTA            | Campo de call to action           |
+| Logo           | Avatar da pagina                  |
+| Banner         | Cover image / background          |
 
 ### 7.3 Configurar a pagina depois de criada
 
@@ -311,21 +322,21 @@ Recomendacao de servicos:
 
 ### 7.9 Onde clicar para cada parte da pagina
 
-| O que editar | Caminho no LinkedIn |
-| --- | --- |
-| Logo | Page home > clicar no avatar > Upload photo / Edit logo |
-| Banner | Page home > clicar na capa > Upload banner / Edit background |
-| Headline | Admin tools > Edit Page > headline / tagline |
-| About | Admin tools > Edit Page > description |
-| Website | Admin tools > Edit Page > website |
-| Industry | Admin tools > Edit Page > industry |
-| Size | Admin tools > Edit Page > company size |
-| Type | Admin tools > Edit Page > company type |
-| Headquarters | Admin tools > Edit Page > location |
-| Specialties | Admin tools > Edit Page > specialties |
-| CTA | Admin tools > Edit Page > call to action |
-| Admins | Admin tools > Manage admins |
-| First post | Page home > Start a post |
+| O que editar | Caminho no LinkedIn                                          |
+| ------------ | ------------------------------------------------------------ |
+| Logo         | Page home > clicar no avatar > Upload photo / Edit logo      |
+| Banner       | Page home > clicar na capa > Upload banner / Edit background |
+| Headline     | Admin tools > Edit Page > headline / tagline                 |
+| About        | Admin tools > Edit Page > description                        |
+| Website      | Admin tools > Edit Page > website                            |
+| Industry     | Admin tools > Edit Page > industry                           |
+| Size         | Admin tools > Edit Page > company size                       |
+| Type         | Admin tools > Edit Page > company type                       |
+| Headquarters | Admin tools > Edit Page > location                           |
+| Specialties  | Admin tools > Edit Page > specialties                        |
+| CTA          | Admin tools > Edit Page > call to action                     |
+| Admins       | Admin tools > Manage admins                                  |
+| First post   | Page home > Start a post                                     |
 
 ## 8. Textos prontos para os primeiros posts
 

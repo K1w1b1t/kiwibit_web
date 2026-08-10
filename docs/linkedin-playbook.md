@@ -198,21 +198,21 @@ Recomendacao de servicos:
 
 Use esta lista como checklist de publicacao.
 
-| Secao | Texto que precisa existir | Observacao |
-| --- | --- | --- |
-| Nome | Kiwibit | Ja definido |
-| Slogan | 1 frase curta de posicionamento | Ver item 5.2 |
-| About | 1 a 2 paragrafos | Ver item 5.3 |
-| Website | URL canonica da empresa | Sem barra final |
-| Industria | Categoria oficial do LinkedIn | Escolher a mais precisa |
-| Tamanho | Faixa de funcionarios | Preencher com a realidade |
-| Sede | Cidade, estado e pais | Padronizar com o site |
-| Tipo | Tipo juridico/organizacional | Escolha consistente |
-| Fundacao | Ano de inicio | Preencher com dado real |
-| Especialidades | Lista curta de palavras-chave | Nao inflar a lista |
-| CTA | Botao principal da pagina | Deve refletir objetivo |
-| Capa | Headline + subheadline ou headline unica | Leitura rapida no mobile |
-| Destaques | Titulos, descricoes e links | Priorizar blog, writeups e estudos |
+| Secao          | Texto que precisa existir                | Observacao                         |
+| -------------- | ---------------------------------------- | ---------------------------------- |
+| Nome           | Kiwibit                                  | Ja definido                        |
+| Slogan         | 1 frase curta de posicionamento          | Ver item 5.2                       |
+| About          | 1 a 2 paragrafos                         | Ver item 5.3                       |
+| Website        | URL canonica da empresa                  | Sem barra final                    |
+| Industria      | Categoria oficial do LinkedIn            | Escolher a mais precisa            |
+| Tamanho        | Faixa de funcionarios                    | Preencher com a realidade          |
+| Sede           | Cidade, estado e pais                    | Padronizar com o site              |
+| Tipo           | Tipo juridico/organizacional             | Escolha consistente                |
+| Fundacao       | Ano de inicio                            | Preencher com dado real            |
+| Especialidades | Lista curta de palavras-chave            | Nao inflar a lista                 |
+| CTA            | Botao principal da pagina                | Deve refletir objetivo             |
+| Capa           | Headline + subheadline ou headline unica | Leitura rapida no mobile           |
+| Destaques      | Titulos, descricoes e links              | Priorizar blog, writeups e estudos |
 
 ## 7. Midias que precisam ser produzidas
 
