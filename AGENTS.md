@@ -151,10 +151,11 @@ Status codes: `400` bad input · `401` unauthenticated · `403` forbidden · `40
 
 ## 8. Quality Gates — MANDATORY
 
-Every change MUST pass all four commands before the task is considered complete:
+Every change MUST pass all five commands before the task is considered complete:
 
 ```bash
 npm run lint       # zero ESLint errors
+npm run format:check # Prettier formatting check passes
 npm run build      # Next.js build succeeds
 npm run test       # unit tests pass
 npm run test:e2e   # E2E tests pass (requires Docker)
@@ -179,7 +180,7 @@ npm run test:e2e   # E2E tests pass (requires Docker)
 3. Never place code outside the defined layers without explicit human instruction.
 4. Always use TypeScript; never use `any`.
 5. Search for existing components/helpers before creating new ones (see Section 6 — Reuse).
-6. Run all four quality gate commands after every change (Section 8).
+6. Run all five quality gate commands after every change (Section 8).
 7. Keep output minimal and aligned with project conventions.
 
 ## 2. Project Stack
