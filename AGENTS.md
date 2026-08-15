@@ -155,12 +155,13 @@ Every change MUST pass all five commands before the task is considered complete:
 
 ```bash
 npm run lint       # zero ESLint errors
-npm run format:check # Prettier formatting check passes
+npm run format     # Prettier code formatting applied
 npm run build      # Next.js build succeeds
 npm run test       # unit tests pass
 npm run test:e2e   # E2E tests pass (requires Docker)
 ```
 
+- Run `npm run format` to ensure consistent code formatting before committing.
 - Fix lint errors immediately before continuing.
 - Fix TypeScript/build errors before continuing (`npx tsc --noEmit` as fast pre-check).
 - E2E failures may indicate broken API contracts, auth regression, or migration issues.

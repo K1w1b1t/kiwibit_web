@@ -170,6 +170,7 @@ Padrao adotado:
 - [docs/design.md] (docs/design.md)
 - [docs/login.md](docs/login.md)
 - [docs/infrastructure.md](docs/infrastructure.md)
+- [docs/linkedin-playbook.md](docs/linkedin-playbook.md)
 - [docs/database/database.png] (docs/database/database.png)
 
 ## Próximos passos

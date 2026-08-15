@@ -40,9 +40,39 @@ model Member {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  linkedinConnection LinkedinConnection?
 
   @@map("members")
+}
+
+/// LinkedIn OAuth link for a member, used to sync the profile photo (issue #80).
+///
+/// A dedicated table rather than columns on `Member`: `Member` is read by public
+/// queries, and the access token must never ride along in those selects. The
+/// token is stored encrypted at rest (AES-256-GCM, see `token-crypto.ts`) and
+/// only ever decrypted server-side.
+///
+/// The current scope is basic OIDC (`openid profile email`), whose token cannot
+/// post. Auto-posting (issue #81) will extend the scope, re-consent, and add a
+/// refresh-token column here.
+model LinkedinConnection {
+  id       String @id @default(uuid()) @db.Uuid
+  memberId String @unique @map("member_id") @db.Uuid
+  /// OIDC `sub` claim — the stable LinkedIn identity. Unique so two members
+  /// cannot claim the same LinkedIn account.
+  linkedinSub String @unique @map("linkedin_sub")
+  /// Space-separated scopes granted at connection time.
+  scope String
+  /// Access token, encrypted as `iv:authTag:ciphertext` (all base64).
+  accessTokenEnc    String   @map("access_token_enc")
+  accessTokenExpiry DateTime @map("access_token_expiry")
+  connectedAt       DateTime @default(now()) @map("connected_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("linkedin_connections")
 }
 
 model Project {

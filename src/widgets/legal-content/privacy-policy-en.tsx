@@ -29,6 +29,14 @@ export function PrivacyPolicyEn() {
           <li>The content of the message you send</li>
         </ul>
         <p>
+          In addition, when an authenticated user from the administrative panel connects their own
+          LinkedIn account to sync their profile photo, we may receive and process basic profile
+          data (such as a unique identifier and photo) and store an access token encrypted in our
+          database solely for the execution of that feature. This processing is limited to
+          authenticated users of the administrative area and is not used as a public login
+          mechanism.
+        </p>
+        <p>
           We do not use tracking or advertising cookies. We only use one functional cookie (
           <code>NEXT_LOCALE</code>) to remember your language preference.
         </p>
@@ -37,9 +45,11 @@ export function PrivacyPolicyEn() {
       <section>
         <h2>3. Purpose and legal basis</h2>
         <p>
-          We process this data to respond to your contact and to carry out the requested business
-          communication. The legal basis is your consent and pre-contractual procedures, under
-          Article 7 of the LGPD.
+          We process this data to respond to your contact, carry out the requested business
+          communication, and, where applicable, execute the user’s voluntary connection with
+          LinkedIn for profile photo synchronization. The legal basis is your consent and
+          pre-contractual procedures, under Article 7 of the LGPD, as well as the express consent
+          provided through the LinkedIn authorization flow.
         </p>
       </section>
 

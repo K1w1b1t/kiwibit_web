@@ -96,9 +96,7 @@ Preencher com o ano real de inicio da operacao formal da marca.
 
 ### 4.10 Especialidades
 
-Use entre 5 e 8 especialidades, sem exagero.
-
-Recomendacao de lista:
+Use estas especialidades, nessa ordem se o LinkedIn permitir:
 
 - Offensive Security
 - Security Research
@@ -144,7 +142,7 @@ Se a pagina permitir uma descricao mais longa, use estes tres blocos:
 
 ### 4.15 Palavras-chave de marca
 
-Estas palavras devem aparecer de forma consistente ao longo da pagina e dos posts:
+Estas palavras devem aparecer de forma consistente na pagina e nos posts:
 
 - seguranca ofensiva
 - pesquisa aplicada
@@ -226,17 +224,6 @@ Recomendacao de servicos:
 3. Separe o logo e o banner em arquivos prontos.
 4. Tenha os textos do About, slogan e especialidades em uma nota.
 5. Separe pelo menos 3 posts iniciais.
-
-### 7.1.1 Onde clicar para criar a pagina
-
-1. Abra o LinkedIn em `linkedin.com` e faca login com sua conta pessoal.
-2. No canto superior direito da pagina inicial, clique em `For Business` ou no menu de aplicativos da conta.
-3. No menu que abrir, procure a opcao `Create a Company Page` ou `Create Page`.
-4. Se essa opcao nao aparecer, abra diretamente `linkedin.com/company/setup/new`.
-5. Na tela de criacao, selecione `Company`.
-6. Avance para o formulario da pagina da empresa.
-
-Se voce nao achar o caminho pelo menu superior, o atalho mais confiavel e o link direto de criacao acima.
 
 ### 7.2 Criar a Company Page
 
