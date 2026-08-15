@@ -27,7 +27,9 @@ describe('GET /api/admin/members/linkedin/callback', () => {
 
   it('redirects to members list when OAuth cookie is missing', async () => {
     mockAuth();
-    const req = new NextRequest('http://localhost/api/admin/members/linkedin/callback?code=123&state=abc');
+    const req = new NextRequest(
+      'http://localhost/api/admin/members/linkedin/callback?code=123&state=abc',
+    );
     const res = await linkedinCallback(req);
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/admin/members');
@@ -35,9 +37,12 @@ describe('GET /api/admin/members/linkedin/callback', () => {
 
   it('redirects with error status when state in URL does not match state in cookie', async () => {
     mockAuth();
-    const req = new NextRequest('http://localhost/api/admin/members/linkedin/callback?code=123&state=wrong_state', {
-      headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=correct_state:verifier:mid-1` },
-    });
+    const req = new NextRequest(
+      'http://localhost/api/admin/members/linkedin/callback?code=123&state=wrong_state',
+      {
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=correct_state:verifier:mid-1` },
+      },
+    );
     const res = await linkedinCallback(req);
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/admin/members/mid-1/edit?linkedin=error');
@@ -45,11 +50,17 @@ describe('GET /api/admin/members/linkedin/callback', () => {
 
   it('redirects with forbidden status when signed-in user does not own the member', async () => {
     mockAuth(); // user id is uid-1
-    (prisma.member.findUnique as jest.Mock).mockResolvedValue({ userId: 'other-user', avatarPath: null });
-
-    const req = new NextRequest('http://localhost/api/admin/members/linkedin/callback?code=123&state=state123', {
-      headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'other-user',
+      avatarPath: null,
     });
+
+    const req = new NextRequest(
+      'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
+      {
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
+      },
+    );
     const res = await linkedinCallback(req);
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/admin/members/mid-1/edit?linkedin=forbidden');
@@ -57,7 +68,10 @@ describe('GET /api/admin/members/linkedin/callback', () => {
 
   it('redirects with error status when linkedinSub is already bound to another member', async () => {
     mockAuth();
-    (prisma.member.findUnique as jest.Mock).mockResolvedValue({ userId: 'uid-1', avatarPath: null });
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      avatarPath: null,
+    });
 
     jest.spyOn(linkedinLib, 'exchangeCode').mockResolvedValue({
       accessToken: 'tok-123',
@@ -73,9 +87,12 @@ describe('GET /api/admin/members/linkedin/callback', () => {
       memberId: 'other-member-id',
     });
 
-    const req = new NextRequest('http://localhost/api/admin/members/linkedin/callback?code=123&state=state123', {
-      headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
-    });
+    const req = new NextRequest(
+      'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
+      {
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
+      },
+    );
     const res = await linkedinCallback(req);
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/admin/members/mid-1/edit?linkedin=error');
@@ -83,7 +100,10 @@ describe('GET /api/admin/members/linkedin/callback', () => {
 
   it('successfully connects LinkedIn account and upserts connection', async () => {
     mockAuth();
-    (prisma.member.findUnique as jest.Mock).mockResolvedValue({ userId: 'uid-1', avatarPath: null });
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      avatarPath: null,
+    });
 
     jest.spyOn(linkedinLib, 'exchangeCode').mockResolvedValue({
       accessToken: 'tok-123',
@@ -99,9 +119,12 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     (prisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prisma));
     (prisma.linkedinConnection.upsert as jest.Mock).mockResolvedValue({});
 
-    const req = new NextRequest('http://localhost/api/admin/members/linkedin/callback?code=123&state=state123', {
-      headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
-    });
+    const req = new NextRequest(
+      'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
+      {
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
+      },
+    );
     const res = await linkedinCallback(req);
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/admin/members/mid-1/edit?linkedin=connected');

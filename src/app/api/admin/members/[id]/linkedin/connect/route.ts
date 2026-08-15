@@ -2,7 +2,12 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { requireAdminSession } from '@/shared/lib/api-helpers';
-import { authorizeUrl, generatePkce, isLinkedinConfigured, LINKEDIN_OAUTH_COOKIE } from '@/shared/lib/linkedin';
+import {
+  authorizeUrl,
+  generatePkce,
+  isLinkedinConfigured,
+  LINKEDIN_OAUTH_COOKIE,
+} from '@/shared/lib/linkedin';
 import { isTokenCryptoConfigured } from '@/shared/lib/token-crypto';
 import { absoluteUrl } from '@/shared/lib/seo';
 

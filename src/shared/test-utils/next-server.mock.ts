@@ -6,7 +6,8 @@ export class NextRequest extends Request {
 
   constructor(input: RequestInfo | URL, init?: RequestInit) {
     super(input, init);
-    const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const urlStr =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     this.nextUrl = new URL(urlStr);
 
     const cookieHeader = (init?.headers as Record<string, string> | undefined)?.cookie;
