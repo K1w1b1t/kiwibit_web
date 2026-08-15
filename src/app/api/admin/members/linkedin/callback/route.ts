@@ -44,7 +44,12 @@ async function syncPhoto(pictureUrl: string | null): Promise<{ url: string; path
   if (!pictureUrl || !isStorageConfigured()) return null;
 
   try {
-    const response = await fetch(pictureUrl);
+    const parsedUrl = new URL(pictureUrl);
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) return null;
+
+    const response = await fetch(pictureUrl, {
+      signal: AbortSignal.timeout(15000),
+    });
     if (!response.ok) return null;
 
     const bytes = new Uint8Array(await response.arrayBuffer());
@@ -68,7 +73,7 @@ export async function GET(request: NextRequest) {
   const cookie = parseOauthCookie(request.cookies.get(LINKEDIN_OAUTH_COOKIE)?.value);
   // With no cookie there is no member to redirect back to; land on the list.
   if (!cookie) return NextResponse.redirect(absoluteUrl('/admin/members'));
-  const { state, memberId } = cookie;
+  const { state, codeVerifier, memberId } = cookie;
 
   const params = request.nextUrl.searchParams;
   // LinkedIn returns `error` when the member declines consent.
@@ -91,8 +96,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const token = await exchangeCode(code);
+    const token = await exchangeCode(code, codeVerifier);
     const userinfo = await fetchUserinfo(token.accessToken);
+
+    // Prevent binding the same LinkedIn account to another member
+    const existingConnection = await prisma.linkedinConnection.findUnique({
+      where: { linkedinSub: userinfo.sub },
+      select: { memberId: true },
+    });
+    if (existingConnection && existingConnection.memberId !== memberId) {
+      return redirectEdit(memberId, 'error');
+    }
+
     const photo = await syncPhoto(userinfo.picture);
 
     const expiry = new Date(Date.now() + token.expiresInSeconds * 1000);
