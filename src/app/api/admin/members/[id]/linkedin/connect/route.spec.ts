@@ -51,7 +51,7 @@ describe('GET /api/admin/members/[id]/linkedin/connect', () => {
     expect(res.headers.get('location')).toContain('/admin/members/mid-1/edit?linkedin=forbidden');
   });
 
-  it('starts OAuth flow with PKCE and sets httpOnly cookie', async () => {
+  it('starts OAuth flow and sets httpOnly cookie', async () => {
     mockAuth();
     (prisma.member.findUnique as jest.Mock).mockResolvedValue({ userId: 'uid-1' });
 
@@ -63,8 +63,7 @@ describe('GET /api/admin/members/[id]/linkedin/connect', () => {
     expect(res.status).toBe(307);
     const location = res.headers.get('location');
     expect(location).toContain('https://www.linkedin.com/oauth/v2/authorization');
-    expect(location).toContain('code_challenge=');
-    expect(location).toContain('code_challenge_method=S256');
+    expect(location).toContain('response_type=code');
 
     const cookieHeader = res.headers.get('set-cookie');
     expect(cookieHeader).toContain(linkedinLib.LINKEDIN_OAUTH_COOKIE);

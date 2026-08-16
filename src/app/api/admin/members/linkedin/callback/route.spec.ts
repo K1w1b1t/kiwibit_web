@@ -40,7 +40,7 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     const req = new NextRequest(
       'http://localhost/api/admin/members/linkedin/callback?code=123&state=wrong_state',
       {
-        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=correct_state:verifier:mid-1` },
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=correct_state:mid-1` },
       },
     );
     const res = await linkedinCallback(req);
@@ -58,7 +58,7 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     const req = new NextRequest(
       'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
       {
-        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:mid-1` },
       },
     );
     const res = await linkedinCallback(req);
@@ -90,7 +90,7 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     const req = new NextRequest(
       'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
       {
-        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:mid-1` },
       },
     );
     const res = await linkedinCallback(req);
@@ -122,7 +122,7 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     const req = new NextRequest(
       'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
       {
-        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:verifier123:mid-1` },
+        headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:mid-1` },
       },
     );
     const res = await linkedinCallback(req);

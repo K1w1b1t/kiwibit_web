@@ -2,35 +2,15 @@ import {
   authorizeUrl,
   exchangeCode,
   fetchUserinfo,
-  generatePkce,
   isLinkedinConfigured,
   LINKEDIN_SCOPE,
   parseOauthCookie,
   redirectUri,
 } from './linkedin';
 
-describe('generatePkce', () => {
-  it('generates a valid codeVerifier and S256 codeChallenge', () => {
-    const { codeVerifier, codeChallenge } = generatePkce();
-    expect(codeVerifier).toBeTruthy();
-    expect(codeChallenge).toBeTruthy();
-    expect(typeof codeVerifier).toBe('string');
-    expect(typeof codeChallenge).toBe('string');
-    expect(codeVerifier).not.toEqual(codeChallenge);
-  });
-});
-
 describe('parseOauthCookie', () => {
-  it('splits state and member id (legacy 2-part format)', () => {
+  it('splits state and member id', () => {
     expect(parseOauthCookie('abc:member-1')).toEqual({ state: 'abc', memberId: 'member-1' });
-  });
-
-  it('splits state, codeVerifier, and member id (3-part PKCE format)', () => {
-    expect(parseOauthCookie('abc:verifier123:member-1')).toEqual({
-      state: 'abc',
-      codeVerifier: 'verifier123',
-      memberId: 'member-1',
-    });
   });
 
   it('rejects malformed or empty values', () => {
@@ -60,19 +40,17 @@ describe('LinkedIn OAuth lib', () => {
     expect(isLinkedinConfigured()).toBe(false);
   });
 
-  it('builds an authorize URL with PKCE parameters, basic scope, and fixed redirect', () => {
-    const url = new URL(authorizeUrl('state-xyz', 'challenge-123'));
+  it('builds an authorize URL with basic scope and fixed redirect', () => {
+    const url = new URL(authorizeUrl('state-xyz'));
     expect(url.origin + url.pathname).toBe('https://www.linkedin.com/oauth/v2/authorization');
     expect(url.searchParams.get('response_type')).toBe('code');
     expect(url.searchParams.get('client_id')).toBe('client-123');
     expect(url.searchParams.get('scope')).toBe(LINKEDIN_SCOPE);
     expect(url.searchParams.get('state')).toBe('state-xyz');
-    expect(url.searchParams.get('code_challenge')).toBe('challenge-123');
-    expect(url.searchParams.get('code_challenge_method')).toBe('S256');
     expect(url.searchParams.get('redirect_uri')).toBe(redirectUri());
   });
 
-  it('exchanges a code with codeVerifier for an access token', async () => {
+  it('exchanges a code for an access token', async () => {
     const fetchMock = jest
       .spyOn(global, 'fetch')
       .mockResolvedValue(
@@ -82,7 +60,7 @@ describe('LinkedIn OAuth lib', () => {
         ),
       );
 
-    const result = await exchangeCode('the-code', 'verifier-456');
+    const result = await exchangeCode('the-code');
     expect(result).toEqual({
       accessToken: 'tok',
       expiresInSeconds: 5184000,
@@ -95,8 +73,6 @@ describe('LinkedIn OAuth lib', () => {
         body: expect.any(URLSearchParams),
       }),
     );
-    const callBody = fetchMock.mock.calls[0][1]?.body as URLSearchParams;
-    expect(callBody.get('code_verifier')).toBe('verifier-456');
   });
 
   it('throws when the token exchange fails', async () => {
