@@ -1,4 +1,6 @@
 import { absoluteUrl } from '@/shared/lib/seo';
+import { runAfterResponse } from '@/shared/lib/after-response';
+import { reportServerError } from '@/shared/lib/discord';
 
 /**
  * "Sign In with LinkedIn using OpenID Connect" OAuth, used to sync a member's
@@ -8,8 +10,7 @@ import { absoluteUrl } from '@/shared/lib/seo';
  * here is `NEXT_PUBLIC_` and the module is imported solely from route handlers.
  *
  * Scope is the basic OIDC set: it returns name/email/`picture` and cannot post.
- * Auto-posting (issue #81) will add `w_member_social`, a separate LinkedIn
- * product approval, and re-consent.
+ * Auto-posting adds a separate LinkedIn product approval flow and re-consent.
  */
 export const LINKEDIN_SCOPE = 'openid profile email';
 
@@ -34,7 +35,7 @@ export function parseOauthCookie(
     return { state, memberId };
   }
 
-  // Fallback for legacy 3-part cookie format if any
+  // Fallback for legacy 3-part cookie format if any.
   const memberId = rest.slice(secondColon + 1);
   if (!state || !memberId) return null;
   return { state, memberId };
@@ -133,3 +134,180 @@ export async function fetchUserinfo(accessToken: string): Promise<LinkedinUserin
     picture: typeof json.picture === 'string' ? json.picture : null,
   };
 }
+
+export type LinkedInTarget = 'personal' | 'company';
+
+export type LinkedInAutoPostInput = {
+  title: string;
+  url: string;
+  summary?: string;
+  imageUrl?: string | null;
+};
+
+export type LinkedInAutoPostResult = {
+  ok: boolean;
+  sent?: boolean;
+  skipped?: boolean;
+  expired?: boolean;
+  target?: LinkedInTarget;
+  status?: number;
+  code?: string;
+  detail?: string;
+};
+
+export type LinkedInBlogPost = {
+  id: string;
+  title: string;
+  content: string;
+  coverImageUrl: string | null;
+  status: 'draft' | 'published';
+};
+
+function getLinkedInConfig(target: LinkedInTarget) {
+  const config = {
+    personal: {
+      enabled: process.env.LINKEDIN_PERSONAL_AUTO_POST_ENABLED,
+      token: process.env.LINKEDIN_PERSONAL_ACCESS_TOKEN,
+      authorUrn: process.env.LINKEDIN_PERSONAL_AUTHOR_URN,
+    },
+    company: {
+      enabled: process.env.LINKEDIN_COMPANY_AUTO_POST_ENABLED,
+      token: process.env.LINKEDIN_COMPANY_ACCESS_TOKEN,
+      authorUrn: process.env.LINKEDIN_COMPANY_AUTHOR_URN,
+    },
+  }[target];
+
+  return {
+    enabled: config.enabled === 'true' || config.enabled === '1',
+    token: config.token?.trim() || undefined,
+    authorUrn: config.authorUrn?.trim() || undefined,
+  };
+}
+
+function ensureLinkedInText(input: LinkedInAutoPostInput): string {
+  const baseText = [input.title, input.summary?.trim() || '', input.url].filter(Boolean).join('\n\n');
+  return baseText.trim().slice(0, 3000);
+}
+
+function buildPayload(input: LinkedInAutoPostInput, authorUrn: string) {
+  const summaryText = input.summary?.trim() || 'Leia o artigo completo no blog da Kiwibit.';
+  const shareText = ensureLinkedInText(input);
+
+  return {
+    author: authorUrn,
+    lifecycleState: 'PUBLISHED',
+    specificContent: {
+      'com.linkedin.ugc.ShareContent': {
+        shareCommentary: { text: shareText },
+        shareMediaCategory: 'ARTICLE',
+        media: [
+          {
+            status: 'READY',
+            description: { text: summaryText.slice(0, 200) },
+            originalUrl: input.url,
+            title: { text: input.title.slice(0, 200) },
+            ...(input.imageUrl ? { media: input.imageUrl } : {}),
+          },
+        ],
+      },
+    },
+    visibility: 'PUBLIC',
+  };
+}
+
+export async function triggerLinkedInAutoPost(
+  target: LinkedInTarget,
+  input: LinkedInAutoPostInput,
+): Promise<LinkedInAutoPostResult> {
+  const { enabled, token, authorUrn } = getLinkedInConfig(target);
+
+  if (!enabled || !token || !authorUrn || !input.url) {
+    return { ok: false, skipped: true, target };
+  }
+
+  const payload = buildPayload(input, authorUrn);
+
+  try {
+    const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.9',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (response.ok) {
+      return { ok: true, sent: true, target, status: response.status };
+    }
+
+    const rawBody = await response.text().catch(() => '');
+    const expired =
+      response.status === 401 || /expired|invalid_token|token.*expired|unauthorized/i.test(rawBody);
+
+    if (expired) {
+      return {
+        ok: false,
+        expired: true,
+        target,
+        status: response.status,
+        code: 'LINKEDIN_TOKEN_EXPIRED',
+        detail: rawBody.slice(0, 500),
+      };
+    }
+
+    return {
+      ok: false,
+      target,
+      status: response.status,
+      code: 'LINKEDIN_POST_FAILED',
+      detail: rawBody.slice(0, 500),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown LinkedIn API error';
+    return {
+      ok: false,
+      target,
+      code: 'LINKEDIN_POST_ERROR',
+      detail: message.slice(0, 500),
+    };
+  }
+}
+
+export async function triggerLinkedInAutoPostForBlog(post: LinkedInBlogPost): Promise<LinkedInAutoPostResult[]> {
+  if (post.status !== 'published') return [];
+
+  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+  const postUrl = `${siteBase}/blog/${post.id}`;
+  const results: LinkedInAutoPostResult[] = [];
+
+  for (const target of ['personal', 'company'] as const) {
+    const result = await triggerLinkedInAutoPost(target, {
+      title: post.title,
+      summary: post.content.replace(/\s+/g, ' ').trim().slice(0, 180),
+      url: postUrl,
+      imageUrl: post.coverImageUrl ?? null,
+    });
+
+    results.push(result);
+
+    if (result.ok || result.skipped) continue;
+
+    runAfterResponse(() =>
+      reportServerError({
+        source: 'linkedinAutoPost',
+        code: result.code ?? 'LINKEDIN_POST_FAILED',
+        message: `LinkedIn ${target} auto-post failed for blog post ${post.id}. ${result.detail ?? 'No response body returned.'}`,
+        status: result.status,
+      }),
+    );
+  }
+
+  return results;
+}
+
+export const publishLinkedInPost = triggerLinkedInAutoPost;
+export const publishToLinkedIn = triggerLinkedInAutoPost;
+

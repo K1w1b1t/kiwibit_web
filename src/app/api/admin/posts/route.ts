@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
 import {
   requireAdminSession,
@@ -10,6 +11,7 @@ import {
 } from '@/shared/lib/api-helpers';
 import { isPostStatus, resolvePublishedAt } from '@/shared/lib/post-status';
 import { isHttpUrl } from '@/shared/lib/url';
+import { triggerLinkedInAutoPostForBlog } from '@/shared/lib/linkedin';
 
 // GET /api/admin/posts
 export async function GET(request: Request) {
@@ -65,6 +67,10 @@ export async function POST(request: Request) {
       ...(typeof coverImageAlt === 'string' && { coverImageAlt }),
     },
   });
+
+  if (post.status === 'published') {
+    runAfterResponse(() => triggerLinkedInAutoPostForBlog(post));
+  }
 
   return NextResponse.json({ success: true, data: post }, { status: 201 });
 }

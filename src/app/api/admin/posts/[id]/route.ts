@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
 import {
   requireAdminSession,
@@ -11,6 +12,7 @@ import {
   toPostUpdateData,
 } from '@/features/admin/posts/model/validate-post-body';
 import { deleteObjects } from '@/shared/lib/storage';
+import { triggerLinkedInAutoPostForBlog } from '@/shared/lib/linkedin';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -45,6 +47,10 @@ export async function PUT(request: Request, { params }: Params) {
     where: { id },
     data: toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
   });
+
+  if (updated.status === 'published' && existing.status !== 'published') {
+    runAfterResponse(() => triggerLinkedInAutoPostForBlog(updated));
+  }
 
   // The cover was replaced or cleared: drop the object that is no longer
   // referenced, but only after the row committed.
