@@ -185,7 +185,9 @@ function getLinkedInConfig(target: LinkedInTarget) {
 }
 
 function ensureLinkedInText(input: LinkedInAutoPostInput): string {
-  const baseText = [input.title, input.summary?.trim() || '', input.url].filter(Boolean).join('\n\n');
+  const baseText = [input.title, input.summary?.trim() || '', input.url]
+    .filter(Boolean)
+    .join('\n\n');
   return baseText.trim().slice(0, 3000);
 }
 
@@ -276,7 +278,9 @@ export async function triggerLinkedInAutoPost(
   }
 }
 
-export async function triggerLinkedInAutoPostForBlog(post: LinkedInBlogPost): Promise<LinkedInAutoPostResult[]> {
+export async function triggerLinkedInAutoPostForBlog(
+  post: LinkedInBlogPost,
+): Promise<LinkedInAutoPostResult[]> {
   if (post.status !== 'published') return [];
 
   const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
@@ -310,4 +314,3 @@ export async function triggerLinkedInAutoPostForBlog(post: LinkedInBlogPost): Pr
 
 export const publishLinkedInPost = triggerLinkedInAutoPost;
 export const publishToLinkedIn = triggerLinkedInAutoPost;
-
