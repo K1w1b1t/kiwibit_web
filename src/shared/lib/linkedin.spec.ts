@@ -6,6 +6,7 @@ import {
   LINKEDIN_SCOPE,
   parseOauthCookie,
   redirectUri,
+  triggerLinkedInAutoPost,
 } from './linkedin';
 
 describe('parseOauthCookie', () => {
@@ -101,5 +102,74 @@ describe('LinkedIn OAuth lib', () => {
 
     spy.mockResolvedValueOnce(new Response(JSON.stringify({ picture: 'x' }), { status: 200 }));
     await expect(fetchUserinfo('tok')).rejects.toThrow();
+  });
+});
+
+describe('triggerLinkedInAutoPost', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete (global as { fetch?: unknown }).fetch;
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  it('skips when the target is disabled or unconfigured', async () => {
+    const result = await triggerLinkedInAutoPost('personal', {
+      title: 'Hello',
+      url: 'https://example.com/post/123',
+    });
+
+    expect(result).toMatchObject({ ok: false, skipped: true });
+  });
+
+  it('posts to LinkedIn for a configured personal profile', async () => {
+    process.env.LINKEDIN_PERSONAL_ACCESS_TOKEN = 'token';
+    process.env.LINKEDIN_PERSONAL_AUTO_POST_ENABLED = 'true';
+    process.env.LINKEDIN_PERSONAL_AUTHOR_URN = 'urn:li:person:abc123';
+
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await triggerLinkedInAutoPost('personal', {
+      title: 'Hello',
+      summary: 'A short summary',
+      url: 'https://example.com/post/123',
+    });
+
+    expect(result).toMatchObject({ ok: true, sent: true });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.linkedin.com/v2/ugcPosts',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer token',
+          'Content-Type': 'application/json',
+        }),
+      }),
+    );
+  });
+
+  it('marks expired tokens without throwing', async () => {
+    process.env.LINKEDIN_COMPANY_ACCESS_TOKEN = 'token';
+    process.env.LINKEDIN_COMPANY_AUTO_POST_ENABLED = 'true';
+    process.env.LINKEDIN_COMPANY_AUTHOR_URN = 'urn:li:organization:abc123';
+
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => 'expired',
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await triggerLinkedInAutoPost('company', {
+      title: 'Hello',
+      url: 'https://example.com/post/123',
+    });
+
+    expect(result).toMatchObject({ ok: false, expired: true });
   });
 });
