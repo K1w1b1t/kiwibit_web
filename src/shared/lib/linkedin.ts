@@ -1,4 +1,3 @@
-import { createHash, randomBytes } from 'node:crypto';
 import { absoluteUrl } from '@/shared/lib/seo';
 
 /**
@@ -14,22 +13,13 @@ import { absoluteUrl } from '@/shared/lib/seo';
  */
 export const LINKEDIN_SCOPE = 'openid profile email';
 
-/** httpOnly cookie carrying `${state}:${codeVerifier}:${memberId}` between connect and callback. */
+/** httpOnly cookie carrying `${state}:${memberId}` between connect and callback. */
 export const LINKEDIN_OAUTH_COOKIE = 'linkedin_oauth';
 
-export type PkcePair = { codeVerifier: string; codeChallenge: string };
-
-/** Generates a cryptographically random PKCE code verifier and S256 challenge. */
-export function generatePkce(): PkcePair {
-  const codeVerifier = randomBytes(32).toString('base64url');
-  const codeChallenge = createHash('sha256').update(codeVerifier).digest('base64url');
-  return { codeVerifier, codeChallenge };
-}
-
-/** Parses the OAuth state cookie carrying state, optional codeVerifier, and memberId. */
+/** Parses the OAuth state cookie carrying state and memberId. */
 export function parseOauthCookie(
   value: string | undefined,
-): { state: string; codeVerifier?: string; memberId: string } | null {
+): { state: string; memberId: string } | null {
   if (!value) return null;
   const firstColon = value.indexOf(':');
   if (firstColon <= 0) return null;
@@ -44,10 +34,10 @@ export function parseOauthCookie(
     return { state, memberId };
   }
 
-  const codeVerifier = rest.slice(0, secondColon);
+  // Fallback for legacy 3-part cookie format if any
   const memberId = rest.slice(secondColon + 1);
-  if (!state || !codeVerifier || !memberId) return null;
-  return { state, codeVerifier, memberId };
+  if (!state || !memberId) return null;
+  return { state, memberId };
 }
 
 const AUTHORIZE_URL = 'https://www.linkedin.com/oauth/v2/authorization';
@@ -74,7 +64,7 @@ export function isLinkedinConfigured(): boolean {
 }
 
 /** Authorization URL to redirect the member to for consent. */
-export function authorizeUrl(state: string, codeChallenge?: string): string {
+export function authorizeUrl(state: string): string {
   const config = readConfig();
   if (!config) throw new Error('LinkedIn is not configured.');
 
@@ -85,17 +75,13 @@ export function authorizeUrl(state: string, codeChallenge?: string): string {
     scope: LINKEDIN_SCOPE,
     state,
   });
-  if (codeChallenge) {
-    params.set('code_challenge', codeChallenge);
-    params.set('code_challenge_method', 'S256');
-  }
   return `${AUTHORIZE_URL}?${params.toString()}`;
 }
 
 export type TokenResult = { accessToken: string; expiresInSeconds: number; scope: string };
 
 /** Exchanges the authorization code for an access token (client secret stays server-side). */
-export async function exchangeCode(code: string, codeVerifier?: string): Promise<TokenResult> {
+export async function exchangeCode(code: string): Promise<TokenResult> {
   const config = readConfig();
   if (!config) throw new Error('LinkedIn is not configured.');
 
@@ -106,9 +92,6 @@ export async function exchangeCode(code: string, codeVerifier?: string): Promise
     client_id: config.clientId,
     client_secret: config.clientSecret,
   });
-  if (codeVerifier) {
-    body.set('code_verifier', codeVerifier);
-  }
 
   const response = await fetch(TOKEN_URL, {
     method: 'POST',

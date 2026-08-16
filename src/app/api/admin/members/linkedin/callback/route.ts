@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
   const cookie = parseOauthCookie(request.cookies.get(LINKEDIN_OAUTH_COOKIE)?.value);
   // With no cookie there is no member to redirect back to; land on the list.
   if (!cookie) return NextResponse.redirect(absoluteUrl('/admin/members'));
-  const { state, codeVerifier, memberId } = cookie;
+  const { state, memberId } = cookie;
 
   const params = request.nextUrl.searchParams;
   // LinkedIn returns `error` when the member declines consent.
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const token = await exchangeCode(code, codeVerifier);
+    const token = await exchangeCode(code);
     const userinfo = await fetchUserinfo(token.accessToken);
 
     // Prevent binding the same LinkedIn account to another member
@@ -144,7 +144,8 @@ export async function GET(request: NextRequest) {
     }
 
     return redirectEdit(memberId, 'connected');
-  } catch {
+  } catch (error) {
+    console.error('[LinkedIn OAuth Callback Error]', error);
     return redirectEdit(memberId, 'error');
   }
 }
