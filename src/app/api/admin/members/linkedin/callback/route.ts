@@ -8,6 +8,7 @@ import {
   isLinkedinConfigured,
   LINKEDIN_OAUTH_COOKIE,
   parseOauthCookie,
+  scopeAllowsAutoPost,
 } from '@/shared/lib/linkedin';
 import { encryptToken, isTokenCryptoConfigured } from '@/shared/lib/token-crypto';
 import { deleteObjects, isStorageConfigured, putObject } from '@/shared/lib/storage';
@@ -112,6 +113,10 @@ export async function GET(request: NextRequest) {
 
     const expiry = new Date(Date.now() + token.expiresInSeconds * 1000);
     const accessTokenEnc = encryptToken(token.accessToken);
+    // The granted scope is authoritative — not the requested intent. Enable the
+    // opt-in only when LinkedIn actually returned `w_member_social`; a photo-only
+    // (re)connect keeps it off, since that token cannot post anyway.
+    const autoPostEnabled = scopeAllowsAutoPost(token.scope);
 
     await prisma.$transaction(async (tx) => {
       if (photo) {
@@ -126,12 +131,14 @@ export async function GET(request: NextRequest) {
           memberId,
           linkedinSub: userinfo.sub,
           scope: token.scope,
+          autoPostEnabled,
           accessTokenEnc,
           accessTokenExpiry: expiry,
         },
         update: {
           linkedinSub: userinfo.sub,
           scope: token.scope,
+          autoPostEnabled,
           accessTokenEnc,
           accessTokenExpiry: expiry,
         },

@@ -4,6 +4,7 @@ import { requireAdminPageSession } from '@/shared/lib/page-auth';
 import { AdminMemberForm } from '@/features/admin/members/ui/admin-member-form';
 import { MemberAccountPanel } from '@/features/admin/members/ui/member-account-panel';
 import { MemberLinkedinPanel } from '@/features/admin/members/ui/member-linkedin-panel';
+import { scopeAllowsAutoPost } from '@/shared/lib/linkedin';
 import { DeleteButton } from '@/shared/ui/delete-button';
 import { AdminPageShell } from '@/shared/ui/admin-page-shell';
 
@@ -24,8 +25,11 @@ export default async function EditMemberPage({ params }: Params) {
       avatarPath: true,
       // The screen must always show whether an account is associated.
       user: { select: { id: true, email: true, role: true } },
-      // Never select the token here — only whether/when it was connected.
-      linkedinConnection: { select: { connectedAt: true } },
+      // Never select the token here — only whether/when it was connected, the
+      // granted scope (to know if auto-post is available), and the opt-in state.
+      linkedinConnection: {
+        select: { connectedAt: true, scope: true, autoPostEnabled: true },
+      },
     },
   });
 
@@ -59,6 +63,8 @@ export default async function EditMemberPage({ params }: Params) {
         isOwner={isLinkedinOwner}
         isConnected={member.linkedinConnection !== null}
         connectedAt={member.linkedinConnection?.connectedAt.toISOString() ?? null}
+        canAutoPost={scopeAllowsAutoPost(member.linkedinConnection?.scope ?? '')}
+        autoPostEnabled={member.linkedinConnection?.autoPostEnabled ?? false}
       />
     </AdminPageShell>
   );

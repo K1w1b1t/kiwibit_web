@@ -131,7 +131,39 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     expect(prisma.linkedinConnection.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { memberId: 'mid-1' },
-        create: expect.objectContaining({ linkedinSub: 'sub-my-account' }),
+        create: expect.objectContaining({ linkedinSub: 'sub-my-account', autoPostEnabled: false }),
+      }),
+    );
+  });
+
+  it('enables the auto-post opt-in when the granted scope includes w_member_social', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      avatarPath: null,
+    });
+
+    jest.spyOn(linkedinLib, 'exchangeCode').mockResolvedValue({
+      accessToken: 'tok-123',
+      expiresInSeconds: 3600,
+      scope: 'openid profile email w_member_social',
+    });
+    jest.spyOn(linkedinLib, 'fetchUserinfo').mockResolvedValue({ sub: 'sub-x', picture: null });
+
+    (prisma.linkedinConnection.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prisma));
+    (prisma.linkedinConnection.upsert as jest.Mock).mockResolvedValue({});
+
+    const req = new NextRequest(
+      'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
+      { headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:mid-1:autopost` } },
+    );
+    await linkedinCallback(req);
+
+    expect(prisma.linkedinConnection.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ autoPostEnabled: true }),
+        update: expect.objectContaining({ autoPostEnabled: true }),
       }),
     );
   });
