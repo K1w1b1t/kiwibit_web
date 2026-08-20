@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
 import {
-  requireAdminSession,
+  requirePanelSession,
   apiError,
   parsePaginationParams,
   parseJsonBody,
@@ -15,8 +15,8 @@ import { publishBlogPostToLinkedIn } from '@/shared/lib/linkedin-blog-post';
 
 // GET /api/admin/posts
 export async function GET(request: Request) {
-  const { response } = await requireAdminSession();
-  if (response) return response;
+  const { session, response } = await requirePanelSession();
+  if (response || !session) return response;
 
   const { page, limit, search, searchParams } = parsePaginationParams(request);
   const authorId = searchParams.get('authorId') ?? undefined;
@@ -26,13 +26,14 @@ export async function GET(request: Request) {
     ...(authorId && { authorId }),
     // Unlike the public route, the admin list shows drafts — unfiltered by default.
     ...(isPostStatus(status) && { status }),
+    ...(session.user.role === 'member' && { authorId: session.user.id }),
   };
   return runPaginatedQuery(prisma.post as unknown as PaginatableDelegate, where, page, limit);
 }
 
 // POST /api/admin/posts
 export async function POST(request: Request) {
-  const { session, response } = await requireAdminSession();
+  const { session, response } = await requirePanelSession();
   if (response || !session) return response;
 
   const { body, error } = await parseJsonBody(request);

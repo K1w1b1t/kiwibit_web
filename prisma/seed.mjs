@@ -1,7 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import prismaClient from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const { PrismaClient } = prismaClient;
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // `SEED_ADMIN_PASSWORD` is accepted as an alias because that is the name
 // documented in .env.example / .env; without it, `npm run prisma:seed` always
