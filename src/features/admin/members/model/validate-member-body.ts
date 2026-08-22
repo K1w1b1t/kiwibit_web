@@ -10,18 +10,27 @@ export type MemberUpdateInput = {
   userId?: string | null;
   name?: string;
   bio?: string | null;
+  bioPt?: string | null;
+  bioEn?: string | null;
   avatarUrl?: string | null;
   avatarPath?: string | null;
+  githubUrl?: string | null;
+  linkedinUrl?: string | null;
 };
 
 /** `avatarUrl` is checked server-side too — a client-only URL check is not a check. */
+function invalidHttpUrl(value: unknown): boolean {
+  return typeof value === 'string' && value !== '' && !isHttpUrl(value);
+}
+
 function invalidAvatarUrl(avatarUrl: unknown): boolean {
   return typeof avatarUrl === 'string' && avatarUrl !== '' && !isHttpUrl(avatarUrl);
 }
 
 /** Server-side shape check for `PUT /api/admin/members/[id]`. */
 export function validateUpdateMemberBody(body: unknown): Validated<MemberUpdateInput> {
-  const { userId, name, bio, avatarUrl, avatarPath } = body as Record<string, unknown>;
+  const { userId, name, bio, bioPt, bioEn, avatarUrl, avatarPath, githubUrl, linkedinUrl } =
+    body as Record<string, unknown>;
 
   if (name !== undefined && !isNonEmptyString(name)) {
     return invalid('BAD_REQUEST', 'name must be a non-empty string.', 400);
@@ -29,16 +38,25 @@ export function validateUpdateMemberBody(body: unknown): Validated<MemberUpdateI
   if (invalidAvatarUrl(avatarUrl)) {
     return invalid('BAD_REQUEST', 'avatarUrl must be an http(s) URL.', 400);
   }
+  if (invalidHttpUrl(githubUrl) || invalidHttpUrl(linkedinUrl)) {
+    return invalid('BAD_REQUEST', 'Social links must be http(s) URLs.', 400);
+  }
 
   return valid({
     ...(userId !== undefined && { userId: typeof userId === 'string' ? userId : null }),
     ...(typeof name === 'string' && { name: name.trim() }),
     ...(bio !== undefined && { bio: typeof bio === 'string' ? bio : null }),
+    ...(bioPt !== undefined && { bioPt: typeof bioPt === 'string' ? bioPt : null }),
+    ...(bioEn !== undefined && { bioEn: typeof bioEn === 'string' ? bioEn : null }),
     ...(avatarUrl !== undefined && {
       avatarUrl: typeof avatarUrl === 'string' ? avatarUrl : null,
     }),
     ...(avatarPath !== undefined && {
       avatarPath: typeof avatarPath === 'string' ? avatarPath : null,
+    }),
+    ...(githubUrl !== undefined && { githubUrl: typeof githubUrl === 'string' ? githubUrl : null }),
+    ...(linkedinUrl !== undefined && {
+      linkedinUrl: typeof linkedinUrl === 'string' ? linkedinUrl : null,
     }),
   });
 }
@@ -60,7 +78,7 @@ export type MemberCreateInput = {
 };
 
 function validateCreateMemberFields(body: Record<string, unknown>): Validated<MemberCreateFields> {
-  const { userId, name, bio, avatarUrl, avatarPath } = body;
+  const { userId, name, bio, bioPt, bioEn, avatarUrl, avatarPath, githubUrl, linkedinUrl } = body;
 
   if (!isNonEmptyString(name)) {
     return invalid('BAD_REQUEST', 'name is required.', 400);
@@ -71,13 +89,20 @@ function validateCreateMemberFields(body: Record<string, unknown>): Validated<Me
   if (invalidAvatarUrl(avatarUrl)) {
     return invalid('BAD_REQUEST', 'avatarUrl must be an http(s) URL.', 400);
   }
+  if (invalidHttpUrl(githubUrl) || invalidHttpUrl(linkedinUrl)) {
+    return invalid('BAD_REQUEST', 'Social links must be http(s) URLs.', 400);
+  }
 
   return valid({
     ...(typeof userId === 'string' && { userId }),
     name: name.trim(),
     ...(typeof bio === 'string' && { bio }),
+    ...(typeof bioPt === 'string' && { bioPt }),
+    ...(typeof bioEn === 'string' && { bioEn }),
     ...(typeof avatarUrl === 'string' && { avatarUrl }),
     ...(typeof avatarPath === 'string' && { avatarPath }),
+    ...(typeof githubUrl === 'string' && { githubUrl }),
+    ...(typeof linkedinUrl === 'string' && { linkedinUrl }),
   });
 }
 

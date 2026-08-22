@@ -21,8 +21,12 @@ export default async function EditMemberPage({ params }: Params) {
       id: true,
       name: true,
       bio: true,
+      bioPt: true,
+      bioEn: true,
       avatarUrl: true,
       avatarPath: true,
+      githubUrl: true,
+      linkedinUrl: true,
       // The screen must always show whether an account is associated.
       user: { select: { id: true, email: true, role: true } },
       // Never select the token here — only whether/when it was connected, the

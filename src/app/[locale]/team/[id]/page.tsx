@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { isLocale } from '@/shared/i18n/config';
 import { getDictionary } from '@/shared/i18n/get-dictionary';
+import { getMemberBio } from '@/shared/lib/member-bio';
 import { localizedAlternates } from '@/shared/lib/seo';
 import { prisma } from '@/shared/lib/prisma';
 import { MemberAvatar } from '@/shared/ui/member-avatar';
+import { FaGithub, FaLinkedinIn } from 'react-icons/fa6';
 
 type Params = { params: Promise<{ locale: string; id: string }> };
 
@@ -13,7 +15,11 @@ const MEMBER_SELECT = {
   id: true,
   name: true,
   bio: true,
+  bioPt: true,
+  bioEn: true,
   avatarUrl: true,
+  githubUrl: true,
+  linkedinUrl: true,
 };
 
 /**
@@ -44,7 +50,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   return {
     title: member.name,
-    description: member.bio?.slice(0, 160) ?? undefined,
+    description: getMemberBio(member, locale, getDictionary(locale).team.labels).slice(0, 160),
     alternates: localizedAlternates(locale, `/team/${id}`),
   };
 }
@@ -77,13 +83,43 @@ export default async function MemberProfilePage({ params }: Readonly<Params>) {
             className="h-40 w-40"
             textClassName="text-4xl"
           />
+          {(member.githubUrl || member.linkedinUrl) && (
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              {member.githubUrl && (
+                <a
+                  href={member.githubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`${member.name} no GitHub`}
+                  title={`Abrir GitHub de ${member.name}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3.5 py-1.5 text-[11px] uppercase tracking-[0.12em] text-white/70 transition hover:border-white/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <FaGithub size={16} aria-hidden="true" />
+                  <span>GitHub</span>
+                </a>
+              )}
+              {member.linkedinUrl && (
+                <a
+                  href={member.linkedinUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`${member.name} no LinkedIn`}
+                  title={`Abrir LinkedIn de ${member.name}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3.5 py-1.5 text-[11px] uppercase tracking-[0.12em] text-white/70 transition hover:border-white/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <FaLinkedinIn size={16} aria-hidden="true" />
+                  <span>LinkedIn</span>
+                </a>
+              )}
+            </div>
+          )}
           <h1 className="mt-6 text-4xl font-black uppercase tracking-[-0.03em] sm:text-5xl">
             {member.name}
           </h1>
         </div>
 
         <p className="mt-10 whitespace-pre-line text-lg leading-relaxed text-white/80">
-          {member.bio || dict.team.labels.noBio}
+          {getMemberBio(member, locale, dict.team.labels)}
         </p>
       </div>
 
@@ -109,7 +145,7 @@ export default async function MemberProfilePage({ params }: Readonly<Params>) {
                   {other.name}
                 </h3>
                 <p className="mt-2 text-sm text-white/60 line-clamp-2">
-                  {other.bio || dict.team.labels.noBio}
+                  {getMemberBio(other, locale, dict.team.labels)}
                 </p>
               </Link>
             ))}

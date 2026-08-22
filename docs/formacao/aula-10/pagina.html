@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portal Acesso | Laboratorio</title>
+    <link rel="stylesheet" href="estilo.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="identity-panel" aria-labelledby="identity-title">
+        <div>
+          <p class="identity-label">Laboratorio</p>
+          <h1 id="identity-title"><span>Portal</span> Acesso</h1>
+        </div>
+        <div class="boot-log" aria-label="Estado do laboratorio">
+          <p>$ init portal.access <span>ok</span></p>
+          <p>$ mount /css-lab <span>ok</span></p>
+          <p>$ verify transport <span>local-only</span></p>
+          <p>$ awaiting operator<span class="cursor">_</span></p>
+        </div>
+      </section>
+
+      <section class="login-card" aria-labelledby="page-title">
+        <p class="eyebrow">portal://access</p>
+        <h2 id="page-title">Entrar<span class="cursor">_</span></h2>
+        <div class="rule" aria-hidden="true"></div>
+        <p class="intro">Interface ficticia para estudar aparencia, usabilidade e confianca.</p>
+
+        <form id="login-form" class="login-form">
+          <div class="field">
+            <label for="username">Usuario</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              placeholder="voce@exemplo.local"
+              required
+            />
+          </div>
+          <div class="field">
+            <label for="password">Senha</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="········"
+              required
+            />
+          </div>
+          <button type="submit">Entrar</button>
+          <a class="secondary-link" href="#recovery">Esqueci a senha</a>
+        </form>
+
+        <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+        <p class="lab-note">Simulacao local: nenhum dado e enviado ou armazenado.</p>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector('#login-form');
+      const feedback = document.querySelector('#feedback');
+      const password = document.querySelector('#password');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        feedback.textContent =
+          'Simulacao concluida localmente. Nenhuma credencial foi exibida, enviada ou armazenada.';
+        password.value = '';
+      });
+    </script>
+  </body>
+</html>

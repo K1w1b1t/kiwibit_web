@@ -25,6 +25,8 @@ const usersSeed = [
     member: {
       name: 'Gustavo Costa',
       bio: 'Engineering lead focused on product architecture and secure delivery pipelines.',
+      bioPt: null,
+      bioEn: 'Engineering lead focused on product architecture and secure delivery pipelines.',
       avatarUrl: '/kiwi.png',
     },
   },
@@ -35,6 +37,9 @@ const usersSeed = [
     member: {
       name: 'Ana Martins',
       bio: 'Editorial owner for technical writing, release notes, and developer education.',
+      bioPt:
+        'Responsavel editorial por textos tecnicos, notas de versao e educacao para desenvolvedores.',
+      bioEn: null,
       avatarUrl: '/kiwi.png',
     },
   },
@@ -45,6 +50,8 @@ const usersSeed = [
     member: {
       name: 'Pedro Galvao',
       bio: 'Community and member operations specialist connecting contributors and projects.',
+      bioPt: null,
+      bioEn: 'Community and member operations specialist connecting contributors and projects.',
       avatarUrl: '/kiwi.png',
     },
   },
@@ -55,6 +62,8 @@ const usersSeed = [
     member: {
       name: 'Laura Souza',
       bio: 'Frontend engineer building accessible interfaces and polished interaction systems.',
+      bioPt: null,
+      bioEn: null,
       avatarUrl: '/kiwi.png',
     },
   },
@@ -189,12 +198,16 @@ async function main() {
       update: {
         name: userSeed.member.name,
         bio: userSeed.member.bio,
+        bioPt: userSeed.member.bioPt,
+        bioEn: userSeed.member.bioEn,
         avatarUrl: userSeed.member.avatarUrl,
       },
       create: {
         userId: user.id,
         name: userSeed.member.name,
         bio: userSeed.member.bio,
+        bioPt: userSeed.member.bioPt,
+        bioEn: userSeed.member.bioEn,
         avatarUrl: userSeed.member.avatarUrl,
       },
     });
