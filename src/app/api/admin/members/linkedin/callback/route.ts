@@ -4,10 +4,12 @@ import { prisma } from '@/shared/lib/prisma';
 import { requireAdminSession } from '@/shared/lib/api-helpers';
 import {
   exchangeCode,
+  fetchProfile,
   fetchUserinfo,
   isLinkedinConfigured,
   LINKEDIN_OAUTH_COOKIE,
   parseOauthCookie,
+  scopeAllowsAutoPost,
 } from '@/shared/lib/linkedin';
 import { encryptToken, isTokenCryptoConfigured } from '@/shared/lib/token-crypto';
 import { deleteObjects, isStorageConfigured, putObject } from '@/shared/lib/storage';
@@ -98,13 +100,17 @@ export async function GET(request: NextRequest) {
   try {
     const token = await exchangeCode(code);
     const userinfo = await fetchUserinfo(token.accessToken);
+    const profile = await fetchProfile(token.accessToken);
 
     // Prevent binding the same LinkedIn account to another member
-    const existingConnection = await prisma.linkedinConnection.findUnique({
-      where: { linkedinSub: userinfo.sub },
+    const existingConnection = await prisma.linkedinConnection.findFirst({
+      where: {
+        OR: [{ linkedinSub: userinfo.sub }, { linkedinPersonId: profile.id }],
+        NOT: { memberId },
+      },
       select: { memberId: true },
     });
-    if (existingConnection && existingConnection.memberId !== memberId) {
+    if (existingConnection) {
       return redirectEdit(memberId, 'error');
     }
 
@@ -112,6 +118,10 @@ export async function GET(request: NextRequest) {
 
     const expiry = new Date(Date.now() + token.expiresInSeconds * 1000);
     const accessTokenEnc = encryptToken(token.accessToken);
+    // The granted scope is authoritative — not the requested intent. Enable the
+    // opt-in only when LinkedIn actually returned `w_member_social`; a photo-only
+    // (re)connect keeps it off, since that token cannot post anyway.
+    const autoPostEnabled = scopeAllowsAutoPost(token.scope);
 
     await prisma.$transaction(async (tx) => {
       if (photo) {
@@ -125,13 +135,17 @@ export async function GET(request: NextRequest) {
         create: {
           memberId,
           linkedinSub: userinfo.sub,
+          linkedinPersonId: profile.id,
           scope: token.scope,
+          autoPostEnabled,
           accessTokenEnc,
           accessTokenExpiry: expiry,
         },
         update: {
           linkedinSub: userinfo.sub,
+          linkedinPersonId: profile.id,
           scope: token.scope,
+          autoPostEnabled,
           accessTokenEnc,
           accessTokenExpiry: expiry,
         },

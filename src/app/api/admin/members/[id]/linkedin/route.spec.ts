@@ -1,8 +1,18 @@
-import { DELETE as disconnectLinkedin } from './route';
+import { DELETE as disconnectLinkedin, PATCH as toggleAutoPost } from './route';
 import { prisma } from '@/shared/lib/prisma';
 import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
 
 // ADMIN_SESSION.user.id is 'uid-1'.
+const AUTOPOST_SCOPE = 'openid profile email w_member_social';
+const ACTIVE_CONNECTION = {
+  scope: AUTOPOST_SCOPE,
+  accessTokenExpiry: new Date(Date.now() + 60_000),
+  linkedinPersonId: 'person-1',
+};
+
+function patchReq(body: unknown) {
+  return makeReq('http://localhost/api/admin/members/mid-1/linkedin', body, 'PATCH');
+}
 
 describe('DELETE /api/admin/members/[id]/linkedin', () => {
   it('returns 401 when unauthenticated', async () => {
@@ -50,6 +60,114 @@ describe('DELETE /api/admin/members/[id]/linkedin', () => {
     expect(res.status).toBe(200);
     expect(prisma.linkedinConnection.deleteMany).toHaveBeenCalledWith({
       where: { memberId: 'mid-1' },
+    });
+  });
+});
+
+describe('PATCH /api/admin/members/[id]/linkedin', () => {
+  it('rejects a non-boolean autoPostEnabled', async () => {
+    mockAuth();
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: 'yes' }), paramsFor('mid-1'));
+    expect(res.status).toBe(400);
+    expect(prisma.linkedinConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('forbids toggling a member that is not your own account', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'someone-else',
+      linkedinConnection: ACTIVE_CONNECTION,
+    });
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: true }), paramsFor('mid-1'));
+    expect(res.status).toBe(403);
+    expect(prisma.linkedinConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('404s when the member has no connection', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      linkedinConnection: null,
+    });
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: true }), paramsFor('mid-1'));
+    expect(res.status).toBe(404);
+    expect(prisma.linkedinConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('409s when enabling without the auto-post scope', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      linkedinConnection: {
+        ...ACTIVE_CONNECTION,
+        scope: 'openid profile email',
+      },
+    });
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: true }), paramsFor('mid-1'));
+    expect(res.status).toBe(409);
+    expect(prisma.linkedinConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('409s when enabling with an expired access token', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      linkedinConnection: {
+        ...ACTIVE_CONNECTION,
+        accessTokenExpiry: new Date(Date.now() - 1000),
+      },
+    });
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: true }), paramsFor('mid-1'));
+    expect(res.status).toBe(409);
+    expect(prisma.linkedinConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('409s when enabling before the profile person id is stored', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      linkedinConnection: {
+        ...ACTIVE_CONNECTION,
+        linkedinPersonId: null,
+      },
+    });
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: true }), paramsFor('mid-1'));
+    expect(res.status).toBe(409);
+    expect(prisma.linkedinConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('enables the opt-in when the scope allows it', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      linkedinConnection: ACTIVE_CONNECTION,
+    });
+    (prisma.linkedinConnection.update as jest.Mock).mockResolvedValue({});
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: true }), paramsFor('mid-1'));
+    expect(res.status).toBe(200);
+    expect(prisma.linkedinConnection.update).toHaveBeenCalledWith({
+      where: { memberId: 'mid-1' },
+      data: { autoPostEnabled: true },
+    });
+  });
+
+  it('allows disabling even without the auto-post scope', async () => {
+    mockAuth();
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      userId: 'uid-1',
+      linkedinConnection: {
+        ...ACTIVE_CONNECTION,
+        scope: 'openid profile email',
+        accessTokenExpiry: new Date(Date.now() - 1000),
+        linkedinPersonId: null,
+      },
+    });
+    (prisma.linkedinConnection.update as jest.Mock).mockResolvedValue({});
+    const res = await toggleAutoPost(patchReq({ autoPostEnabled: false }), paramsFor('mid-1'));
+    expect(res.status).toBe(200);
+    expect(prisma.linkedinConnection.update).toHaveBeenCalledWith({
+      where: { memberId: 'mid-1' },
+      data: { autoPostEnabled: false },
     });
   });
 });

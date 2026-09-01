@@ -1,5 +1,6 @@
 const mockModel = () => ({
   findMany: jest.fn(),
+  findFirst: jest.fn(),
   findUnique: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),

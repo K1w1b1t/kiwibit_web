@@ -53,17 +53,26 @@ model Member {
 /// token is stored encrypted at rest (AES-256-GCM, see `token-crypto.ts`) and
 /// only ever decrypted server-side.
 ///
-/// The current scope is basic OIDC (`openid profile email`), whose token cannot
-/// post. Auto-posting (issue #81) will extend the scope, re-consent, and add a
-/// refresh-token column here.
+/// The basic connection scope is OIDC plus the lite profile scope needed to
+/// read the app-scoped Person ID. Auto-posting (issue #81) re-consents with the
+/// extra `w_member_social` scope and flips `autoPostEnabled`; posting uses
+/// `linkedinPersonId` for `urn:li:person:{id}`, not the OIDC `sub`.
 model LinkedinConnection {
   id       String @id @default(uuid()) @db.Uuid
   memberId String @unique @map("member_id") @db.Uuid
   /// OIDC `sub` claim — the stable LinkedIn identity. Unique so two members
   /// cannot claim the same LinkedIn account.
   linkedinSub String @unique @map("linkedin_sub")
+  /// LinkedIn Person ID from the Profile API, used to build post author URNs.
+  /// Nullable only so old connections can survive the migration and reconnect.
+  linkedinPersonId String? @unique @map("linkedin_person_id")
   /// Space-separated scopes granted at connection time.
   scope String
+  /// Explicit per-member opt-in for auto-posting to the personal profile (issue
+  /// #81). Only meaningful when `scope` includes `w_member_social`. Reset to
+  /// false automatically when a post fails with an expired token — reconnect
+  /// re-consents and re-enables it.
+  autoPostEnabled Boolean @default(false) @map("auto_post_enabled")
   /// Access token, encrypted as `iv:authTag:ciphertext` (all base64).
   accessTokenEnc    String   @map("access_token_enc")
   accessTokenExpiry DateTime @map("access_token_expiry")

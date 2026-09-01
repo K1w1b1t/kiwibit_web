@@ -12,7 +12,7 @@ import {
   toPostUpdateData,
 } from '@/features/admin/posts/model/validate-post-body';
 import { deleteObjects } from '@/shared/lib/storage';
-import { triggerLinkedInAutoPostForBlog } from '@/shared/lib/linkedin';
+import { publishBlogPostToLinkedIn } from '@/shared/lib/linkedin-blog-post';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -49,7 +49,7 @@ export async function PUT(request: Request, { params }: Params) {
   });
 
   if (updated.status === 'published' && existing.status !== 'published') {
-    runAfterResponse(() => triggerLinkedInAutoPostForBlog(updated));
+    runAfterResponse(() => publishBlogPostToLinkedIn(updated));
   }
 
   // The cover was replaced or cleared: drop the object that is no longer
