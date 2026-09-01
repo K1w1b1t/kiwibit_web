@@ -29,6 +29,7 @@ export async function publishBlogPostToLinkedIn(
       linkedinConnection: {
         select: {
           linkedinSub: true,
+          linkedinPersonId: true,
           scope: true,
           autoPostEnabled: true,
           accessTokenEnc: true,
@@ -41,10 +42,10 @@ export async function publishBlogPostToLinkedIn(
   const connection = member?.linkedinConnection ?? null;
   const results = await triggerLinkedInAutoPostForBlog(post, connection);
 
-  // Disable the opt-in on an expired personal token so it stops trying until the
-  // member reconnects with a fresh one.
+  // Disable the opt-in when the personal connection needs a reconnect so it
+  // stops trying until the member grants a fresh, complete connection.
   const personal = results.find((result) => result.target === 'personal');
-  if (member && connection?.autoPostEnabled && personal?.expired) {
+  if (member && connection?.autoPostEnabled && (personal?.expired || personal?.reconnectRequired)) {
     await prisma.linkedinConnection
       .update({ where: { memberId: member.id }, data: { autoPostEnabled: false } })
       .catch(() => undefined);

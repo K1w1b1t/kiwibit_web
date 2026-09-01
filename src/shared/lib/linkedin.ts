@@ -10,10 +10,12 @@ import { decryptToken } from '@/shared/lib/token-crypto';
  * SERVER ONLY. `LINKEDIN_CLIENT_SECRET` must never reach the browser — nothing
  * here is `NEXT_PUBLIC_` and the module is imported solely from route handlers.
  *
- * Scope is the basic OIDC set: it returns name/email/`picture` and cannot post.
+ * Scope combines the OIDC set (name/email/`picture`) with `r_liteprofile`, which
+ * lets the callback fetch the app-scoped Person ID used by posting APIs.
  * Auto-posting adds a separate LinkedIn product approval flow and re-consent.
  */
-export const LINKEDIN_SCOPE = 'openid profile email';
+export const LINKEDIN_PROFILE_ID_SCOPE = 'r_liteprofile';
+export const LINKEDIN_SCOPE = `openid profile email ${LINKEDIN_PROFILE_ID_SCOPE}`;
 
 /**
  * Extended scope for auto-posting to the member's OWN profile (issue #81). Adds
@@ -55,6 +57,7 @@ export function parseOauthCookie(
 const AUTHORIZE_URL = 'https://www.linkedin.com/oauth/v2/authorization';
 const TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
 const USERINFO_URL = 'https://api.linkedin.com/v2/userinfo';
+const PROFILE_URL = 'https://api.linkedin.com/v2/me';
 
 /** Fixed redirect URI — LinkedIn matches it exactly; the member id travels in `state`. */
 export function redirectUri(): string {
@@ -150,6 +153,24 @@ export async function fetchUserinfo(accessToken: string): Promise<LinkedinUserin
   };
 }
 
+export type LinkedinProfile = { id: string };
+
+/** Reads the Profile API Person ID required for `urn:li:person:{id}` authors. */
+export async function fetchProfile(accessToken: string): Promise<LinkedinProfile> {
+  const response = await fetch(PROFILE_URL, {
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      'X-Restli-Protocol-Version': '2.0.0',
+    },
+  });
+  if (!response.ok) throw new Error(`LinkedIn profile failed (${response.status}).`);
+
+  const json = (await response.json()) as { id?: unknown };
+  if (typeof json.id !== 'string') throw new Error('LinkedIn profile is missing id.');
+
+  return { id: json.id };
+}
+
 export type LinkedInTarget = 'personal' | 'company';
 
 export type LinkedInAutoPostInput = {
@@ -164,6 +185,7 @@ export type LinkedInAutoPostResult = {
   sent?: boolean;
   skipped?: boolean;
   expired?: boolean;
+  reconnectRequired?: boolean;
   target?: LinkedInTarget;
   status?: number;
   code?: string;
@@ -319,11 +341,16 @@ export async function triggerLinkedInAutoPost(
  */
 export type LinkedinAutoPostConnection = {
   linkedinSub: string;
+  linkedinPersonId: string | null;
   scope: string;
   autoPostEnabled: boolean;
   accessTokenEnc: string;
   accessTokenExpiry: Date;
 };
+
+export function isLinkedInAccessTokenExpired(expiry: Date, now: number = Date.now()): boolean {
+  return expiry.getTime() <= now;
+}
 
 /**
  * Posts to the author's OWN LinkedIn profile from their stored connection (issue
@@ -339,13 +366,24 @@ export async function triggerPersonalAutoPost(
     return { ok: false, skipped: true, target: 'personal' };
   }
 
-  if (connection.accessTokenExpiry.getTime() <= Date.now()) {
+  if (isLinkedInAccessTokenExpired(connection.accessTokenExpiry)) {
     return {
       ok: false,
       expired: true,
+      reconnectRequired: true,
       target: 'personal',
       code: 'LINKEDIN_TOKEN_EXPIRED',
       detail: 'Stored access token expired before the request.',
+    };
+  }
+
+  if (!connection.linkedinPersonId) {
+    return {
+      ok: false,
+      reconnectRequired: true,
+      target: 'personal',
+      code: 'LINKEDIN_PERSON_ID_MISSING',
+      detail: 'Stored LinkedIn connection is missing the Person ID required for posting.',
     };
   }
 
@@ -361,7 +399,7 @@ export async function triggerPersonalAutoPost(
     };
   }
 
-  const result = await postUgc(token, `urn:li:person:${connection.linkedinSub}`, input);
+  const result = await postUgc(token, `urn:li:person:${connection.linkedinPersonId}`, input);
   return { ...result, target: 'personal' };
 }
 

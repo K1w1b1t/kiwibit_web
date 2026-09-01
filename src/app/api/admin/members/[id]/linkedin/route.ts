@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { requireAdminSession, apiError } from '@/shared/lib/api-helpers';
-import { scopeAllowsAutoPost } from '@/shared/lib/linkedin';
+import { isLinkedInAccessTokenExpired, scopeAllowsAutoPost } from '@/shared/lib/linkedin';
 
 type Params = { params: Promise<{ id: string }> };
 
 /**
- * Loads the member's owner id and, when present, its LinkedIn connection scope.
- * Shared by the guards below — both actions are owner-only ("each manages their
- * own").
+ * Loads the member owner and connection metadata needed by the guards below.
+ * Both actions are owner-only ("each manages their own").
  */
 async function loadOwnedConnection(id: string, userId: string) {
   const member = await prisma.member.findUnique({
     where: { id },
-    select: { userId: true, linkedinConnection: { select: { scope: true } } },
+    select: {
+      userId: true,
+      linkedinConnection: {
+        select: { scope: true, accessTokenExpiry: true, linkedinPersonId: true },
+      },
+    },
   });
   if (!member) return { error: apiError('NOT_FOUND', 'Member not found.', 404) };
   if (member.userId !== userId) {
@@ -75,6 +79,22 @@ export async function PATCH(request: Request, { params }: Params) {
     return apiError(
       'CONFLICT',
       'Reconnect LinkedIn granting the auto-post permission before enabling it.',
+      409,
+    );
+  }
+
+  if (autoPostEnabled && isLinkedInAccessTokenExpired(owned.connection.accessTokenExpiry)) {
+    return apiError(
+      'CONFLICT',
+      'Reconnect LinkedIn before enabling auto-post because the access token has expired.',
+      409,
+    );
+  }
+
+  if (autoPostEnabled && !owned.connection.linkedinPersonId) {
+    return apiError(
+      'CONFLICT',
+      'Reconnect LinkedIn before enabling auto-post so the Person ID can be stored.',
       409,
     );
   }

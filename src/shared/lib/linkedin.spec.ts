@@ -1,6 +1,7 @@
 import {
   authorizeUrl,
   exchangeCode,
+  fetchProfile,
   fetchUserinfo,
   isLinkedinConfigured,
   LINKEDIN_AUTOPOST_SCOPE,
@@ -116,6 +117,16 @@ describe('LinkedIn OAuth lib', () => {
     });
   });
 
+  it('reads the profile person id used for author URNs', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ id: 'person-123' }), {
+        status: 200,
+      }),
+    );
+
+    await expect(fetchProfile('tok')).resolves.toEqual({ id: 'person-123' });
+  });
+
   it('tolerates a missing picture but requires sub', async () => {
     const spy = jest.spyOn(global, 'fetch');
 
@@ -211,6 +222,7 @@ describe('triggerPersonalAutoPost', () => {
   function connection(over: Partial<LinkedinAutoPostConnection> = {}): LinkedinAutoPostConnection {
     return {
       linkedinSub: 'sub-123',
+      linkedinPersonId: 'person-123',
       scope: 'openid profile email w_member_social',
       autoPostEnabled: true,
       accessTokenEnc: encryptToken('member-token'),
@@ -256,7 +268,22 @@ describe('triggerPersonalAutoPost', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('posts to the derived person URN with the decrypted token', async () => {
+  it('requires the stored profile person id before posting', async () => {
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await triggerPersonalAutoPost(connection({ linkedinPersonId: null }), input);
+
+    expect(result).toMatchObject({
+      ok: false,
+      reconnectRequired: true,
+      code: 'LINKEDIN_PERSON_ID_MISSING',
+      target: 'personal',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('posts to the stored person URN with the decrypted token', async () => {
     const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
     global.fetch = fetchMock as unknown as typeof fetch;
 
@@ -265,7 +292,7 @@ describe('triggerPersonalAutoPost', () => {
     expect(result).toMatchObject({ ok: true, sent: true, target: 'personal' });
     const [, requestInit] = fetchMock.mock.calls[0];
     expect(requestInit.headers.Authorization).toBe('Bearer member-token');
-    expect(JSON.parse(requestInit.body).author).toBe('urn:li:person:sub-123');
+    expect(JSON.parse(requestInit.body).author).toBe('urn:li:person:person-123');
   });
 });
 
@@ -308,6 +335,7 @@ describe('triggerLinkedInAutoPostForBlog', () => {
 
     const results = await triggerLinkedInAutoPostForBlog(post, {
       linkedinSub: 'sub-9',
+      linkedinPersonId: 'person-9',
       scope: 'openid profile email w_member_social',
       autoPostEnabled: true,
       accessTokenEnc: encryptToken('tok'),

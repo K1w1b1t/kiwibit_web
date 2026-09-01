@@ -11,6 +11,7 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     process.env.LINKEDIN_CLIENT_ID = 'client-id';
     process.env.LINKEDIN_CLIENT_SECRET = 'client-secret';
     process.env.LINKEDIN_TOKEN_ENC_KEY = Buffer.alloc(32, 'a').toString('base64');
+    (prisma.linkedinConnection.findFirst as jest.Mock).mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -82,8 +83,9 @@ describe('GET /api/admin/members/linkedin/callback', () => {
       sub: 'sub-claimed-by-other',
       picture: null,
     });
+    jest.spyOn(linkedinLib, 'fetchProfile').mockResolvedValue({ id: 'person-claimed-by-other' });
 
-    (prisma.linkedinConnection.findUnique as jest.Mock).mockResolvedValue({
+    (prisma.linkedinConnection.findFirst as jest.Mock).mockResolvedValue({
       memberId: 'other-member-id',
     });
 
@@ -114,8 +116,8 @@ describe('GET /api/admin/members/linkedin/callback', () => {
       sub: 'sub-my-account',
       picture: null,
     });
+    jest.spyOn(linkedinLib, 'fetchProfile').mockResolvedValue({ id: 'person-my-account' });
 
-    (prisma.linkedinConnection.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prisma));
     (prisma.linkedinConnection.upsert as jest.Mock).mockResolvedValue({});
 
@@ -131,7 +133,11 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     expect(prisma.linkedinConnection.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { memberId: 'mid-1' },
-        create: expect.objectContaining({ linkedinSub: 'sub-my-account', autoPostEnabled: false }),
+        create: expect.objectContaining({
+          linkedinSub: 'sub-my-account',
+          linkedinPersonId: 'person-my-account',
+          autoPostEnabled: false,
+        }),
       }),
     );
   });
@@ -149,8 +155,8 @@ describe('GET /api/admin/members/linkedin/callback', () => {
       scope: 'openid profile email w_member_social',
     });
     jest.spyOn(linkedinLib, 'fetchUserinfo').mockResolvedValue({ sub: 'sub-x', picture: null });
+    jest.spyOn(linkedinLib, 'fetchProfile').mockResolvedValue({ id: 'person-x' });
 
-    (prisma.linkedinConnection.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prisma));
     (prisma.linkedinConnection.upsert as jest.Mock).mockResolvedValue({});
 

@@ -4,6 +4,7 @@ import { prisma } from '@/shared/lib/prisma';
 import { requireAdminSession } from '@/shared/lib/api-helpers';
 import {
   exchangeCode,
+  fetchProfile,
   fetchUserinfo,
   isLinkedinConfigured,
   LINKEDIN_OAUTH_COOKIE,
@@ -99,13 +100,17 @@ export async function GET(request: NextRequest) {
   try {
     const token = await exchangeCode(code);
     const userinfo = await fetchUserinfo(token.accessToken);
+    const profile = await fetchProfile(token.accessToken);
 
     // Prevent binding the same LinkedIn account to another member
-    const existingConnection = await prisma.linkedinConnection.findUnique({
-      where: { linkedinSub: userinfo.sub },
+    const existingConnection = await prisma.linkedinConnection.findFirst({
+      where: {
+        OR: [{ linkedinSub: userinfo.sub }, { linkedinPersonId: profile.id }],
+        NOT: { memberId },
+      },
       select: { memberId: true },
     });
-    if (existingConnection && existingConnection.memberId !== memberId) {
+    if (existingConnection) {
       return redirectEdit(memberId, 'error');
     }
 
@@ -130,6 +135,7 @@ export async function GET(request: NextRequest) {
         create: {
           memberId,
           linkedinSub: userinfo.sub,
+          linkedinPersonId: profile.id,
           scope: token.scope,
           autoPostEnabled,
           accessTokenEnc,
@@ -137,6 +143,7 @@ export async function GET(request: NextRequest) {
         },
         update: {
           linkedinSub: userinfo.sub,
+          linkedinPersonId: profile.id,
           scope: token.scope,
           autoPostEnabled,
           accessTokenEnc,

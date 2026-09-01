@@ -168,8 +168,8 @@ export function MemberLinkedinPanel({
               ) : (
                 <>
                   <p className="mt-1 text-sm text-white/50">
-                    Requer uma permissão extra do LinkedIn. Reconecte concedendo o acesso de
-                    publicação para ativar.
+                    Reconecte concedendo o acesso de publicação para ativar. Se o acesso atual
+                    expirou, a reconexão também renova o token.
                   </p>
                   <Button
                     variant="outline"

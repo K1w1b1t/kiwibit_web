@@ -19,6 +19,7 @@ describe('publishBlogPostToLinkedIn', () => {
       id: 'mid-1',
       linkedinConnection: {
         linkedinSub: 'sub-1',
+        linkedinPersonId: 'person-1',
         scope: 'openid profile email w_member_social',
         autoPostEnabled: true,
         accessTokenEnc: 'enc',
@@ -36,7 +37,11 @@ describe('publishBlogPostToLinkedIn', () => {
 
     expect(linkedinLib.triggerLinkedInAutoPostForBlog).toHaveBeenCalledWith(
       post,
-      expect.objectContaining({ linkedinSub: 'sub-1', autoPostEnabled: true }),
+      expect.objectContaining({
+        linkedinSub: 'sub-1',
+        linkedinPersonId: 'person-1',
+        autoPostEnabled: true,
+      }),
     );
     expect(prisma.linkedinConnection.update).toHaveBeenCalledWith({
       where: { memberId: 'mid-1' },
@@ -49,6 +54,7 @@ describe('publishBlogPostToLinkedIn', () => {
       id: 'mid-1',
       linkedinConnection: {
         linkedinSub: 'sub-1',
+        linkedinPersonId: 'person-1',
         scope: 'openid profile email w_member_social',
         autoPostEnabled: true,
         accessTokenEnc: 'enc',
