@@ -5,7 +5,6 @@ import { requireAdminSession } from '@/shared/lib/api-helpers';
 import {
   authorizeUrl,
   isLinkedinConfigured,
-  LINKEDIN_AUTOPOST_FLAG,
   LINKEDIN_AUTOPOST_SCOPE,
   LINKEDIN_OAUTH_COOKIE,
   LINKEDIN_SCOPE,
@@ -53,16 +52,12 @@ export async function GET(request: NextRequest, { params }: Params) {
   const scope = wantsAutoPost ? LINKEDIN_AUTOPOST_SCOPE : LINKEDIN_SCOPE;
 
   const state = randomUUID();
-  // The requested intent rides the state cookie so the callback knows whether to
-  // enable the opt-in (the granted scope is still re-checked there).
-  const cookieValue = wantsAutoPost ? `${state}:${id}:${LINKEDIN_AUTOPOST_FLAG}` : `${state}:${id}`;
-
   const redirect = NextResponse.redirect(authorizeUrl(state, scope));
 
   // Binds the callback to this browser and this member. Short-lived; cleared on
   // the callback. `lax` so it rides the top-level GET navigation back from
   // LinkedIn; `httpOnly` so client JS cannot read the CSRF value.
-  redirect.cookies.set(LINKEDIN_OAUTH_COOKIE, cookieValue, {
+  redirect.cookies.set(LINKEDIN_OAUTH_COOKIE, `${state}:${id}`, {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

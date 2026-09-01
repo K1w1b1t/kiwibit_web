@@ -32,29 +32,24 @@ export function scopeAllowsAutoPost(scope: string): boolean {
 }
 
 /**
- * httpOnly cookie carrying `${state}:${memberId}` between connect and callback,
- * with an optional `:autopost` suffix when the extended scope was requested.
+ * httpOnly cookie carrying `${state}:${memberId}` between connect and callback.
  */
 export const LINKEDIN_OAUTH_COOKIE = 'linkedin_oauth';
 
-/** Suffix appended to the state cookie when the auto-post scope is requested. */
-export const LINKEDIN_AUTOPOST_FLAG = 'autopost';
-
 /**
  * Parses the OAuth state cookie. `state` and `memberId` (a UUID, no colons) are
- * the first two parts; a trailing `:autopost` marks that the extended
- * auto-post scope was requested. Two-part cookies stay valid (photo-only).
+ * separated by a colon; the granted token scope, not this cookie, determines
+ * whether auto-posting can be enabled.
  */
 export function parseOauthCookie(
   value: string | undefined,
-): { state: string; memberId: string; autoPost: boolean } | null {
+): { state: string; memberId: string } | null {
   if (!value) return null;
 
-  const parts = value.split(':');
-  const [state, memberId, flag] = parts;
+  const [state, memberId] = value.split(':');
   if (!state || !memberId) return null;
 
-  return { state, memberId, autoPost: flag === LINKEDIN_AUTOPOST_FLAG };
+  return { state, memberId };
 }
 
 const AUTHORIZE_URL = 'https://www.linkedin.com/oauth/v2/authorization';

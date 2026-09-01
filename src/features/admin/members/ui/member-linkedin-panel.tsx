@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/shared/api/api-client';
 import { Button } from '@/shared/ui/button';
@@ -42,6 +42,7 @@ export function MemberLinkedinPanel({
 }: Readonly<Props>) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [autoPostChecked, setAutoPostChecked] = useState(autoPostEnabled);
 
   // Seed the banner from the OAuth redirect outcome (?linkedin=connected|error|
   // forbidden). Derived once from the URL present on mount; the disconnect action
@@ -54,6 +55,10 @@ export function MemberLinkedinPanel({
     const seed = outcome ? CONNECT_MESSAGES[outcome] : undefined;
     return seed ? { status: seed.status, message: seed.message } : { status: 'idle', message: '' };
   });
+
+  useEffect(() => {
+    setAutoPostChecked(autoPostEnabled);
+  }, [autoPostEnabled]);
 
   const connectUrl = `/api/admin/members/${memberId}/linkedin/connect`;
 
@@ -73,12 +78,15 @@ export function MemberLinkedinPanel({
   const autoPostUrl = `${connectUrl}?autopost=1`;
 
   async function handleToggleAutoPost(next: boolean) {
+    const previous = autoPostChecked;
+    setAutoPostChecked(next);
     setBanner({ status: 'submitting', message: '' });
 
     const result = await apiClient.patch(connectUrl.replace('/connect', ''), {
       autoPostEnabled: next,
     });
     if (!result.ok) {
+      setAutoPostChecked(previous);
       setBanner({ status: 'error', message: result.message });
       return;
     }
@@ -146,7 +154,7 @@ export function MemberLinkedinPanel({
                     <input
                       type="checkbox"
                       className="h-4 w-4 rounded border-white/20 bg-transparent"
-                      checked={autoPostEnabled}
+                      checked={autoPostChecked}
                       disabled={status === 'submitting'}
                       onChange={(event) => void handleToggleAutoPost(event.target.checked)}
                     />

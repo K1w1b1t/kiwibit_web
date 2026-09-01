@@ -16,22 +16,18 @@ import {
 import { encryptToken } from './token-crypto';
 
 describe('parseOauthCookie', () => {
-  it('splits state and member id (photo-only, no auto-post)', () => {
+  it('splits state and member id', () => {
     expect(parseOauthCookie('abc:member-1')).toEqual({
       state: 'abc',
       memberId: 'member-1',
-      autoPost: false,
     });
   });
 
-  it('flags the auto-post intent from the trailing suffix', () => {
+  it('ignores any stale trailing suffix', () => {
     expect(parseOauthCookie('abc:member-1:autopost')).toEqual({
       state: 'abc',
       memberId: 'member-1',
-      autoPost: true,
     });
-    // Any other trailing token is not the auto-post flag.
-    expect(parseOauthCookie('abc:member-1:other')).toMatchObject({ autoPost: false });
   });
 
   it('rejects malformed or empty values', () => {

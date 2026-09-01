@@ -156,7 +156,7 @@ describe('GET /api/admin/members/linkedin/callback', () => {
 
     const req = new NextRequest(
       'http://localhost/api/admin/members/linkedin/callback?code=123&state=state123',
-      { headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:mid-1:autopost` } },
+      { headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:mid-1` } },
     );
     await linkedinCallback(req);
 
