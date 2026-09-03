@@ -76,7 +76,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
   const existing = await prisma.post.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'Post not found.', 404);
-  if (session.user.role === 'member' && existing.authorId !== session.user.id) {
+  if (session.user.role === 'member') {
     return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
   }
 

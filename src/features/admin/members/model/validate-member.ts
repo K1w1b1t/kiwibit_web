@@ -1,4 +1,4 @@
-import { isHttpUrl } from '@/shared/lib/url';
+import { isAllowedSocialUrl, isHttpUrl } from '@/shared/lib/url';
 
 export type MemberFormValues = {
   name: string;
@@ -73,8 +73,9 @@ export function validateMember(values: MemberFormValues): MemberValidationResult
   if (avatarUrl && !isHttpUrl(avatarUrl)) {
     fieldErrors.avatarUrl = 'Avatar URL deve ser uma URL http/https válida.';
   }
-  if (githubUrl && !isHttpUrl(githubUrl)) fieldErrors.githubUrl = 'Link do GitHub inválido.';
-  if (linkedinUrl && !isHttpUrl(linkedinUrl))
+  if (githubUrl && !isAllowedSocialUrl(githubUrl, 'github'))
+    fieldErrors.githubUrl = 'Link do GitHub inválido.';
+  if (linkedinUrl && !isAllowedSocialUrl(linkedinUrl, 'linkedin'))
     fieldErrors.linkedinUrl = 'Link do LinkedIn inválido.';
 
   if (Object.keys(fieldErrors).length > 0) {

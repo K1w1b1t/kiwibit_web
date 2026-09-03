@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
 import {
+  requireAdminSession,
   requirePanelSession,
   apiError,
   parsePaginationParams,
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
 
 // POST /api/admin/posts
 export async function POST(request: Request) {
-  const { session, response } = await requirePanelSession();
+  const { session, response } = await requireAdminSession();
   if (response || !session) return response;
 
   const { body, error } = await parseJsonBody(request);

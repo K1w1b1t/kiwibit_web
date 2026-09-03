@@ -3,7 +3,7 @@ import { invalid, isNonEmptyString, valid, type Validated } from '@/shared/lib/a
 import { isValidEmail } from '@/shared/lib/email';
 import { checkPassword } from '@/shared/lib/password';
 import { isPrivilegedRole, isUserRole } from '@/shared/lib/roles';
-import { isHttpUrl } from '@/shared/lib/url';
+import { isAllowedSocialUrl, isHttpUrl } from '@/shared/lib/url';
 
 export type MemberUpdateInput = {
   /** Present-but-not-a-string clears the column; absent leaves it untouched. */
@@ -18,9 +18,8 @@ export type MemberUpdateInput = {
   linkedinUrl?: string | null;
 };
 
-/** `avatarUrl` is checked server-side too — a client-only URL check is not a check. */
-function invalidHttpUrl(value: unknown): boolean {
-  return typeof value === 'string' && value !== '' && !isHttpUrl(value);
+function invalidSocialUrl(value: unknown, social: 'github' | 'linkedin'): boolean {
+  return typeof value === 'string' && value !== '' && !isAllowedSocialUrl(value, social);
 }
 
 function invalidAvatarUrl(avatarUrl: unknown): boolean {
@@ -38,8 +37,11 @@ export function validateUpdateMemberBody(body: unknown): Validated<MemberUpdateI
   if (invalidAvatarUrl(avatarUrl)) {
     return invalid('BAD_REQUEST', 'avatarUrl must be an http(s) URL.', 400);
   }
-  if (invalidHttpUrl(githubUrl) || invalidHttpUrl(linkedinUrl)) {
-    return invalid('BAD_REQUEST', 'Social links must be http(s) URLs.', 400);
+  if (invalidSocialUrl(githubUrl, 'github')) {
+    return invalid('BAD_REQUEST', 'githubUrl must point to github.com.', 400);
+  }
+  if (invalidSocialUrl(linkedinUrl, 'linkedin')) {
+    return invalid('BAD_REQUEST', 'linkedinUrl must point to linkedin.com.', 400);
   }
 
   return valid({
@@ -89,8 +91,11 @@ function validateCreateMemberFields(body: Record<string, unknown>): Validated<Me
   if (invalidAvatarUrl(avatarUrl)) {
     return invalid('BAD_REQUEST', 'avatarUrl must be an http(s) URL.', 400);
   }
-  if (invalidHttpUrl(githubUrl) || invalidHttpUrl(linkedinUrl)) {
-    return invalid('BAD_REQUEST', 'Social links must be http(s) URLs.', 400);
+  if (invalidSocialUrl(githubUrl, 'github')) {
+    return invalid('BAD_REQUEST', 'githubUrl must point to github.com.', 400);
+  }
+  if (invalidSocialUrl(linkedinUrl, 'linkedin')) {
+    return invalid('BAD_REQUEST', 'linkedinUrl must point to linkedin.com.', 400);
   }
 
   return valid({
