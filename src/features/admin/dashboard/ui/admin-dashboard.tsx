@@ -29,14 +29,12 @@ export function AdminDashboard({
     <AdminPageShell title="Dashboard">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <AdminMetricCard label="Posts" value={posts} href="/admin/posts" delayClass="delay-100" />
-        {!isMember && (
-          <AdminMetricCard
-            label="Membros"
-            value={members}
-            href="/admin/members"
-            delayClass="delay-200"
-          />
-        )}
+        <AdminMetricCard
+          label="Membros"
+          value={members}
+          href="/admin/members"
+          delayClass="delay-200"
+        />
         {!isMember && (
           <AdminMetricCard
             label="Projetos"
@@ -61,15 +59,13 @@ export function AdminDashboard({
           seeAllHref="/admin/posts"
           delayClass="delay-200"
         />
-        {!isMember && (
-          <AdminRecentList
-            title="Últimos membros"
-            items={recentMembers}
-            emptyMessage="Nenhum membro ainda."
-            seeAllHref="/admin/members"
-            delayClass="delay-300"
-          />
-        )}
+        <AdminRecentList
+          title="Últimos membros"
+          items={recentMembers}
+          emptyMessage="Nenhum membro ainda."
+          seeAllHref="/admin/members"
+          delayClass="delay-300"
+        />
         {!isMember && (
           <AdminRecentList
             title="Últimos projetos"

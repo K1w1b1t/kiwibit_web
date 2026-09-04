@@ -33,6 +33,7 @@ export type MemberInitial = {
 type Props = {
   /** Absent means create; present means edit. */
   initial?: MemberInitial;
+  updateEndpoint?: string;
 };
 
 function toFormValues(initial?: MemberInitial): MemberFormValues {
@@ -53,8 +54,11 @@ function toFormValues(initial?: MemberInitial): MemberFormValues {
  * were ~85% identical; the only real differences are the HTTP verb, the payload
  * shape (`undefined` vs `null` for cleared optionals) and the labels.
  */
-export function AdminMemberForm({ initial }: Readonly<Props>) {
+export function AdminMemberForm({ initial, updateEndpoint }: Readonly<Props>) {
   const isEdit = initial !== undefined;
+  const endpoint = isEdit
+    ? (updateEndpoint ?? `/api/admin/members/${initial.id}`)
+    : '/api/admin/members';
   const [form, setForm] = useState<MemberFormValues>(() => toFormValues(initial));
 
   const { status, message, fieldErrors, isSubmitting, submit } = useResourceForm<
@@ -65,7 +69,7 @@ export function AdminMemberForm({ initial }: Readonly<Props>) {
     validate: validateMember,
     toPayload: isEdit ? toUpdateMemberPayload : toCreateMemberPayload,
     method: isEdit ? 'PUT' : 'POST',
-    endpoint: isEdit ? `/api/admin/members/${initial.id}` : '/api/admin/members',
+    endpoint,
     successMessage: isEdit ? 'Alterações salvas.' : 'Membro criado com sucesso.',
     emptyFieldErrors: EMPTY_MEMBER_FIELD_ERRORS,
     // Create clears the form for the next entry; edit keeps what was typed.

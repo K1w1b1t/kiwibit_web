@@ -17,7 +17,10 @@ export function AdminNav({ role }: Readonly<{ role: UserRole }>) {
     role === 'member'
       ? ADMIN_NAV_ITEMS.filter(
           (item) =>
-            item.href === '/admin' || item.href === '/admin/posts' || item.href === '/admin/users',
+            item.href === '/admin' ||
+            item.href === '/admin/posts' ||
+            item.href === '/admin/members' ||
+            item.href === '/admin/users',
         )
       : ADMIN_NAV_ITEMS;
 

@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 /**
- * Allows `next/image` to optimize objects from our OCI bucket, and only those.
+ * Allows `next/image` to optimize objects from the configured storage bucket.
  *
  * Two reasons this must stay narrow:
  *  - `hostname: '**'` would turn the Vercel image optimizer into an open proxy
@@ -12,7 +12,17 @@ import type { NextConfig } from 'next';
  * The guarded fallback matters: a missing env var must not fail `npm run build`
  * locally or in CI.
  */
-function ociImagePatterns(): NonNullable<NonNullable<NextConfig['images']>['remotePatterns']> {
+function storageImagePatterns(): NonNullable<NonNullable<NextConfig['images']>['remotePatterns']> {
+  const localUrl = process.env.LOCAL_S3_PUBLIC_URL;
+  const localBucket = process.env.LOCAL_S3_BUCKET;
+  if (localUrl && localBucket) {
+    try {
+      return [new URL(`${localUrl.replace(/\/$/, '')}/${localBucket}/**`)];
+    } catch {
+      return [];
+    }
+  }
+
   const region = process.env.OCI_STORAGE_REGION;
   const namespace = process.env.OCI_STORAGE_NAMESPACE;
   const bucket = process.env.OCI_STORAGE_BUCKET;
@@ -31,7 +41,7 @@ function ociImagePatterns(): NonNullable<NonNullable<NextConfig['images']>['remo
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
-    remotePatterns: ociImagePatterns(),
+    remotePatterns: storageImagePatterns(),
   },
 };
 

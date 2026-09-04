@@ -203,12 +203,12 @@ async function main() {
         avatarUrl: userSeed.member.avatarUrl,
       },
       create: {
-        userId: user.id,
         name: userSeed.member.name,
         bio: userSeed.member.bio,
         bioPt: userSeed.member.bioPt,
         bioEn: userSeed.member.bioEn,
         avatarUrl: userSeed.member.avatarUrl,
+        user: { connect: { id: user.id } },
       },
     });
   }

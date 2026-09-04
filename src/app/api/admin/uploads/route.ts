@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminSession, apiError } from '@/shared/lib/api-helpers';
+import { requireAdminSession, requirePanelSession, apiError } from '@/shared/lib/api-helpers';
 import { deleteObjects, isStorageConfigured, putObject } from '@/shared/lib/storage';
 import {
   checkImageFile,
@@ -16,12 +16,8 @@ import {
  * (stored so the object can be deleted later).
  */
 export async function POST(request: Request) {
-  const { response } = await requireAdminSession();
-  if (response) return response;
-
-  if (!isStorageConfigured()) {
-    return apiError('STORAGE_UNAVAILABLE', 'Storage is not configured on this environment.', 503);
-  }
+  const { session, response } = await requirePanelSession();
+  if (response || !session) return response;
 
   let form: FormData;
   try {
@@ -38,6 +34,13 @@ export async function POST(request: Request) {
   }
   if (!isUploadScope(scope)) {
     return apiError('BAD_REQUEST', 'scope must be projects, posts or members.', 400);
+  }
+  if (session.user.role === 'member' && scope !== 'members') {
+    return apiError('FORBIDDEN', 'Members can upload images only for their profile.', 403);
+  }
+
+  if (!isStorageConfigured()) {
+    return apiError('STORAGE_UNAVAILABLE', 'Storage is not configured on this environment.', 503);
   }
 
   const check = checkImageFile({ type: file.type, size: file.size });

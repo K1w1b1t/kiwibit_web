@@ -58,4 +58,19 @@ describe('AdminDashboardPage', () => {
       );
     }
   });
+
+  it('limits dashboard members to the signed-in member profile', async () => {
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({
+      user: { id: 'uid-member', role: 'member' },
+    });
+
+    const element = await AdminDashboardPage();
+
+    expect(prisma.member.count).toHaveBeenCalledWith({ where: { userId: 'uid-member' } });
+    expect(prisma.member.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: 'uid-member' } }),
+    );
+    expect(element.props.isMember).toBe(true);
+    expect(element.props.members).toBe(3);
+  });
 });
