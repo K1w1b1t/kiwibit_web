@@ -1,15 +1,15 @@
 import AdminDashboardPage from './page';
 import { AdminDashboard } from '@/features/admin/dashboard/ui/admin-dashboard';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { prisma } from '@/shared/lib/prisma';
 
-jest.mock('@/shared/lib/page-auth', () => ({ requireAdminPageSession: jest.fn() }));
+jest.mock('@/shared/lib/page-auth', () => ({ requirePanelPageSession: jest.fn() }));
 
 const createdAt = new Date('2026-03-07T12:00:00Z');
 
 describe('AdminDashboardPage', () => {
   beforeEach(() => {
-    (requireAdminPageSession as jest.Mock).mockResolvedValue({ user: { role: 'admin' } });
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({ user: { role: 'admin' } });
     (prisma.post.count as jest.Mock).mockResolvedValue(5);
     (prisma.member.count as jest.Mock).mockResolvedValue(3);
     (prisma.project.count as jest.Mock).mockResolvedValue(2);
@@ -27,7 +27,7 @@ describe('AdminDashboardPage', () => {
 
   it('exige sessão administrativa antes de buscar métricas', async () => {
     await AdminDashboardPage();
-    expect(requireAdminPageSession).toHaveBeenCalledTimes(1);
+    expect(requirePanelPageSession).toHaveBeenCalledTimes(1);
   });
 
   it('renderiza AdminDashboard com as quatro contagens', async () => {
@@ -57,5 +57,20 @@ describe('AdminDashboardPage', () => {
         expect.objectContaining({ take: 5, orderBy: { createdAt: 'desc' } }),
       );
     }
+  });
+
+  it('limits dashboard members to the signed-in member profile', async () => {
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({
+      user: { id: 'uid-member', role: 'member' },
+    });
+
+    const element = await AdminDashboardPage();
+
+    expect(prisma.member.count).toHaveBeenCalledWith({ where: { userId: 'uid-member' } });
+    expect(prisma.member.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: 'uid-member' } }),
+    );
+    expect(element.props.isMember).toBe(true);
+    expect(element.props.members).toBe(3);
   });
 });

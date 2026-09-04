@@ -18,6 +18,7 @@ type Props = {
   page: number;
   total: number;
   pageSize: number;
+  canCreate?: boolean;
 };
 
 const COLUMNS: ReadonlyArray<Column<MemberRow>> = [
@@ -58,7 +59,13 @@ const COLUMNS: ReadonlyArray<Column<MemberRow>> = [
   },
 ];
 
-export function AdminMembersTable({ members, page: rawPage, total, pageSize }: Props) {
+export function AdminMembersTable({
+  members,
+  page: rawPage,
+  total,
+  pageSize,
+  canCreate = true,
+}: Props) {
   const page = Math.max(1, rawPage);
 
   if (members.length === 0) {
@@ -66,12 +73,14 @@ export function AdminMembersTable({ members, page: rawPage, total, pageSize }: P
       <EmptyState
         message="Nenhum membro cadastrado."
         action={
-          <Link
-            href="/admin/members/new"
-            className="inline-block rounded-full border border-white/20 px-5 py-2 text-xs uppercase tracking-[0.14em] text-white/70 transition hover:border-white/50 hover:text-white"
-          >
-            Criar primeiro membro
-          </Link>
+          canCreate ? (
+            <Link
+              href="/admin/members/new"
+              className="inline-block rounded-full border border-white/20 px-5 py-2 text-xs uppercase tracking-[0.14em] text-white/70 transition hover:border-white/50 hover:text-white"
+            >
+              Criar primeiro membro
+            </Link>
+          ) : undefined
         }
       />
     );

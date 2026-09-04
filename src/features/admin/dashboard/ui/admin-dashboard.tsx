@@ -12,6 +12,7 @@ type Props = {
   recentPosts: readonly DashboardItem[];
   recentMembers: readonly DashboardItem[];
   recentProjects: readonly DashboardItem[];
+  isMember?: boolean;
 };
 
 export function AdminDashboard({
@@ -22,6 +23,7 @@ export function AdminDashboard({
   recentPosts,
   recentMembers,
   recentProjects,
+  isMember = false,
 }: Readonly<Props>) {
   return (
     <AdminPageShell title="Dashboard">
@@ -33,12 +35,14 @@ export function AdminDashboard({
           href="/admin/members"
           delayClass="delay-200"
         />
-        <AdminMetricCard
-          label="Projetos"
-          value={projects}
-          href="/admin/projects"
-          delayClass="delay-300"
-        />
+        {!isMember && (
+          <AdminMetricCard
+            label="Projetos"
+            value={projects}
+            href="/admin/projects"
+            delayClass="delay-300"
+          />
+        )}
         <AdminMetricCard
           label="Usuários"
           value={users}
@@ -62,29 +66,33 @@ export function AdminDashboard({
           seeAllHref="/admin/members"
           delayClass="delay-300"
         />
-        <AdminRecentList
-          title="Últimos projetos"
-          items={recentProjects}
-          emptyMessage="Nenhum projeto ainda."
-          seeAllHref="/admin/projects"
-          delayClass="delay-400"
-        />
+        {!isMember && (
+          <AdminRecentList
+            title="Últimos projetos"
+            items={recentProjects}
+            emptyMessage="Nenhum projeto ainda."
+            seeAllHref="/admin/projects"
+            delayClass="delay-400"
+          />
+        )}
       </div>
 
-      <div className="animate-fade-up delay-500 mt-8 flex flex-wrap gap-3">
-        <Link
-          href="/admin/members/new"
-          className="inline-block rounded-full bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-white/90"
-        >
-          Novo membro
-        </Link>
-        <Link
-          href="/admin/users/new"
-          className="inline-block rounded-full border border-white/35 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:border-white/80"
-        >
-          Novo usuário
-        </Link>
-      </div>
+      {!isMember && (
+        <div className="animate-fade-up delay-500 mt-8 flex flex-wrap gap-3">
+          <Link
+            href="/admin/members/new"
+            className="inline-block rounded-full bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-white/90"
+          >
+            Novo membro
+          </Link>
+          <Link
+            href="/admin/users/new"
+            className="inline-block rounded-full border border-white/35 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:border-white/80"
+          >
+            Novo usuário
+          </Link>
+        </div>
+      )}
     </AdminPageShell>
   );
 }

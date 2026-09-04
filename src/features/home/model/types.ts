@@ -42,7 +42,11 @@ export type HomeMember = {
   userId: string | null;
   name: string;
   bio: string | null;
+  bioPt: string | null;
+  bioEn: string | null;
   avatarUrl: string | null;
+  githubUrl: string | null;
+  linkedinUrl: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { authOptions } from '@/shared/lib/auth';
 import { reportServerError } from '@/shared/lib/discord';
-import { ADMIN_ROLES } from '@/shared/lib/roles';
+import { ADMIN_ROLES, PANEL_ROLES } from '@/shared/lib/roles';
 
 export async function requireAdminSession() {
   const session = await getServerSession(authOptions);
@@ -17,6 +17,29 @@ export async function requireAdminSession() {
     };
   }
   if (!ADMIN_ROLES.has(session.user.role)) {
+    return {
+      session: null,
+      response: NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions.' } },
+        { status: 403 },
+      ),
+    };
+  }
+  return { session, response: null };
+}
+
+export async function requirePanelSession() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return {
+      session: null,
+      response: NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Authentication required.' } },
+        { status: 401 },
+      ),
+    };
+  }
+  if (!PANEL_ROLES.has(session.user.role)) {
     return {
       session: null,
       response: NextResponse.json(

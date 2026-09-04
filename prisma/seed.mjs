@@ -1,7 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import prismaClient from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const { PrismaClient } = prismaClient;
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // `SEED_ADMIN_PASSWORD` is accepted as an alias because that is the name
 // documented in .env.example / .env; without it, `npm run prisma:seed` always
@@ -20,6 +25,8 @@ const usersSeed = [
     member: {
       name: 'Gustavo Costa',
       bio: 'Engineering lead focused on product architecture and secure delivery pipelines.',
+      bioPt: null,
+      bioEn: 'Engineering lead focused on product architecture and secure delivery pipelines.',
       avatarUrl: '/kiwi.png',
     },
   },
@@ -30,6 +37,9 @@ const usersSeed = [
     member: {
       name: 'Ana Martins',
       bio: 'Editorial owner for technical writing, release notes, and developer education.',
+      bioPt:
+        'Responsavel editorial por textos tecnicos, notas de versao e educacao para desenvolvedores.',
+      bioEn: null,
       avatarUrl: '/kiwi.png',
     },
   },
@@ -40,6 +50,8 @@ const usersSeed = [
     member: {
       name: 'Pedro Galvao',
       bio: 'Community and member operations specialist connecting contributors and projects.',
+      bioPt: null,
+      bioEn: 'Community and member operations specialist connecting contributors and projects.',
       avatarUrl: '/kiwi.png',
     },
   },
@@ -50,6 +62,8 @@ const usersSeed = [
     member: {
       name: 'Laura Souza',
       bio: 'Frontend engineer building accessible interfaces and polished interaction systems.',
+      bioPt: null,
+      bioEn: null,
       avatarUrl: '/kiwi.png',
     },
   },
@@ -184,13 +198,17 @@ async function main() {
       update: {
         name: userSeed.member.name,
         bio: userSeed.member.bio,
+        bioPt: userSeed.member.bioPt,
+        bioEn: userSeed.member.bioEn,
         avatarUrl: userSeed.member.avatarUrl,
       },
       create: {
-        userId: user.id,
         name: userSeed.member.name,
         bio: userSeed.member.bio,
+        bioPt: userSeed.member.bioPt,
+        bioEn: userSeed.member.bioEn,
         avatarUrl: userSeed.member.avatarUrl,
+        user: { connect: { id: user.id } },
       },
     });
   }

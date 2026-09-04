@@ -16,6 +16,7 @@ import type { ApiFailure } from '../lib/api-helpers';
 
 // Controlled mocks for functions that tests need to spy on / override
 export const requireAdminSession = jest.fn();
+export const requirePanelSession = jest.fn();
 export const apiError = jest
   .fn()
   .mockImplementation((code: string, message: string, status: number) => ({

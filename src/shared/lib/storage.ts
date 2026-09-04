@@ -1,3 +1,4 @@
+import http from 'node:http';
 import https from 'node:https';
 import { AwsClient } from 'aws4fetch';
 import { runAfterResponse } from '@/shared/lib/after-response';
@@ -15,7 +16,8 @@ import { reportServerError } from '@/shared/lib/discord';
  * prefers thin `fetch` wrappers (see `discord.ts`).
  */
 type StorageConfig = {
-  namespace: string;
+  endpoint: string;
+  publicBaseUrl: string;
   bucket: string;
   region: string;
   accessKeyId: string;
@@ -23,6 +25,23 @@ type StorageConfig = {
 };
 
 function readConfig(): StorageConfig | null {
+  const localEndpoint = process.env.LOCAL_S3_ENDPOINT;
+  const localPublicUrl = process.env.LOCAL_S3_PUBLIC_URL;
+  const localBucket = process.env.LOCAL_S3_BUCKET;
+  const localAccessKeyId = process.env.LOCAL_S3_ACCESS_KEY_ID;
+  const localSecretAccessKey = process.env.LOCAL_S3_SECRET_ACCESS_KEY;
+
+  if (localEndpoint && localPublicUrl && localBucket && localAccessKeyId && localSecretAccessKey) {
+    return {
+      endpoint: localEndpoint,
+      publicBaseUrl: `${localPublicUrl.replace(/\/$/, '')}/${localBucket}`,
+      bucket: localBucket,
+      region: process.env.LOCAL_S3_REGION ?? 'us-east-1',
+      accessKeyId: localAccessKeyId,
+      secretAccessKey: localSecretAccessKey,
+    };
+  }
+
   const namespace = process.env.OCI_STORAGE_NAMESPACE;
   const bucket = process.env.OCI_STORAGE_BUCKET;
   const region = process.env.OCI_STORAGE_REGION;
@@ -31,7 +50,15 @@ function readConfig(): StorageConfig | null {
 
   if (!namespace || !bucket || !region || !accessKeyId || !secretAccessKey) return null;
 
-  return { namespace, bucket, region, accessKeyId, secretAccessKey };
+  const host = `${namespace}.compat.objectstorage.${region}.oraclecloud.com`;
+  return {
+    endpoint: `https://${host}`,
+    publicBaseUrl: `https://objectstorage.${region}.oraclecloud.com/n/${namespace}/b/${bucket}/o`,
+    bucket,
+    region,
+    accessKeyId,
+    secretAccessKey,
+  };
 }
 
 /** True when the app has everything needed to talk to the bucket. */
@@ -41,26 +68,24 @@ export function isStorageConfigured(): boolean {
 
 /** S3-compatible endpoint, used for writes. Path-style addressing. */
 function writeUrl(config: StorageConfig, key: string): string {
-  const host = `${config.namespace}.compat.objectstorage.${config.region}.oraclecloud.com`;
-  return `https://${host}/${config.bucket}/${encodeURI(key)}`;
+  return `${config.endpoint.replace(/\/$/, '')}/${config.bucket}/${encodeURI(key)}`;
 }
 
 /**
- * Public read URL, served by the native Object Storage endpoint. Works without
- * credentials because the bucket is created with `access_type = ObjectRead`
- * (public objects, private listing).
+ * Public read URL. LocalStack configures a local public-read bucket, while OCI
+ * uses its native public object endpoint.
  */
 export function publicUrl(key: string): string {
   const config = readConfig();
   if (!config) return '';
-  const { region, namespace, bucket } = config;
-  return `https://objectstorage.${region}.oraclecloud.com/n/${namespace}/b/${bucket}/o/${encodeURI(key)}`;
+  return `${config.publicBaseUrl.replace(/\/$/, '')}/${encodeURI(key)}`;
 }
 
 /** Hostname that `next.config.ts` must allow for `next/image`. */
 export function publicImageHost(): string | null {
-  const region = process.env.OCI_STORAGE_REGION;
-  return region ? `objectstorage.${region}.oraclecloud.com` : null;
+  const config = readConfig();
+  if (!config) return null;
+  return new URL(config.publicBaseUrl).hostname;
 }
 
 function makeClient(config: StorageConfig): AwsClient {
@@ -92,7 +117,8 @@ function sendSigned(url: URL, method: string, headers: Headers, body: Uint8Array
       headerObject[name] = value;
     });
 
-    const req = https.request(url, { method, headers: headerObject }, (res) => {
+    const transport = url.protocol === 'https:' ? https : http;
+    const req = transport.request(url, { method, headers: headerObject }, (res) => {
       res.resume(); // Drain the response body; only the status matters here.
       res.on('end', () => resolve(res.statusCode ?? 0));
       res.on('error', reject);
