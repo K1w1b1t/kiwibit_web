@@ -36,6 +36,7 @@ describe('EditUserPage', () => {
 
   it('exige sessão administrativa antes de buscar', async () => {
     await EditUserPage({ params: Promise.resolve({ id: 'uid-2' }) });
+    expect(requirePanelPageSession).toHaveBeenCalledTimes(1);
   });
 
   it('chama notFound quando o usuário não existe', async () => {

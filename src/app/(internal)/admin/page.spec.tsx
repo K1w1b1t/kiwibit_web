@@ -27,6 +27,7 @@ describe('AdminDashboardPage', () => {
 
   it('exige sessão administrativa antes de buscar métricas', async () => {
     await AdminDashboardPage();
+    expect(requirePanelPageSession).toHaveBeenCalledTimes(1);
   });
 
   it('renderiza AdminDashboard com as quatro contagens', async () => {
@@ -56,5 +57,19 @@ describe('AdminDashboardPage', () => {
         expect.objectContaining({ take: 5, orderBy: { createdAt: 'desc' } }),
       );
     }
+  });
+
+  it('não consulta dados fora do escopo de um member', async () => {
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({
+      user: { id: 'uid-1', role: 'member' },
+    });
+
+    await AdminDashboardPage();
+
+    expect(prisma.member.count).not.toHaveBeenCalled();
+    expect(prisma.member.findMany).not.toHaveBeenCalled();
+    expect(prisma.project.count).not.toHaveBeenCalled();
+    expect(prisma.project.findMany).not.toHaveBeenCalled();
+    expect(prisma.user.count).not.toHaveBeenCalled();
   });
 });

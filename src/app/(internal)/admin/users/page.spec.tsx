@@ -27,6 +27,7 @@ describe('AdminUsersPage', () => {
 
   it('exige sessão administrativa antes de consultar', async () => {
     await AdminUsersPage({ searchParams: Promise.resolve({}) });
+    expect(requirePanelPageSession).toHaveBeenCalledTimes(1);
   });
 
   it('nunca seleciona a coluna password', async () => {

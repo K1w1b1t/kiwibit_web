@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import {
   requireAdminSession,
+  requirePanelSession,
   apiError,
   parseJsonBody,
   failureResponse,
@@ -47,8 +48,8 @@ const USER_SELECT = {
 
 // GET /api/admin/users/[id]
 export async function GET(_req: Request, { params }: Params) {
-  const { response } = await requireAdminSession();
-  if (response) return response;
+  const { session, response } = await requirePanelSession();
+  if (response || !session) return response;
 
   const { id } = await params;
   const user = await prisma.user.findUnique({
@@ -57,12 +58,15 @@ export async function GET(_req: Request, { params }: Params) {
   });
 
   if (!user) return apiError('NOT_FOUND', 'User not found.', 404);
+  if (session.user.role === 'member' && user.id !== session.user.id) {
+    return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
+  }
   return NextResponse.json(user);
 }
 
 // PUT /api/admin/users/[id]
 export async function PUT(request: Request, { params }: Params) {
-  const { session, response } = await requireAdminSession();
+  const { session, response } = await requirePanelSession();
   if (response || !session) return response;
 
   const { id } = await params;
@@ -72,6 +76,9 @@ export async function PUT(request: Request, { params }: Params) {
 
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'User not found.', 404);
+  if (session.user.role === 'member' && existing.id !== session.user.id) {
+    return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
+  }
 
   const fields = validateUpdateUserFields(body, session.user.role);
   if (fields.failure) return failureResponse(fields.failure);

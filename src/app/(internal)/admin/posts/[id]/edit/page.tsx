@@ -44,7 +44,7 @@ export default async function EditPostPage({ params }: Readonly<Params>) {
         )
       }
     >
-      <AdminPostForm initial={post} />
+      <AdminPostForm initial={post} canPublish={session.user.role !== 'member'} />
     </AdminPageShell>
   );
 }

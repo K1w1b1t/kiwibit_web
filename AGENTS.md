@@ -86,9 +86,9 @@ first (source of `Dictionary` type), then `pt.ts` (compile-time key parity).
 
 - JWT stored in httpOnly cookie (`sameSite: lax`, `secure` in production only).
 - `NEXTAUTH_SECRET` and `NEXTAUTH_URL` must be present in env.
-- Roles: `admin` · `editor` · `member_manager` → access admin routes. `member` → no admin access.
-- **Proxy** (`src/proxy.ts`, Next 16's renamed middleware): unauthenticated admin API → `401 JSON`; wrong role → `403 JSON`; unauthenticated admin page → redirect `/login`. Also handles locale negotiation for public routes — `/login` is excluded from it, since internal pages are not localized.
-- **Server guard**: always call `requireAdminSession()` at the top of every admin route handler.
+- Roles: `admin` · `editor` · `member_manager` have full panel access; `member` may enter the shared panel only for their own account and posts.
+- **Proxy** (`src/proxy.ts`, Next 16's renamed middleware): unauthenticated panel API → `401 JSON`; wrong role → `403 JSON`; unauthenticated panel page → redirect `/login`. Also handles locale negotiation for public routes — `/login` is excluded from it, since internal pages are not localized.
+- **Server guards**: use `requirePanelSession()` / `requirePanelPageSession()` for shared panel access and enforce ownership in the handler or page; use `requireAdminSession()` / `requireAdminPageSession()` for administrator-only operations and routes.
 - **Client**: use `useAuth()` from `src/features/auth/use-auth.ts`.
 
 ---
@@ -145,7 +145,7 @@ Status codes: `400` bad input · `401` unauthenticated · `403` forbidden · `40
 - No secrets or credentials in source files or frontend code.
 - Validate all external input at server boundaries.
 - Never log sensitive data (tokens, passwords, PII).
-- Always use `requireAdminSession()` before admin mutations.
+- Use `requirePanelSession()` before member-scoped mutations and enforce that the target belongs to the session user. Use `requireAdminSession()` before privileged admin mutations.
 
 ---
 
@@ -288,10 +288,10 @@ Rules:
 
 | Role             | Description                     |
 | ---------------- | ------------------------------- |
-| `admin`          | Full access to all admin routes |
-| `editor`         | Access to admin routes          |
-| `member_manager` | Access to admin routes          |
-| `member`         | No access to admin routes       |
+| `admin`          | Full access to all panel routes and operations |
+| `editor`         | Access to panel routes and administrative operations |
+| `member_manager` | Access to panel routes and administrative operations |
+| `member`         | Access only to own account and posts in the shared panel |
 
 ### 5.3 Route Protection
 
@@ -302,7 +302,9 @@ Rules:
 
 ### 5.4 Server-side Guard
 
-- Use `requireAdminSession()` from `src/shared/lib/api-helpers.ts` at the top of every admin route handler.
+- Use `requirePanelSession()` from `src/shared/lib/api-helpers.ts` for routes shared with `member`; enforce ownership and operation-specific restrictions after the guard.
+- Use `requireAdminSession()` for administrator-only routes and mutations such as creating users or posts, deleting posts, and publishing posts.
+- Use `requirePanelPageSession()` for shared `/admin` pages and `requireAdminPageSession()` for administrator-only pages.
 - Never trust client-side role checks for data mutations.
 
 ### 5.5 Client-side
@@ -380,7 +382,8 @@ Before creating any new component, hook, utility or helper, AI assistants and de
 - Validate all external input (client and server boundaries).
 - Follow secure authentication and authorization practices.
 - Avoid logging sensitive data (tokens, passwords, personal data).
-- Always call `requireAdminSession()` before any admin route mutation.
+- Call `requirePanelSession()` before member-scoped mutations and enforce ownership server-side.
+- Call `requireAdminSession()` before privileged admin mutations.
 
 ## 10. Rules for New Features
 

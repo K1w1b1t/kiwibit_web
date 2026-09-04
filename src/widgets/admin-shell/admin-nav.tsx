@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { UserRole } from '@prisma/client';
 import { SignOutButton } from '@/features/auth/ui/sign-out-button';
-import { ADMIN_NAV_ITEMS, isActiveNavItem } from '@/widgets/admin-shell/model/admin-nav-items';
+import {
+  ADMIN_NAV_ITEMS,
+  isActiveNavItem,
+  isVisibleNavItem,
+} from '@/widgets/admin-shell/model/admin-nav-items';
 
 const LINK_BASE =
   'shrink-0 rounded-full px-3 py-2 text-xs font-medium uppercase tracking-[0.12em] transition';
@@ -13,13 +17,7 @@ const LINK_IDLE = 'text-white/60 hover:bg-white/5 hover:text-white';
 
 export function AdminNav({ role }: Readonly<{ role: UserRole }>) {
   const pathname = usePathname();
-  const navItems =
-    role === 'member'
-      ? ADMIN_NAV_ITEMS.filter(
-          (item) =>
-            item.href === '/admin' || item.href === '/admin/posts' || item.href === '/admin/users',
-        )
-      : ADMIN_NAV_ITEMS;
+  const navItems = ADMIN_NAV_ITEMS.filter((item) => isVisibleNavItem(role, item));
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur">

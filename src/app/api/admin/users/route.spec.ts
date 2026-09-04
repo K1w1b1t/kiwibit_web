@@ -1,6 +1,6 @@
 import { GET as listUsers, POST as createUser } from './route';
 import { GET as getUser, PUT as updateUser, DELETE as deleteUser } from './[id]/route';
-import { apiError, requireAdminSession } from '@/shared/lib/api-helpers';
+import { apiError, requireAdminSession, requirePanelSession } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
 import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
 
@@ -27,9 +27,20 @@ const USER = {
 
 /** Signs the request as a non-admin admin-area role. */
 function mockEditorAuth() {
-  (requireAdminSession as jest.Mock).mockResolvedValue({
+  const result = {
     session: {
       user: { id: 'uid-9', name: 'Ed', email: 'ed@test.com', role: 'editor' as const },
+    },
+    response: null,
+  };
+  (requireAdminSession as jest.Mock).mockResolvedValue(result);
+  (requirePanelSession as jest.Mock).mockResolvedValue(result);
+}
+
+function mockMemberAuth(id = 'uid-2') {
+  (requirePanelSession as jest.Mock).mockResolvedValue({
+    session: {
+      user: { id, name: 'Member', email: 'member@test.com', role: 'member' as const },
     },
     response: null,
   });
@@ -352,6 +363,33 @@ describe('PUT /api/admin/users/[id]', () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.data.name).toBe('Bob');
+  });
+
+  it('allows a member to update their own account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(USER);
+    (prisma.user.update as jest.Mock).mockResolvedValue({ ...USER, name: 'Updated member' });
+
+    const res = await updateUser(
+      makeReq('http://localhost/api/admin/users/uid-2', { name: 'Updated member' }, 'PUT'),
+      paramsFor('uid-2'),
+    );
+
+    expect(res.status).toBe(200);
+    expect(prisma.user.update).toHaveBeenCalled();
+  });
+
+  it('rejects a member from updating another account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...USER, id: 'uid-3' });
+
+    const res = await updateUser(
+      makeReq('http://localhost/api/admin/users/uid-3', { name: 'Updated' }, 'PUT'),
+      paramsFor('uid-3'),
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   it('hashes password when password field is provided', async () => {

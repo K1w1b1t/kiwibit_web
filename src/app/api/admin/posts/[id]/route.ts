@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
 import {
+  requireAdminSession,
   requirePanelSession,
   apiError,
   parseJsonBody,
@@ -48,6 +49,9 @@ export async function PUT(request: Request, { params }: Params) {
 
   const parsed = validateUpdatePostBody(body);
   if (parsed.failure) return failureResponse(parsed.failure);
+  if (session.user.role === 'member' && parsed.data.status === 'published') {
+    return apiError('FORBIDDEN', 'Only administrators can publish posts.', 403);
+  }
 
   const updated = await prisma.post.update({
     where: { id },
@@ -70,16 +74,12 @@ export async function PUT(request: Request, { params }: Params) {
 
 // DELETE /api/admin/posts/[id]
 export async function DELETE(_req: Request, { params }: Params) {
-  const { session, response } = await requirePanelSession();
+  const { session, response } = await requireAdminSession();
   if (response || !session) return response;
 
   const { id } = await params;
   const existing = await prisma.post.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'Post not found.', 404);
-  if (session.user.role === 'member' && existing.authorId !== session.user.id) {
-    return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
-  }
-
   await prisma.post.delete({ where: { id } });
 
   // DB first, then best-effort object cleanup. A null path means the cover was a
