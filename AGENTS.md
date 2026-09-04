@@ -286,11 +286,11 @@ Rules:
 
 ### 5.2 Roles
 
-| Role             | Description                     |
-| ---------------- | ------------------------------- |
-| `admin`          | Full access to all panel routes and operations |
-| `editor`         | Access to panel routes and administrative operations |
-| `member_manager` | Access to panel routes and administrative operations |
+| Role             | Description                                              |
+| ---------------- | -------------------------------------------------------- |
+| `admin`          | Full access to all panel routes and operations           |
+| `editor`         | Access to panel routes and administrative operations     |
+| `member_manager` | Access to panel routes and administrative operations     |
 | `member`         | Access only to own account and posts in the shared panel |
 
 ### 5.3 Route Protection
