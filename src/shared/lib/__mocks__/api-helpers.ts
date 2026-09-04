@@ -6,6 +6,7 @@ export const paginatedJson = actual.paginatedJson;
 export const runPaginatedQuery = actual.runPaginatedQuery;
 
 export const requireAdminSession = jest.fn();
+export const requirePanelSession = jest.fn();
 export const apiError = jest
   .fn()
   .mockImplementation((code: string, message: string, status: number) => ({

@@ -1,6 +1,6 @@
 import { GET as listPosts, POST as createPost } from './route';
 import { GET as getPost, PUT as updatePost, DELETE as deletePost } from './[id]/route';
-import { apiError } from '@/shared/lib/api-helpers';
+import { apiError, requireAdminSession, requirePanelSession } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
 import {
   makeReq,
@@ -19,6 +19,22 @@ const POST_RECORD = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
+
+function mockMemberAuth() {
+  (requirePanelSession as jest.Mock).mockResolvedValue({
+    session: {
+      user: { id: 'uid-1', name: 'Member', email: 'member@test.com', role: 'member' as const },
+    },
+    response: null,
+  });
+  (requireAdminSession as jest.Mock).mockResolvedValue({
+    session: null,
+    response: new Response(
+      JSON.stringify({ error: { code: 'FORBIDDEN', message: 'Insufficient permissions.' } }),
+      { status: 403 },
+    ),
+  });
+}
 
 // ── GET /api/admin/posts ──────────────────────────────────────────────────────
 
@@ -79,6 +95,15 @@ describe('POST /api/admin/posts', () => {
       makeReq('http://localhost/api/admin/posts', { title: 'T', content: 'C' }),
     );
     expect(res.status).toBe(401);
+  });
+
+  it('returns 403 when a member attempts to create a post', async () => {
+    mockMemberAuth();
+    const res = await createPost(
+      makeReq('http://localhost/api/admin/posts', { title: 'T', content: 'C' }),
+    );
+    expect(res.status).toBe(403);
+    expect(prisma.post.create).not.toHaveBeenCalled();
   });
 
   it('returns 400 when body is invalid JSON', async () => {
@@ -202,6 +227,23 @@ describe('PUT /api/admin/posts/[id]', () => {
     expect(body.data.title).toBe('Updated');
     expect(body.data.content).toBe('New content');
   });
+
+  it('rejects a member from publishing their own post', async () => {
+    mockMemberAuth();
+    (prisma.post.findUnique as jest.Mock).mockResolvedValue({
+      ...POST_RECORD,
+      status: 'draft',
+    });
+
+    const res = await updatePost(
+      makeReq('http://localhost/api/admin/posts/post-1', { status: 'published' }, 'PUT'),
+      paramsFor('post-1'),
+    );
+
+    expect(res.status).toBe(403);
+    expect(apiError).toHaveBeenCalledWith('FORBIDDEN', expect.any(String), 403);
+    expect(prisma.post.update).not.toHaveBeenCalled();
+  });
 });
 
 // ── DELETE /api/admin/posts/[id] ──────────────────────────────────────────────
@@ -214,6 +256,17 @@ describe('DELETE /api/admin/posts/[id]', () => {
       paramsFor('post-1'),
     );
     expect(res.status).toBe(401);
+  });
+
+  it('returns 403 when a member attempts to delete a post', async () => {
+    mockMemberAuth();
+    const res = await deletePost(
+      makeReq('http://localhost/api/admin/posts/post-1', undefined, 'DELETE'),
+      paramsFor('post-1'),
+    );
+    expect(res.status).toBe(403);
+    expect(prisma.post.findUnique).not.toHaveBeenCalled();
+    expect(prisma.post.delete).not.toHaveBeenCalled();
   });
 
   it('returns 404 when post not found', async () => {

@@ -1,9 +1,9 @@
 import AdminUsersPage from './page';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 
 jest.mock('@/shared/lib/page-auth', () => ({
-  requireAdminPageSession: jest.fn(),
+  requirePanelPageSession: jest.fn(),
 }));
 
 const USERS = [
@@ -18,7 +18,7 @@ const USERS = [
 
 describe('AdminUsersPage', () => {
   beforeEach(() => {
-    (requireAdminPageSession as jest.Mock).mockResolvedValue({
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({
       user: { id: 'uid-1', role: 'admin' },
     });
     (prisma.user.findMany as jest.Mock).mockResolvedValue(USERS);
@@ -27,7 +27,7 @@ describe('AdminUsersPage', () => {
 
   it('exige sessão administrativa antes de consultar', async () => {
     await AdminUsersPage({ searchParams: Promise.resolve({}) });
-    expect(requireAdminPageSession).toHaveBeenCalledTimes(1);
+    expect(requirePanelPageSession).toHaveBeenCalledTimes(1);
   });
 
   it('nunca seleciona a coluna password', async () => {

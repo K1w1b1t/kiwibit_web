@@ -1,7 +1,7 @@
 import EditUserPage from './page';
 import { prisma } from '@/shared/lib/prisma';
 import { notFound } from 'next/navigation';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
@@ -9,7 +9,7 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 jest.mock('@/shared/lib/page-auth', () => ({
-  requireAdminPageSession: jest.fn(),
+  requirePanelPageSession: jest.fn(),
 }));
 // Componentes client não carregam no ambiente node do jest.
 jest.mock('@/features/admin/users/ui/admin-user-form', () => ({
@@ -25,7 +25,7 @@ jest.mock('@/shared/ui/delete-button', () => ({
 const USER = { id: 'uid-2', name: 'Alice', email: 'alice@test.com', role: 'member' };
 
 function mockSession(role = 'admin', id = 'uid-1') {
-  (requireAdminPageSession as jest.Mock).mockResolvedValue({ user: { id, role } });
+  (requirePanelPageSession as jest.Mock).mockResolvedValue({ user: { id, role } });
 }
 
 describe('EditUserPage', () => {
@@ -36,7 +36,7 @@ describe('EditUserPage', () => {
 
   it('exige sessão administrativa antes de buscar', async () => {
     await EditUserPage({ params: Promise.resolve({ id: 'uid-2' }) });
-    expect(requireAdminPageSession).toHaveBeenCalledTimes(1);
+    expect(requirePanelPageSession).toHaveBeenCalledTimes(1);
   });
 
   it('chama notFound quando o usuário não existe', async () => {

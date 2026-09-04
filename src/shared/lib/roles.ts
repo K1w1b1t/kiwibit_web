@@ -6,6 +6,9 @@ export const USER_ROLES = ['member', 'member_manager', 'editor', 'admin'] as con
 /** Roles com acesso à área administrativa (páginas /admin e APIs /api/admin). */
 export const ADMIN_ROLES = new Set<UserRole>(['admin', 'editor', 'member_manager']);
 
+/** Roles allowed to enter the shared admin shell. */
+export const PANEL_ROLES = new Set<UserRole>([...ADMIN_ROLES, 'member']);
+
 /**
  * Roles that only an `admin` may assign. Without this, an `editor` could mint
  * another `admin` via POST /api/admin/users and escalate privileges.

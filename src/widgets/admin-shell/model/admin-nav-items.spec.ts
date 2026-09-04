@@ -1,6 +1,7 @@
 import {
   ADMIN_NAV_ITEMS,
   isActiveNavItem,
+  isVisibleNavItem,
   type AdminNavItem,
 } from '@/widgets/admin-shell/model/admin-nav-items';
 
@@ -37,5 +38,18 @@ describe('ADMIN_NAV_ITEMS', () => {
   it('não tem hrefs duplicados', () => {
     const hrefs = ADMIN_NAV_ITEMS.map((item) => item.href);
     expect(new Set(hrefs).size).toBe(hrefs.length);
+  });
+
+  it('restringe itens administrativos ao member', () => {
+    const visible = ADMIN_NAV_ITEMS.filter((item) => isVisibleNavItem('member', item));
+    expect(visible.map((item) => item.href)).toEqual(['/admin', '/admin/posts', '/admin/users']);
+  });
+
+  it('mostra itens restritos para roles administrativas', () => {
+    for (const role of ['admin', 'editor', 'member_manager'] as const) {
+      expect(ADMIN_NAV_ITEMS.filter((item) => isVisibleNavItem(role, item))).toHaveLength(
+        ADMIN_NAV_ITEMS.length,
+      );
+    }
   });
 });
