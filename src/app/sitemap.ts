@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { locales } from '@/shared/i18n/config';
 import { absoluteUrl } from '@/shared/lib/seo';
+import { isSearchIndexingEnabled } from '@/shared/lib/search-indexing';
 
 interface RouteDef {
   path: string;
@@ -22,6 +23,10 @@ const HREFLANG: Record<(typeof locales)[number], string> = {
 };
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  if (!isSearchIndexingEnabled()) {
+    return [];
+  }
+
   const lastModified = new Date('2026-07-18');
 
   return ROUTES.flatMap((route) => {

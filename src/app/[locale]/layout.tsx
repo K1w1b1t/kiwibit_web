@@ -5,6 +5,7 @@ import { COMPANY } from '@/shared/config/company';
 import { htmlLang, isLocale, locales, ogLocale, type Locale } from '@/shared/i18n/config';
 import { getDictionary } from '@/shared/i18n/get-dictionary';
 import { localizedAlternates, organizationJsonLd, siteUrl, websiteJsonLd } from '@/shared/lib/seo';
+import { isSearchIndexingEnabled } from '@/shared/lib/search-indexing';
 import { SiteFooter } from '@/widgets/site-footer/site-footer';
 import { SiteHeader } from '@/widgets/site-header/site-header';
 import '../globals.css';
@@ -63,6 +64,7 @@ export async function generateMetadata({
       title: dict.meta.defaultTitle,
       description: dict.meta.defaultDescription,
     },
+    robots: isSearchIndexingEnabled() ? undefined : { index: false, follow: false },
   };
 }
 
