@@ -1,6 +1,6 @@
 import { GET as listUsers, POST as createUser } from './route';
 import { GET as getUser, PUT as updateUser, DELETE as deleteUser } from './[id]/route';
-import { apiError, requireAdminSession } from '@/shared/lib/api-helpers';
+import { apiError, requireAdminSession, requirePanelSession } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
 import { makeReq, paramsFor, mockAuth } from '@/shared/test-utils/spec-helpers';
 
@@ -30,6 +30,21 @@ function mockEditorAuth() {
   (requireAdminSession as jest.Mock).mockResolvedValue({
     session: {
       user: { id: 'uid-9', name: 'Ed', email: 'ed@test.com', role: 'editor' as const },
+    },
+    response: null,
+  });
+  (requirePanelSession as jest.Mock).mockResolvedValue({
+    session: {
+      user: { id: 'uid-9', name: 'Ed', email: 'ed@test.com', role: 'editor' as const },
+    },
+    response: null,
+  });
+}
+
+function mockMemberAuth(id = 'uid-2') {
+  (requirePanelSession as jest.Mock).mockResolvedValue({
+    session: {
+      user: { id, name: 'Member', email: 'member@test.com', role: 'member' as const },
     },
     response: null,
   });
@@ -306,6 +321,26 @@ describe('GET /api/admin/users/[id]', () => {
     const args = (prisma.user.findUnique as jest.Mock).mock.calls[0][0];
     expect(args.select.password).toBeUndefined();
   });
+
+  it('allows a member to read only their own account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(USER);
+    const res = await getUser(
+      makeReq('http://localhost/api/admin/users/uid-2'),
+      paramsFor('uid-2'),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('forbids a member from reading another account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...USER, id: 'uid-1' });
+    const res = await getUser(
+      makeReq('http://localhost/api/admin/users/uid-1'),
+      paramsFor('uid-1'),
+    );
+    expect(res.status).toBe(403);
+  });
 });
 
 // ── PUT /api/admin/users/[id] ─────────────────────────────────────────────────
@@ -352,6 +387,28 @@ describe('PUT /api/admin/users/[id]', () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.data.name).toBe('Bob');
+  });
+
+  it('allows a member to update only their own account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(USER);
+    (prisma.user.update as jest.Mock).mockResolvedValue({ ...USER, name: 'Bob' });
+    const res = await updateUser(
+      makeReq('http://localhost/api/admin/users/uid-2', { name: 'Bob' }, 'PUT'),
+      paramsFor('uid-2'),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('forbids a member from updating another account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...USER, id: 'uid-1' });
+    const res = await updateUser(
+      makeReq('http://localhost/api/admin/users/uid-1', { name: 'Bob' }, 'PUT'),
+      paramsFor('uid-1'),
+    );
+    expect(res.status).toBe(403);
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   it('hashes password when password field is provided', async () => {

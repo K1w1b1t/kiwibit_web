@@ -33,16 +33,59 @@ model Member {
   userId     String?  @unique @map("user_id") @db.Uuid
   name       String
   bio        String?
+  bioPt      String?  @map("bio_pt")
+  bioEn      String?  @map("bio_en")
   avatarUrl  String?  @map("avatar_url")
   /// Bucket key for an uploaded avatar. NULL means the URL is externally hosted
   /// (pasted by hand) and MUST NOT be deleted from the bucket.
   avatarPath String?  @map("avatar_path")
+  githubUrl  String?  @map("github_url")
+  linkedinUrl String? @map("linkedin_url")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  linkedinConnection LinkedinConnection?
 
   @@map("members")
+}
+
+/// LinkedIn OAuth link for a member, used to sync the profile photo (issue #80).
+///
+/// A dedicated table rather than columns on `Member`: `Member` is read by public
+/// queries, and the access token must never ride along in those selects. The
+/// token is stored encrypted at rest (AES-256-GCM, see `token-crypto.ts`) and
+/// only ever decrypted server-side.
+///
+/// The basic connection scope is OIDC plus the lite profile scope needed to
+/// read the app-scoped Person ID. Auto-posting (issue #81) re-consents with the
+/// extra `w_member_social` scope and flips `autoPostEnabled`; posting uses
+/// `linkedinPersonId` for `urn:li:person:{id}`, not the OIDC `sub`.
+model LinkedinConnection {
+  id       String @id @default(uuid()) @db.Uuid
+  memberId String @unique @map("member_id") @db.Uuid
+  /// OIDC `sub` claim — the stable LinkedIn identity. Unique so two members
+  /// cannot claim the same LinkedIn account.
+  linkedinSub String @unique @map("linkedin_sub")
+  /// LinkedIn Person ID from the Profile API, used to build post author URNs.
+  /// Nullable only so old connections can survive the migration and reconnect.
+  linkedinPersonId String? @unique @map("linkedin_person_id")
+  /// Space-separated scopes granted at connection time.
+  scope String
+  /// Explicit per-member opt-in for auto-posting to the personal profile (issue
+  /// #81). Only meaningful when `scope` includes `w_member_social`. Reset to
+  /// false automatically when a post fails with an expired token — reconnect
+  /// re-consents and re-enables it.
+  autoPostEnabled Boolean @default(false) @map("auto_post_enabled")
+  /// Access token, encrypted as `iv:authTag:ciphertext` (all base64).
+  accessTokenEnc    String   @map("access_token_enc")
+  accessTokenExpiry DateTime @map("access_token_expiry")
+  connectedAt       DateTime @default(now()) @map("connected_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("linkedin_connections")
 }
 
 model Project {

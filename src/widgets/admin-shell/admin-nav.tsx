@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { UserRole } from '@prisma/client';
 import { SignOutButton } from '@/features/auth/ui/sign-out-button';
 import { ADMIN_NAV_ITEMS, isActiveNavItem } from '@/widgets/admin-shell/model/admin-nav-items';
 
@@ -10,8 +11,18 @@ const LINK_BASE =
 const LINK_ACTIVE = 'bg-white/10 text-white';
 const LINK_IDLE = 'text-white/60 hover:bg-white/5 hover:text-white';
 
-export function AdminNav() {
+export function AdminNav({ role }: Readonly<{ role: UserRole }>) {
   const pathname = usePathname();
+  const navItems =
+    role === 'member'
+      ? ADMIN_NAV_ITEMS.filter(
+          (item) =>
+            item.href === '/admin' ||
+            item.href === '/admin/posts' ||
+            item.href === '/admin/members' ||
+            item.href === '/admin/users',
+        )
+      : ADMIN_NAV_ITEMS;
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur">
@@ -24,7 +35,7 @@ export function AdminNav() {
         </Link>
 
         <nav aria-label="Administração" className="flex flex-1 gap-1 overflow-x-auto">
-          {ADMIN_NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = isActiveNavItem(pathname, item);
             return (
               <Link

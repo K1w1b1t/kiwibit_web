@@ -22,21 +22,30 @@ export type MemberInitial = {
   id: string;
   name: string;
   bio: string | null;
+  bioPt: string | null;
+  bioEn: string | null;
   avatarUrl: string | null;
   avatarPath: string | null;
+  githubUrl: string | null;
+  linkedinUrl: string | null;
 };
 
 type Props = {
   /** Absent means create; present means edit. */
   initial?: MemberInitial;
+  updateEndpoint?: string;
 };
 
 function toFormValues(initial?: MemberInitial): MemberFormValues {
   return {
     name: initial?.name ?? '',
     bio: initial?.bio ?? '',
+    bioPt: initial?.bioPt ?? '',
+    bioEn: initial?.bioEn ?? '',
     avatarUrl: initial?.avatarUrl ?? '',
     avatarPath: initial?.avatarPath ?? '',
+    githubUrl: initial?.githubUrl ?? '',
+    linkedinUrl: initial?.linkedinUrl ?? '',
   };
 }
 
@@ -45,8 +54,11 @@ function toFormValues(initial?: MemberInitial): MemberFormValues {
  * were ~85% identical; the only real differences are the HTTP verb, the payload
  * shape (`undefined` vs `null` for cleared optionals) and the labels.
  */
-export function AdminMemberForm({ initial }: Readonly<Props>) {
+export function AdminMemberForm({ initial, updateEndpoint }: Readonly<Props>) {
   const isEdit = initial !== undefined;
+  const endpoint = isEdit
+    ? (updateEndpoint ?? `/api/admin/members/${initial.id}`)
+    : '/api/admin/members';
   const [form, setForm] = useState<MemberFormValues>(() => toFormValues(initial));
 
   const { status, message, fieldErrors, isSubmitting, submit } = useResourceForm<
@@ -57,7 +69,7 @@ export function AdminMemberForm({ initial }: Readonly<Props>) {
     validate: validateMember,
     toPayload: isEdit ? toUpdateMemberPayload : toCreateMemberPayload,
     method: isEdit ? 'PUT' : 'POST',
-    endpoint: isEdit ? `/api/admin/members/${initial.id}` : '/api/admin/members',
+    endpoint,
     successMessage: isEdit ? 'Alterações salvas.' : 'Membro criado com sucesso.',
     emptyFieldErrors: EMPTY_MEMBER_FIELD_ERRORS,
     // Create clears the form for the next entry; edit keeps what was typed.
@@ -105,6 +117,28 @@ export function AdminMemberForm({ initial }: Readonly<Props>) {
           className="animate-fade-up delay-300"
         />
 
+        <TextAreaField
+          id={`${idPrefix}-bio-pt`}
+          label="Bio em português"
+          value={form.bioPt}
+          onChange={(event) => update('bioPt', event.target.value)}
+          disabled={isSubmitting}
+          placeholder="Bio exibida em português"
+          error={fieldErrors.bioPt}
+          className="animate-fade-up delay-300"
+        />
+
+        <TextAreaField
+          id={`${idPrefix}-bio-en`}
+          label="Bio em inglês"
+          value={form.bioEn}
+          onChange={(event) => update('bioEn', event.target.value)}
+          disabled={isSubmitting}
+          placeholder="Bio displayed in English"
+          error={fieldErrors.bioEn}
+          className="animate-fade-up delay-300"
+        />
+
         <div className="animate-fade-up delay-400">
           <ImageUploadField
             id={`${idPrefix}-avatar`}
@@ -121,6 +155,30 @@ export function AdminMemberForm({ initial }: Readonly<Props>) {
                 avatarPath: next.path,
               }))
             }
+          />
+        </div>
+
+        <div className="animate-fade-up delay-500 pt-2">
+          <TextField
+            id={`${idPrefix}-github`}
+            label="GitHub"
+            type="url"
+            value={form.githubUrl}
+            onChange={(event) => update('githubUrl', event.target.value)}
+            disabled={isSubmitting}
+            placeholder="https://github.com/usuario"
+            error={fieldErrors.githubUrl}
+          />
+          <TextField
+            id={`${idPrefix}-linkedin`}
+            label="LinkedIn"
+            type="url"
+            value={form.linkedinUrl}
+            onChange={(event) => update('linkedinUrl', event.target.value)}
+            disabled={isSubmitting}
+            placeholder="https://linkedin.com/in/usuario"
+            error={fieldErrors.linkedinUrl}
+            className="mt-4"
           />
         </div>
 

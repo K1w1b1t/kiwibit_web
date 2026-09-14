@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminPageShell } from '@/shared/ui/admin-page-shell';
 import { AdminUserForm } from '@/features/admin/users/ui/admin-user-form';
 import { UserPasswordPanel } from '@/features/admin/users/ui/user-password-panel';
@@ -9,7 +9,7 @@ import { DeleteButton } from '@/shared/ui/delete-button';
 type Params = { params: Promise<{ id: string }> };
 
 export default async function EditUserPage({ params }: Readonly<Params>) {
-  const session = await requireAdminPageSession();
+  const session = await requirePanelPageSession();
 
   const { id } = await params;
 
@@ -20,6 +20,8 @@ export default async function EditUserPage({ params }: Readonly<Params>) {
 
   if (!user) notFound();
 
+  if (session.user.role === 'member' && session.user.id !== user.id) redirect('/admin/users');
+
   const isSelf = session.user.id === user.id;
 
   return (
@@ -29,7 +31,7 @@ export default async function EditUserPage({ params }: Readonly<Params>) {
       description={isSelf ? 'Esta é a sua própria conta.' : undefined}
       action={
         // The API refuses self-deletion anyway; not offering it avoids a dead end.
-        isSelf ? undefined : (
+        isSelf || session.user.role === 'member' ? undefined : (
           <DeleteButton
             endpoint={`/api/admin/users/${user.id}`}
             resourceLabel="usuário"

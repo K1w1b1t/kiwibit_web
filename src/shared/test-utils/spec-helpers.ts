@@ -1,4 +1,4 @@
-import { requireAdminSession } from '@/shared/lib/api-helpers';
+import { requireAdminSession, requirePanelSession } from '@/shared/lib/api-helpers';
 
 export function makeReq(url: string, body?: unknown, method?: string) {
   const m = method ?? (body !== undefined ? 'POST' : 'GET');
@@ -26,9 +26,9 @@ export const UNAUTH_RESPONSE = {
 };
 
 export function mockAuth(ok = true) {
-  (requireAdminSession as jest.Mock).mockResolvedValue(
-    ok ? ADMIN_SESSION : { session: null, response: UNAUTH_RESPONSE },
-  );
+  const result = ok ? ADMIN_SESSION : { session: null, response: UNAUTH_RESPONSE };
+  (requireAdminSession as jest.Mock).mockResolvedValue(result);
+  (requirePanelSession as jest.Mock).mockResolvedValue(result);
 }
 
 export async function assertPaginatedResponse(

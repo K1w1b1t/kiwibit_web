@@ -151,15 +151,17 @@ Status codes: `400` bad input · `401` unauthenticated · `403` forbidden · `40
 
 ## 8. Quality Gates — MANDATORY
 
-Every change MUST pass all four commands before the task is considered complete:
+Every change MUST pass all five commands before the task is considered complete:
 
 ```bash
 npm run lint       # zero ESLint errors
+npm run format     # Prettier code formatting applied
 npm run build      # Next.js build succeeds
 npm run test       # unit tests pass
 npm run test:e2e   # E2E tests pass (requires Docker)
 ```
 
+- Run `npm run format` to ensure consistent code formatting before committing.
 - Fix lint errors immediately before continuing.
 - Fix TypeScript/build errors before continuing (`npx tsc --noEmit` as fast pre-check).
 - E2E failures may indicate broken API contracts, auth regression, or migration issues.
@@ -179,7 +181,7 @@ npm run test:e2e   # E2E tests pass (requires Docker)
 3. Never place code outside the defined layers without explicit human instruction.
 4. Always use TypeScript; never use `any`.
 5. Search for existing components/helpers before creating new ones (see Section 6 — Reuse).
-6. Run all four quality gate commands after every change (Section 8).
+6. Run all five quality gate commands after every change (Section 8).
 7. Keep output minimal and aligned with project conventions.
 
 ## 2. Project Stack
@@ -532,3 +534,13 @@ AI assistants (Copilot, chat agents, code generation tools) MUST:
 - Always use TypeScript typing.
 - Prioritize reuse of existing code before creating new abstractions.
 - Keep output minimal, objective, and aligned with this repository conventions.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

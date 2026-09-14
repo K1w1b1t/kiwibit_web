@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminShell } from '@/widgets/admin-shell/admin-shell';
 
 /**
@@ -10,7 +10,7 @@ import { AdminShell } from '@/widgets/admin-shell/admin-shell';
  * other means and AGENTS.md § 4 mandates the server guard at the entrypoint.
  */
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
-  await requireAdminPageSession();
+  const session = await requirePanelPageSession();
 
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell role={session.user.role}>{children}</AdminShell>;
 }

@@ -1,6 +1,6 @@
 import { GET as listPosts, POST as createPost } from './route';
 import { GET as getPost, PUT as updatePost, DELETE as deletePost } from './[id]/route';
-import { apiError } from '@/shared/lib/api-helpers';
+import { apiError, requireAdminSession, requirePanelSession } from '@/shared/lib/api-helpers';
 import { prisma } from '@/shared/lib/prisma';
 import {
   makeReq,
@@ -79,6 +79,23 @@ describe('POST /api/admin/posts', () => {
       makeReq('http://localhost/api/admin/posts', { title: 'T', content: 'C' }),
     );
     expect(res.status).toBe(401);
+  });
+
+  it('returns 403 for a member even when publishing', async () => {
+    mockAuth();
+    (requireAdminSession as jest.Mock).mockResolvedValue({
+      session: null,
+      response: { status: 403 },
+    });
+    const res = await createPost(
+      makeReq('http://localhost/api/admin/posts', {
+        title: 'Member post',
+        content: 'Content',
+        status: 'published',
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(prisma.post.create).not.toHaveBeenCalled();
   });
 
   it('returns 400 when body is invalid JSON', async () => {
@@ -237,5 +254,24 @@ describe('DELETE /api/admin/posts/[id]', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+
+  it('forbids a member from deleting their own post', async () => {
+    mockAuth();
+    (requirePanelSession as jest.Mock).mockResolvedValue({
+      session: {
+        user: { id: 'uid-1', name: 'Member', email: 'member@test.com', role: 'member' as const },
+      },
+      response: null,
+    });
+    (prisma.post.findUnique as jest.Mock).mockResolvedValue(POST_RECORD);
+
+    const res = await deletePost(
+      makeReq('http://localhost/api/admin/posts/post-1', undefined, 'DELETE'),
+      paramsFor('post-1'),
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.post.delete).not.toHaveBeenCalled();
   });
 });

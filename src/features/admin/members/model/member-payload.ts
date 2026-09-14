@@ -3,15 +3,23 @@ import type { MemberFormValues } from './validate-member';
 export type CreateMemberPayload = {
   name: string;
   bio?: string;
+  bioPt?: string;
+  bioEn?: string;
   avatarUrl?: string;
   avatarPath?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
 };
 
 export type UpdateMemberPayload = {
   name: string;
   bio: string | null;
+  bioPt?: string | null;
+  bioEn?: string | null;
   avatarUrl: string | null;
   avatarPath: string | null;
+  githubUrl?: string | null;
+  linkedinUrl?: string | null;
 };
 
 /**
@@ -27,6 +35,12 @@ export function toCreateMemberPayload(values: MemberFormValues): CreateMemberPay
     bio: values.bio.trim() || undefined,
     avatarUrl: values.avatarUrl.trim() || undefined,
     avatarPath: values.avatarPath.trim() || undefined,
+    ...(values.bioPt !== undefined && { bioPt: values.bioPt.trim() || undefined }),
+    ...(values.bioEn !== undefined && { bioEn: values.bioEn.trim() || undefined }),
+    ...(values.githubUrl !== undefined && { githubUrl: values.githubUrl.trim() || undefined }),
+    ...(values.linkedinUrl !== undefined && {
+      linkedinUrl: values.linkedinUrl.trim() || undefined,
+    }),
   };
 }
 
@@ -44,5 +58,11 @@ export function toUpdateMemberPayload(values: MemberFormValues): UpdateMemberPay
     bio: values.bio.trim() || null,
     avatarUrl: values.avatarUrl.trim() || null,
     avatarPath: values.avatarPath.trim() || null,
+    ...(values.bioPt !== undefined && { bioPt: values.bioPt.trim() || null }),
+    ...(values.bioEn !== undefined && { bioEn: values.bioEn.trim() || null }),
+    ...(values.githubUrl !== undefined && { githubUrl: values.githubUrl.trim() || null }),
+    ...(values.linkedinUrl !== undefined && {
+      linkedinUrl: values.linkedinUrl.trim() || null,
+    }),
   };
 }

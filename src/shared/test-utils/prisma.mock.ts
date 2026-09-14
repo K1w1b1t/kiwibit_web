@@ -1,9 +1,11 @@
 const mockModel = () => ({
   findMany: jest.fn(),
+  findFirst: jest.fn(),
   findUnique: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   updateMany: jest.fn(),
+  upsert: jest.fn(),
   delete: jest.fn(),
   deleteMany: jest.fn(),
   count: jest.fn(),
@@ -17,6 +19,7 @@ type MockPrisma = {
   project: MockModel;
   projectImage: MockModel;
   user: MockModel;
+  linkedinConnection: MockModel;
   $transaction: jest.Mock;
 };
 
@@ -37,5 +40,6 @@ export const prisma: MockPrisma = {
   project: mockModel(),
   projectImage: mockModel(),
   user: mockModel(),
+  linkedinConnection: mockModel(),
   $transaction: mockTransaction,
 };

@@ -18,5 +18,5 @@ module.exports = {
   globalSetup: '<rootDir>/tests/e2e/setup/global-setup.ts',
   globalTeardown: '<rootDir>/tests/e2e/setup/global-teardown.ts',
   testTimeout: 30000,
-  runInBand: true,
+  maxWorkers: 1,
 };

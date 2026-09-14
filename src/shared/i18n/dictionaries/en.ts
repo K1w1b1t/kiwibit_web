@@ -189,7 +189,9 @@ const en = {
     viewAll: 'View all members',
     labels: {
       viewFullProfile: 'View full profile',
-      noBio: 'Profile details will be published soon.',
+      noBio: 'Coming soon',
+      noBioEn: 'This member has not added an English bio yet.',
+      noBioPt: 'Este membro ainda não adicionou uma bio em português.',
     },
     member: {
       backToAll: 'All members',

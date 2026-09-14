@@ -33,6 +33,14 @@ export function PrivacyPolicyPt() {
           <li>Conteúdo da mensagem enviada</li>
         </ul>
         <p>
+          Além disso, quando um usuário autenticado do painel administrativo conecta sua própria
+          conta do LinkedIn para sincronizar a foto de perfil, podemos receber e processar dados
+          básicos do perfil (como identificador único e foto) e armazenar um token de acesso de
+          forma cifrada em nosso banco de dados, exclusivamente para a execução dessa
+          funcionalidade. Esse processamento é limitado a usuários autenticados da área
+          administrativa e não é utilizado como mecanismo de login público.
+        </p>
+        <p>
           Não utilizamos cookies de rastreamento ou publicidade. Utilizamos apenas um cookie
           funcional (<code>NEXT_LOCALE</code>) para lembrar o idioma escolhido.
         </p>
@@ -41,9 +49,11 @@ export function PrivacyPolicyPt() {
       <section>
         <h2>3. Finalidade e base legal</h2>
         <p>
-          Tratamos esses dados para responder ao seu contato e conduzir a comunicação comercial
-          solicitada. A base legal é o consentimento e os procedimentos preliminares relacionados a
-          um contrato, nos termos do art. 7º da LGPD.
+          Tratamos esses dados para responder ao seu contato, conduzir a comunicação comercial
+          solicitada e, quando aplicável, executar a conexão voluntária do usuário com o LinkedIn
+          para sincronização de foto de perfil. A base legal é o consentimento e os procedimentos
+          preliminares relacionados a um contrato, nos termos do art. 7º da LGPD, bem como o
+          consentimento expresso fornecido por meio do fluxo de autorização do LinkedIn.
         </p>
       </section>
 

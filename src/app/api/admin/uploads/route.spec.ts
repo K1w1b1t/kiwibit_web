@@ -1,5 +1,5 @@
 import { POST as upload, DELETE as discard } from './route';
-import { apiError } from '@/shared/lib/api-helpers';
+import { apiError, requirePanelSession } from '@/shared/lib/api-helpers';
 import { deleteObjects, isStorageConfigured, putObject } from '@/shared/lib/storage';
 import { mockAuth } from '@/shared/test-utils/spec-helpers';
 
@@ -16,6 +16,13 @@ jest.mock('@/shared/lib/storage', () => ({
 const URL_ = 'http://localhost/api/admin/uploads';
 
 const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+const MEMBER_SESSION = {
+  session: {
+    user: { id: 'uid-member', name: 'Member', email: 'member@test.com', role: 'member' as const },
+  },
+  response: null,
+};
 
 /** 16 bytes: `sniffImageType` refuses anything shorter than 12. */
 function pngBytes() {
@@ -99,6 +106,28 @@ describe('POST /api/admin/uploads', () => {
     mockAuth();
     const res = await upload(uploadRequest(pngBytes(), 'image/png', 'etc'));
     expect(res.status).toBe(400);
+  });
+
+  it('allows a member to upload an image for their own profile', async () => {
+    (requirePanelSession as jest.Mock).mockResolvedValue(MEMBER_SESSION);
+
+    const res = await upload(uploadRequest(pngBytes(), 'image/png', 'members'));
+
+    expect(res.status).toBe(201);
+    expect(putObject).toHaveBeenCalledWith(
+      expect.stringMatching(/^members\//),
+      expect.any(Uint8Array),
+      'image/png',
+    );
+  });
+
+  it('does not allow a member to upload a project image', async () => {
+    (requirePanelSession as jest.Mock).mockResolvedValue(MEMBER_SESSION);
+
+    await upload(uploadRequest(pngBytes(), 'image/png', 'projects'));
+
+    expect(apiError).toHaveBeenCalledWith('FORBIDDEN', expect.any(String), 403);
+    expect(putObject).not.toHaveBeenCalled();
   });
 
   it('returns 400 for a disallowed declared type', async () => {

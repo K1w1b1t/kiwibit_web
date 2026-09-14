@@ -1,5 +1,5 @@
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminDashboard } from '@/features/admin/dashboard/ui/admin-dashboard';
 import {
   membersToDashboardItems,
@@ -10,15 +10,19 @@ import {
 const RECENT_TAKE = 5;
 
 export default async function AdminDashboardPage() {
-  await requireAdminPageSession();
+  const session = await requirePanelPageSession();
+  const isMember = session.user.role === 'member';
+  const ownPostWhere = isMember ? { authorId: session.user.id } : undefined;
+  const ownMemberWhere = isMember ? { userId: session.user.id } : undefined;
 
   const [posts, members, projects, users, recentPosts, recentMembers, recentProjects] =
     await Promise.all([
-      prisma.post.count(),
-      prisma.member.count(),
-      prisma.project.count(),
-      prisma.user.count(),
+      prisma.post.count({ where: ownPostWhere }),
+      prisma.member.count({ where: ownMemberWhere }),
+      isMember ? Promise.resolve(0) : prisma.project.count(),
+      isMember ? Promise.resolve(1) : prisma.user.count(),
       prisma.post.findMany({
+        where: ownPostWhere,
         take: RECENT_TAKE,
         orderBy: { createdAt: 'desc' },
         select: {
@@ -30,6 +34,7 @@ export default async function AdminDashboardPage() {
         },
       }),
       prisma.member.findMany({
+        where: ownMemberWhere,
         take: RECENT_TAKE,
         orderBy: { createdAt: 'desc' },
         select: {
@@ -39,11 +44,13 @@ export default async function AdminDashboardPage() {
           user: { select: { email: true } },
         },
       }),
-      prisma.project.findMany({
-        take: RECENT_TAKE,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, title: true, createdAt: true },
-      }),
+      isMember
+        ? Promise.resolve([])
+        : prisma.project.findMany({
+            take: RECENT_TAKE,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, title: true, createdAt: true },
+          }),
     ]);
 
   return (
@@ -55,6 +62,7 @@ export default async function AdminDashboardPage() {
       recentPosts={postsToDashboardItems(recentPosts)}
       recentMembers={membersToDashboardItems(recentMembers)}
       recentProjects={projectsToDashboardItems(recentProjects)}
+      isMember={isMember}
     />
   );
 }

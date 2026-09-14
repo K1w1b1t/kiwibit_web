@@ -193,7 +193,9 @@ const pt: Dictionary = {
     viewAll: 'Ver todos os membros',
     labels: {
       viewFullProfile: 'Ver perfil completo',
-      noBio: 'Os detalhes do perfil serão publicados em breve.',
+      noBio: 'Em breve',
+      noBioEn: 'This member has not added an English bio yet.',
+      noBioPt: 'Este membro ainda não adicionou uma bio em português.',
     },
     member: {
       backToAll: 'Todos os membros',
