@@ -37,8 +37,12 @@ export function PrivacyPolicyEn() {
           mechanism.
         </p>
         <p>
-          We do not use tracking or advertising cookies. We only use one functional cookie (
-          <code>NEXT_LOCALE</code>) to remember your language preference.
+          We use PostHog Cloud in the United States region, only after your consent, for analytics,
+          error diagnosis, and session replay. Text and inputs are masked before transmission, and
+          this data is not used for advertising. Your decision is stored in the{' '}
+          <code>analytics_consent</code> cookie for up to 180 days; you can decline or withdraw it
+          at any time through “Privacy preferences”. We also use the functional{' '}
+          <code>NEXT_LOCALE</code> cookie to remember your language preference.
         </p>
       </section>
 

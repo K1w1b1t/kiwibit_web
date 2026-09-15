@@ -41,8 +41,12 @@ export function PrivacyPolicyPt() {
           administrativa e não é utilizado como mecanismo de login público.
         </p>
         <p>
-          Não utilizamos cookies de rastreamento ou publicidade. Utilizamos apenas um cookie
-          funcional (<code>NEXT_LOCALE</code>) para lembrar o idioma escolhido.
+          Usamos o PostHog Cloud na região dos Estados Unidos, somente após seu consentimento, para
+          analytics, diagnóstico de erros e reprodução de sessões. Textos e campos são mascarados
+          antes do envio e não usamos esses dados para publicidade. A decisão fica no cookie{' '}
+          <code>analytics_consent</code> por até 180 dias; você pode recusá-la ou revogá-la a
+          qualquer momento em “Preferências de privacidade”. Também usamos o cookie funcional{' '}
+          <code>NEXT_LOCALE</code> para lembrar o idioma escolhido.
         </p>
       </section>
 

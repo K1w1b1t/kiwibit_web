@@ -544,3 +544,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## 13. PostHog telemetry
+
+- Browser analytics, errors, and replay require explicit consent and must stop on withdrawal. Keep all text and inputs masked and strip URL query strings.
+- Every event includes app=kiwibit, environment, and telemetry_source. Never send names, emails, form content, bodies, headers, query strings, or tokens.
+- Identify authenticated people only by the stable internal ID and reset PostHog on logout.
+- Anonymous server telemetry is consent-independent and fail-open. Keep Discord and PostHog error reporting isolated and parallel.
+- Validate app/environment separation, masked replay, source maps, and production Discord destinations after deployment.

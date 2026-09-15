@@ -8,6 +8,7 @@ import { localizedAlternates, organizationJsonLd, siteUrl, websiteJsonLd } from 
 import { isSearchIndexingEnabled } from '@/shared/lib/search-indexing';
 import { SiteFooter } from '@/widgets/site-footer/site-footer';
 import { SiteHeader } from '@/widgets/site-header/site-header';
+import { AnalyticsConsentControl } from '@/features/analytics/consent-control';
 import '../globals.css';
 
 const geistSans = Geist({
@@ -89,6 +90,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         <SiteHeader locale={typedLocale} dict={dict.header} />
         {children}
         <SiteFooter locale={typedLocale} dict={dict.footer} headerDict={dict.header} year={year} />
+        <AnalyticsConsentControl />
       </body>
     </html>
   );
