@@ -5,8 +5,13 @@ import { identifyAnalyticsUser, resetAnalyticsUser } from '@/shared/lib/analytic
 export function AnalyticsUserIdentity() {
   const { data, status } = useSession();
   useEffect(() => {
-    if (status === 'authenticated' && data.user.id) identifyAnalyticsUser(data.user.id);
+    const identify = () => {
+      if (status === 'authenticated' && data.user.id) identifyAnalyticsUser(data.user.id);
+    };
+    identify();
+    window.addEventListener('analytics-consent-granted', identify);
     if (status === 'unauthenticated') resetAnalyticsUser();
+    return () => window.removeEventListener('analytics-consent-granted', identify);
   }, [data?.user.id, status]);
   return null;
 }

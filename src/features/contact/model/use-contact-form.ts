@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { validateContact, type ContactFieldErrors, type ContactInput } from './validate-contact';
+import { captureAnalyticsEvent } from '@/shared/lib/analytics';
 
 export type ContactStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -37,6 +38,7 @@ export function useContactForm() {
       }
 
       setStatus('success');
+      if (input.website.trim() === '') captureAnalyticsEvent('contact_form_submitted');
       return { ok: true };
     } catch {
       setStatus('error');

@@ -14,6 +14,7 @@ import {
 } from '@/features/admin/posts/model/post-payload';
 import { useResourceForm } from '@/shared/hooks/use-resource-form';
 import { POST_STATUS_LABELS, POST_STATUSES } from '@/shared/lib/post-status';
+import { captureAnalyticsEvent } from '@/shared/lib/analytics';
 import { Button } from '@/shared/ui/button';
 import { FormStatus } from '@/shared/ui/form-status';
 import { ImageUploadField } from '@/shared/ui/image-upload-field';
@@ -68,7 +69,12 @@ export function AdminPostForm({ initial }: Readonly<Props>) {
     endpoint: isEdit ? `/api/admin/posts/${initial.id}` : '/api/admin/posts',
     successMessage: isEdit ? 'Alterações salvas.' : 'Post criado com sucesso.',
     emptyFieldErrors: EMPTY_POST_FIELD_ERRORS,
-    onSuccess: isEdit ? undefined : () => setForm(toFormValues()),
+    onSuccess: isEdit
+      ? undefined
+      : () => {
+          setForm(toFormValues());
+          captureAnalyticsEvent('post_created');
+        },
   });
 
   function update<K extends keyof PostFormValues>(field: K, value: PostFormValues[K]) {
