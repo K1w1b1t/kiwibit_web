@@ -38,7 +38,24 @@ export function AnalyticsConsentControl({ dict, cookiePolicyHref }: AnalyticsCon
               aria-hidden="true"
               className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-emerald-300/20 bg-emerald-400/10 text-lg"
             >
-              🍪
+              <svg
+                aria-hidden="true"
+                fill="none"
+                viewBox="0 0 24 24"
+                className="size-5 text-emerald-300"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-4-4 4 4 0 0 1-4-4"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                />
+                <circle cx="8" cy="13" r="1" fill="currentColor" />
+                <circle cx="12" cy="17" r="1" fill="currentColor" />
+                <circle cx="16" cy="14" r="1" fill="currentColor" />
+              </svg>
             </div>
             <div className="min-w-0">
               <strong
