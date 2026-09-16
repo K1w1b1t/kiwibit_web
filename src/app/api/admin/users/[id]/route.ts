@@ -58,7 +58,7 @@ export async function GET(_req: Request, { params }: Params) {
   });
 
   if (!user) return apiError('NOT_FOUND', 'User not found.', 404);
-  if (session.user.role === 'member' && session.user.id !== user.id) {
+  if (session.user.role === 'member' && user.id !== session.user.id) {
     return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
   }
   return NextResponse.json(user);
@@ -76,7 +76,7 @@ export async function PUT(request: Request, { params }: Params) {
 
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'User not found.', 404);
-  if (session.user.role === 'member' && session.user.id !== existing.id) {
+  if (session.user.role === 'member' && existing.id !== session.user.id) {
     return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
   }
 

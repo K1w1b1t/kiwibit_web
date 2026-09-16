@@ -27,18 +27,14 @@ const USER = {
 
 /** Signs the request as a non-admin admin-area role. */
 function mockEditorAuth() {
-  (requireAdminSession as jest.Mock).mockResolvedValue({
+  const result = {
     session: {
       user: { id: 'uid-9', name: 'Ed', email: 'ed@test.com', role: 'editor' as const },
     },
     response: null,
-  });
-  (requirePanelSession as jest.Mock).mockResolvedValue({
-    session: {
-      user: { id: 'uid-9', name: 'Ed', email: 'ed@test.com', role: 'editor' as const },
-    },
-    response: null,
-  });
+  };
+  (requireAdminSession as jest.Mock).mockResolvedValue(result);
+  (requirePanelSession as jest.Mock).mockResolvedValue(result);
 }
 
 function mockMemberAuth(id = 'uid-2') {
@@ -389,24 +385,29 @@ describe('PUT /api/admin/users/[id]', () => {
     expect(body.data.name).toBe('Bob');
   });
 
-  it('allows a member to update only their own account', async () => {
+  it('allows a member to update their own account', async () => {
     mockMemberAuth();
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(USER);
-    (prisma.user.update as jest.Mock).mockResolvedValue({ ...USER, name: 'Bob' });
+    (prisma.user.update as jest.Mock).mockResolvedValue({ ...USER, name: 'Updated member' });
+
     const res = await updateUser(
-      makeReq('http://localhost/api/admin/users/uid-2', { name: 'Bob' }, 'PUT'),
+      makeReq('http://localhost/api/admin/users/uid-2', { name: 'Updated member' }, 'PUT'),
       paramsFor('uid-2'),
     );
+
     expect(res.status).toBe(200);
+    expect(prisma.user.update).toHaveBeenCalled();
   });
 
-  it('forbids a member from updating another account', async () => {
+  it('rejects a member from updating another account', async () => {
     mockMemberAuth();
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...USER, id: 'uid-1' });
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...USER, id: 'uid-3' });
+
     const res = await updateUser(
-      makeReq('http://localhost/api/admin/users/uid-1', { name: 'Bob' }, 'PUT'),
-      paramsFor('uid-1'),
+      makeReq('http://localhost/api/admin/users/uid-3', { name: 'Updated' }, 'PUT'),
+      paramsFor('uid-3'),
     );
+
     expect(res.status).toBe(403);
     expect(prisma.user.update).not.toHaveBeenCalled();
   });

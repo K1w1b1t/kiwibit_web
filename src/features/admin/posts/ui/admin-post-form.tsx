@@ -31,7 +31,10 @@ export type PostInitial = {
   coverImageAlt: string | null;
 };
 
-type Props = { initial?: PostInitial };
+type Props = {
+  initial?: PostInitial;
+  canPublish?: boolean;
+};
 
 function toFormValues(initial?: PostInitial): PostFormValues {
   return {
@@ -45,14 +48,14 @@ function toFormValues(initial?: PostInitial): PostFormValues {
   };
 }
 
-const STATUS_OPTIONS = POST_STATUSES.map((status) => ({
-  value: status,
-  label: POST_STATUS_LABELS[status],
-}));
-
-export function AdminPostForm({ initial }: Readonly<Props>) {
+export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<PostFormValues>(() => toFormValues(initial));
+  const statusOptions = POST_STATUSES.map((status) => ({
+    value: status,
+    label: POST_STATUS_LABELS[status],
+    disabled: status === 'published' && !canPublish,
+  }));
 
   const { status, message, fieldErrors, isSubmitting, submit } = useResourceForm<
     PostFormValues,
@@ -104,7 +107,7 @@ export function AdminPostForm({ initial }: Readonly<Props>) {
           id={`${idPrefix}-status`}
           label="Status"
           required
-          options={STATUS_OPTIONS}
+          options={statusOptions}
           value={form.status}
           onChange={(event) => update('status', event.target.value)}
           disabled={isSubmitting}
