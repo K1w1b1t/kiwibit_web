@@ -43,12 +43,12 @@ const en = {
   },
 
   analytics: {
-    title: 'Analytics and private session replay',
+    title: 'Optional cookies',
     description:
-      'With your permission, PostHog helps us understand usage and fix errors. All text and inputs are masked. You can change this choice at any time.',
-    accept: 'Accept',
+      'We use optional cookies to understand what works on the site and fix problems. You can accept or decline; essential features will still work.',
+    accept: 'Accept cookies',
     decline: 'Decline',
-    preferencesLabel: 'Privacy preferences',
+    preferencesLabel: 'Cookie preferences',
   },
 
   header: {

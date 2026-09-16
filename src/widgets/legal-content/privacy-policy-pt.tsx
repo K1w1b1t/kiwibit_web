@@ -15,7 +15,7 @@ export function PrivacyPolicyPt() {
         <h2>1. Controlador dos dados</h2>
         <p>
           O controlador dos dados é a {COMPANY.legalName} (CNPJ {COMPANY.cnpj}), com sede em{' '}
-          {COMPANY.city} — {COMPANY.state}. Contato do encarregado pelo tratamento de dados (DPO):{' '}
+          {COMPANY.address}. Contato do encarregado pelo tratamento de dados (DPO):{' '}
           <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>.
         </p>
       </section>

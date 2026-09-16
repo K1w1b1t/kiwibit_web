@@ -45,12 +45,12 @@ const pt: Dictionary = {
   },
 
   analytics: {
-    title: 'Analytics e reprodução privada de sessão',
+    title: 'Cookies opcionais',
     description:
-      'Com sua permissão, o PostHog nos ajuda a entender o uso e corrigir erros. Todos os textos e campos são mascarados. Você pode mudar esta escolha a qualquer momento.',
-    accept: 'Aceitar',
+      'Usamos cookies opcionais para entender o que funciona no site e corrigir problemas. Você pode aceitar ou recusar; os recursos essenciais continuam funcionando.',
+    accept: 'Aceitar cookies',
     decline: 'Recusar',
-    preferencesLabel: 'Preferências de privacidade',
+    preferencesLabel: 'Preferências de cookies',
   },
 
   header: {
