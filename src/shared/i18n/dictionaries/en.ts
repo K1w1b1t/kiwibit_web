@@ -42,6 +42,15 @@ const en = {
     },
   },
 
+  analytics: {
+    title: 'Analytics and private session replay',
+    description:
+      'With your permission, PostHog helps us understand usage and fix errors. All text and inputs are masked. You can change this choice at any time.',
+    accept: 'Accept',
+    decline: 'Decline',
+    preferencesLabel: 'Privacy preferences',
+  },
+
   header: {
     brand: 'Kiwibit',
     nav: {

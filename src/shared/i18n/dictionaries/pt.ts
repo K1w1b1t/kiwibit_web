@@ -44,6 +44,15 @@ const pt: Dictionary = {
     },
   },
 
+  analytics: {
+    title: 'Analytics e reprodução privada de sessão',
+    description:
+      'Com sua permissão, o PostHog nos ajuda a entender o uso e corrigir erros. Todos os textos e campos são mascarados. Você pode mudar esta escolha a qualquer momento.',
+    accept: 'Aceitar',
+    decline: 'Recusar',
+    preferencesLabel: 'Preferências de privacidade',
+  },
+
   header: {
     brand: 'Kiwibit',
     nav: {

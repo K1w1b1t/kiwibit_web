@@ -67,6 +67,9 @@ export function setAnalyticsConsent(value: AnalyticsConsent) {
   consent = value;
   document.cookie = `analytics_consent=${value}; Max-Age=${60 * 60 * 24 * 180}; Path=/; SameSite=Lax${environment() === 'production' ? '; Secure' : ''}`;
   if (value === 'granted') {
+    try {
+      posthog.opt_in_capturing();
+    } catch {}
     initialize();
     window.dispatchEvent(new Event('analytics-consent-granted'));
     return;
@@ -75,10 +78,10 @@ export function setAnalyticsConsent(value: AnalyticsConsent) {
     posthog.stopSessionRecording();
   } catch {}
   try {
-    posthog.opt_out_capturing();
+    posthog.reset();
   } catch {}
   try {
-    posthog.reset();
+    posthog.opt_out_capturing();
   } catch {}
   initialized = false;
 }
