@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from 'next/font/google';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AnalyticsConsentControl } from '@/features/analytics/consent-control';
+import { getDictionary } from '@/shared/i18n/get-dictionary';
 import '../globals.css';
 
 const geistSans = Geist({
@@ -18,7 +19,7 @@ export default function InternalLayout({ children }: Readonly<{ children: React.
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>{children}</AuthProvider>
-        <AnalyticsConsentControl />
+        <AnalyticsConsentControl dict={getDictionary('en').analytics} />
       </body>
     </html>
   );
