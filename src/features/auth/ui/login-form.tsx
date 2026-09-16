@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { authErrorMessage } from '@/features/auth/model/auth-error-message';
 import { validateLogin } from '@/features/auth/model/validate-login';
+import { captureAnalyticsEvent } from '@/shared/lib/analytics';
 
 type Status = 'idle' | 'loading' | 'error';
 
@@ -32,6 +33,7 @@ export function LoginForm() {
     try {
       const res = await signIn('credentials', { redirect: false, email, password });
       if (res?.ok) {
+        captureAnalyticsEvent('user_logged_in');
         window.location.href = '/admin';
         return;
       }

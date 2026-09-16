@@ -6,12 +6,18 @@ import type { Instrumentation } from 'next';
  * No-op when DISCORD_ERROR_WEBHOOK_URL is unset.
  */
 export const onRequestError: Instrumentation.onRequestError = async (err, request) => {
-  const { reportServerError } = await import('@/shared/lib/discord');
+  const [{ reportServerError }, { captureServerException }] = await Promise.all([
+    import('@/shared/lib/discord'),
+    import('@/shared/lib/server-analytics'),
+  ]);
   const message = err instanceof Error ? err.message : String(err);
-  await reportServerError({
-    source: request.path,
-    method: request.method,
-    message,
-    status: 500,
-  });
+  await Promise.allSettled([
+    reportServerError({
+      source: request.path.split('?')[0],
+      method: request.method,
+      message,
+      status: 500,
+    }),
+    captureServerException(err, request.path, request.method),
+  ]);
 };

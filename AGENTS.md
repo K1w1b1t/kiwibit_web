@@ -547,3 +547,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## 13. PostHog telemetry
+
+- Browser analytics, errors, and replay require explicit consent and must stop on withdrawal. Keep all text and inputs masked and strip URL query strings.
+- Every event includes app=kiwibit, environment, and telemetry_source. Never send names, emails, form content, bodies, headers, query strings, or tokens.
+- Identify authenticated people only by the stable internal ID and reset PostHog on logout.
+- Anonymous server telemetry is consent-independent and fail-open. Keep Discord and PostHog error reporting isolated and parallel.
+- Validate app/environment separation, masked replay, source maps, and production Discord destinations after deployment.
+  \n\n### Uso no codigo\n\n- Importe apenas `captureAnalyticsEvent` de `src/shared/lib/analytics.ts` em handlers de sucesso de acoes reais. Eventos permitidos: `user_logged_in` apos login confirmado, `post_created` apos POST de criacao responder com sucesso e `contact_form_submitted` apos API de contato aceitar o formulario real. O page view e automatico (`$pageview`); nao crie `page_viewed` duplicado.\n- Nao capture em renderizacao, clique antes do sucesso, validacao, tentativa com erro, autosave ou formulario honeypot. Nunca passe propriedades com PII; o helper acrescenta `app=kiwibit`, `environment` e `telemetry_source=browser`.\n- Para identidade, use somente `identifyAnalyticsUser(session.user.id)` no componente de sessao; nao chame identify com email/nome. Em logout use `resetAnalyticsUser`.\n- Mantenha o Replay configurado no dashboard compartilhado: 10% das sessoes consentidas e 100% das que possuem `$exception`, por trigger groups que se combinam por OR.\n- Runtime Vercel: Preview usa `NEXT_PUBLIC_APP_ENV=staging`; Production usa `NEXT_PUBLIC_APP_ENV=production`. Cadastre token/host publicos e segredos de source map no dashboard da Vercel, nunca em Actions ou codigo.\n

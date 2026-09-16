@@ -12,6 +12,7 @@ export const COMPANY = {
   email: 'tech@kiwibit.com.br',
   domain: 'kiwibit.com.br',
   city: 'São José dos Campos',
+  address: 'Rua Alagoinhas, nº 92, Jardim Vale do Sol, São José dos Campos/SP, CEP 12238-020',
   state: 'SP',
   country: 'BR',
 } as const;
