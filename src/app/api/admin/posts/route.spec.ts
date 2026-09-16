@@ -97,10 +97,10 @@ describe('POST /api/admin/posts', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 403 when a member attempts to create a post', async () => {
+  it.each(['draft', 'published'])('returns 403 when a member creates a %s post', async (status) => {
     mockMemberAuth();
     const res = await createPost(
-      makeReq('http://localhost/api/admin/posts', { title: 'T', content: 'C' }),
+      makeReq('http://localhost/api/admin/posts', { title: 'T', content: 'C', status }),
     );
     expect(res.status).toBe(403);
     expect(prisma.post.create).not.toHaveBeenCalled();
@@ -290,5 +290,18 @@ describe('DELETE /api/admin/posts/[id]', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+
+  it('forbids a member from deleting their own post', async () => {
+    mockMemberAuth();
+    (prisma.post.findUnique as jest.Mock).mockResolvedValue(POST_RECORD);
+
+    const res = await deletePost(
+      makeReq('http://localhost/api/admin/posts/post-1', undefined, 'DELETE'),
+      paramsFor('post-1'),
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.post.delete).not.toHaveBeenCalled();
   });
 });

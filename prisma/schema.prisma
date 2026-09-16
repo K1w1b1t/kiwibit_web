@@ -33,10 +33,14 @@ model Member {
   userId     String?  @unique @map("user_id") @db.Uuid
   name       String
   bio        String?
+  bioPt      String?  @map("bio_pt")
+  bioEn      String?  @map("bio_en")
   avatarUrl  String?  @map("avatar_url")
   /// Bucket key for an uploaded avatar. NULL means the URL is externally hosted
   /// (pasted by hand) and MUST NOT be deleted from the bucket.
   avatarPath String?  @map("avatar_path")
+  githubUrl  String?  @map("github_url")
+  linkedinUrl String? @map("linkedin_url")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 

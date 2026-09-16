@@ -18,3 +18,14 @@ export function isHttpUrl(raw: unknown): boolean {
     return false;
   }
 }
+
+const SOCIAL_HOSTS = {
+  github: new Set(['github.com', 'www.github.com']),
+  linkedin: new Set(['linkedin.com', 'www.linkedin.com']),
+} as const;
+
+export function isAllowedSocialUrl(raw: unknown, social: keyof typeof SOCIAL_HOSTS): boolean {
+  if (!isHttpUrl(raw)) return false;
+  const hostname = new URL((raw as string).trim()).hostname.toLowerCase();
+  return SOCIAL_HOSTS[social].has(hostname);
+}

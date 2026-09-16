@@ -1,4 +1,4 @@
-import { isHttpUrl } from '@/shared/lib/url';
+import { isAllowedSocialUrl, isHttpUrl } from '@/shared/lib/url';
 
 describe('isHttpUrl', () => {
   it.each(['http://a.co', 'https://a.co/x.png', 'https://sub.a.co:8443/p?q=1'])(
@@ -24,6 +24,30 @@ describe('isHttpUrl', () => {
     expect(isHttpUrl(undefined)).toBe(false);
     expect(isHttpUrl(null)).toBe(false);
     expect(isHttpUrl(1)).toBe(false);
+  });
+
+  describe('isAllowedSocialUrl', () => {
+    it.each(['https://github.com/user', 'https://www.github.com/user'])(
+      'accepts GitHub host %s',
+      (value) => {
+        expect(isAllowedSocialUrl(value, 'github')).toBe(true);
+      },
+    );
+
+    it.each(['https://linkedin.com/in/user', 'https://www.linkedin.com/in/user'])(
+      'accepts LinkedIn host %s',
+      (value) => {
+        expect(isAllowedSocialUrl(value, 'linkedin')).toBe(true);
+      },
+    );
+
+    it.each([
+      ['https://example.com/user', 'github'],
+      ['https://github.com.evil.example/user', 'github'],
+      ['https://github.com/user', 'linkedin'],
+    ] as const)('rejects non-official social host %s', (value, social) => {
+      expect(isAllowedSocialUrl(value, social)).toBe(false);
+    });
   });
 
   it('ignora espaços nas pontas', () => {

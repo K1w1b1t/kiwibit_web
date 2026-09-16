@@ -1,15 +1,18 @@
 import EditMemberPage from './page';
 import { prisma } from '@/shared/lib/prisma';
-import { notFound } from 'next/navigation';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { notFound, redirect } from 'next/navigation';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
     throw new Error('NEXT_NOT_FOUND');
   }),
+  redirect: jest.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  }),
 }));
 jest.mock('@/shared/lib/page-auth', () => ({
-  requireAdminPageSession: jest.fn(),
+  requirePanelPageSession: jest.fn(),
 }));
 // Evita carregar o componente client no ambiente node do jest.
 jest.mock('@/features/admin/members/ui/admin-member-form', () => ({
@@ -26,7 +29,7 @@ const MEMBER = { id: 'mid-1', name: 'Alice', bio: 'Dev', avatarUrl: null, user: 
 
 describe('EditMemberPage', () => {
   beforeEach(() => {
-    (requireAdminPageSession as jest.Mock).mockResolvedValue({
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({
       user: { id: 'uid-1', role: 'admin' },
     });
   });
@@ -34,7 +37,7 @@ describe('EditMemberPage', () => {
   it('exige sessão administrativa antes de buscar o membro', async () => {
     (prisma.member.findUnique as jest.Mock).mockResolvedValue(MEMBER);
     await EditMemberPage({ params: Promise.resolve({ id: 'mid-1' }) });
-    expect(requireAdminPageSession).toHaveBeenCalledTimes(1);
+    expect(requirePanelPageSession).toHaveBeenCalledTimes(1);
   });
 
   it('chama notFound quando o membro não existe', async () => {
@@ -59,5 +62,20 @@ describe('EditMemberPage', () => {
     expect(args.select.user).toBeTruthy();
     // Nunca a senha, mesmo passando pela relação.
     expect(args.select.user.select.password).toBeUndefined();
+  });
+
+  it('redirects a member away from another member profile', async () => {
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({
+      user: { id: 'uid-member', role: 'member' },
+    });
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      ...MEMBER,
+      user: { id: 'uid-other', email: 'other@test.com', role: 'member' },
+    });
+
+    await expect(EditMemberPage({ params: Promise.resolve({ id: 'mid-1' }) })).rejects.toThrow(
+      'NEXT_REDIRECT:/admin/members',
+    );
+    expect(redirect).toHaveBeenCalledWith('/admin/members');
   });
 });

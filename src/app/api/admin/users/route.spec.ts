@@ -317,6 +317,26 @@ describe('GET /api/admin/users/[id]', () => {
     const args = (prisma.user.findUnique as jest.Mock).mock.calls[0][0];
     expect(args.select.password).toBeUndefined();
   });
+
+  it('allows a member to read only their own account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(USER);
+    const res = await getUser(
+      makeReq('http://localhost/api/admin/users/uid-2'),
+      paramsFor('uid-2'),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('forbids a member from reading another account', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...USER, id: 'uid-1' });
+    const res = await getUser(
+      makeReq('http://localhost/api/admin/users/uid-1'),
+      paramsFor('uid-1'),
+    );
+    expect(res.status).toBe(403);
+  });
 });
 
 // ── PUT /api/admin/users/[id] ─────────────────────────────────────────────────

@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminMemberForm } from '@/features/admin/members/ui/admin-member-form';
 import { MemberAccountPanel } from '@/features/admin/members/ui/member-account-panel';
 import { MemberLinkedinPanel } from '@/features/admin/members/ui/member-linkedin-panel';
@@ -11,7 +11,8 @@ import { AdminPageShell } from '@/shared/ui/admin-page-shell';
 type Params = { params: Promise<{ id: string }> };
 
 export default async function EditMemberPage({ params }: Params) {
-  const session = await requireAdminPageSession();
+  const session = await requirePanelPageSession();
+  const isMember = session.user.role === 'member';
 
   const { id } = await params;
 
@@ -21,8 +22,12 @@ export default async function EditMemberPage({ params }: Params) {
       id: true,
       name: true,
       bio: true,
+      bioPt: true,
+      bioEn: true,
       avatarUrl: true,
       avatarPath: true,
+      githubUrl: true,
+      linkedinUrl: true,
       // The screen must always show whether an account is associated.
       user: { select: { id: true, email: true, role: true } },
       // Never select the token here — only whether/when it was connected, the
@@ -41,6 +46,10 @@ export default async function EditMemberPage({ params }: Params) {
 
   if (!member) notFound();
 
+  if (isMember && member.user?.id !== session.user.id) {
+    redirect('/admin/members');
+  }
+
   // "Each connects their own": the panel is actionable only for the member
   // linked to the signed-in user's account.
   const isLinkedinOwner = member.user?.id === session.user.id;
@@ -57,27 +66,36 @@ export default async function EditMemberPage({ params }: Params) {
       width="form"
       description="Atualize os dados do membro. As alterações são salvas na hora."
       action={
-        <DeleteButton
-          endpoint={`/api/admin/members/${member.id}`}
-          resourceLabel="membro"
-          redirectTo="/admin/members"
-        />
+        !isMember && (
+          <DeleteButton
+            endpoint={`/api/admin/members/${member.id}`}
+            resourceLabel="membro"
+            redirectTo="/admin/members"
+          />
+        )
       }
     >
-      <AdminMemberForm initial={member} />
-      <MemberAccountPanel
-        memberId={member.id}
-        account={member.user}
-        canAssignPrivileged={session.user.role === 'admin'}
+      <AdminMemberForm
+        initial={member}
+        updateEndpoint={isMember ? '/api/member/profile' : undefined}
       />
-      <MemberLinkedinPanel
-        memberId={member.id}
-        isOwner={isLinkedinOwner}
-        isConnected={linkedinConnection !== null}
-        connectedAt={linkedinConnection?.connectedAt.toISOString() ?? null}
-        canAutoPost={canAutoPost}
-        autoPostEnabled={linkedinConnection?.autoPostEnabled ?? false}
-      />
+      {!isMember && (
+        <>
+          <MemberAccountPanel
+            memberId={member.id}
+            account={member.user}
+            canAssignPrivileged={session.user.role === 'admin'}
+          />
+          <MemberLinkedinPanel
+            memberId={member.id}
+            isOwner={isLinkedinOwner}
+            isConnected={linkedinConnection !== null}
+            connectedAt={linkedinConnection?.connectedAt.toISOString() ?? null}
+            canAutoPost={canAutoPost}
+            autoPostEnabled={linkedinConnection?.autoPostEnabled ?? false}
+          />
+        </>
+      )}
     </AdminPageShell>
   );
 }

@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useHighlightedMembers } from '@/features/home/model/use-public-highlights';
 import type { Locale } from '@/shared/i18n/config';
 import type { Dictionary } from '@/shared/i18n/get-dictionary';
+import { getMemberBio } from '@/shared/lib/member-bio';
 import { MemberAvatar } from '@/shared/ui/member-avatar';
+import { FaGithub, FaLinkedinIn } from 'react-icons/fa6';
 
 interface HomeTeamProps {
   locale: Locale;
@@ -93,8 +95,38 @@ export function HomeTeam({ locale, dict, showHeader = true }: HomeTeamProps) {
                 />
                 <h3 className="mt-4 text-xl font-semibold text-white">{member.name}</h3>
                 <p className="mt-2 flex-1 text-sm text-white/70 line-clamp-3">
-                  {member.bio || dict.labels.noBio}
+                  {getMemberBio(member, locale, dict.labels)}
                 </p>
+                {(member.githubUrl || member.linkedinUrl) && (
+                  <div className="mt-4 flex gap-2">
+                    {member.githubUrl && (
+                      <a
+                        href={member.githubUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${member.name} no GitHub`}
+                        title={`Abrir GitHub de ${member.name}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-2 py-1 text-[9px] uppercase tracking-[0.1em] text-white/60 transition hover:border-white/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                      >
+                        <FaGithub size={18} aria-hidden="true" />
+                        <span>GitHub</span>
+                      </a>
+                    )}
+                    {member.linkedinUrl && (
+                      <a
+                        href={member.linkedinUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${member.name} no LinkedIn`}
+                        title={`Abrir LinkedIn de ${member.name}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-2 py-1 text-[9px] uppercase tracking-[0.1em] text-white/60 transition hover:border-white/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                      >
+                        <FaLinkedinIn size={18} aria-hidden="true" />
+                        <span>LinkedIn</span>
+                      </a>
+                    )}
+                  </div>
+                )}
                 <Link
                   href={`/${locale}/team/${member.id}`}
                   className="mt-5 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:border-white/80 hover:text-white"

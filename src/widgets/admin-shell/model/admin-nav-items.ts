@@ -19,7 +19,7 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavItem[] = [
   { label: 'Dashboard', href: '/admin', exact: true },
   { label: 'Blog', href: '/admin/posts' },
   { label: 'Projetos', href: '/admin/projects', roles: ADMIN_ONLY_ROLES },
-  { label: 'Equipe', href: '/admin/members', roles: ADMIN_ONLY_ROLES },
+  { label: 'Equipe', href: '/admin/members' },
   { label: 'Usuários', href: '/admin/users' },
 ];
 

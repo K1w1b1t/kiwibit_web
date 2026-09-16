@@ -1,7 +1,7 @@
 // src/app/admin/members/page.tsx
 import Link from 'next/link';
 import { prisma } from '@/shared/lib/prisma';
-import { requireAdminPageSession } from '@/shared/lib/page-auth';
+import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminMembersTable } from '@/features/admin/members/ui/admin-members-table';
 import { AdminPageShell } from '@/shared/ui/admin-page-shell';
 import { parseLimitParam, parsePageParam } from '@/shared/lib/pagination';
@@ -11,13 +11,14 @@ export default async function AdminMembersPage({
 }: {
   searchParams: Promise<{ page?: string; limit?: string }>;
 }) {
-  await requireAdminPageSession();
+  const session = await requirePanelPageSession();
+  const isMember = session.user.role === 'member';
 
   const { page: pageParam, limit: limitParam } = await searchParams;
   const pageSize = parseLimitParam(limitParam);
   const page = parsePageParam(pageParam);
 
-  const where = {};
+  const where = isMember ? { userId: session.user.id } : undefined;
   const [members, total] = await Promise.all([
     prisma.member.findMany({
       select: {
@@ -38,15 +39,23 @@ export default async function AdminMembersPage({
     <AdminPageShell
       title="Membros"
       action={
-        <Link
-          href="/admin/members/new"
-          className="rounded-full bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-white/90"
-        >
-          Novo membro
-        </Link>
+        !isMember && (
+          <Link
+            href="/admin/members/new"
+            className="rounded-full bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-white/90"
+          >
+            Novo membro
+          </Link>
+        )
       }
     >
-      <AdminMembersTable members={members} page={page} total={total} pageSize={pageSize} />
+      <AdminMembersTable
+        members={members}
+        page={page}
+        total={total}
+        pageSize={pageSize}
+        canCreate={!isMember}
+      />
     </AdminPageShell>
   );
 }

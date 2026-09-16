@@ -6,12 +6,12 @@ import { AdminRecentList } from './admin-recent-list';
 
 type Props = {
   posts: number;
-  members?: number;
-  projects?: number;
-  users?: number;
+  members: number;
+  projects: number;
+  users: number;
   recentPosts: readonly DashboardItem[];
-  recentMembers?: readonly DashboardItem[];
-  recentProjects?: readonly DashboardItem[];
+  recentMembers: readonly DashboardItem[];
+  recentProjects: readonly DashboardItem[];
   isMember?: boolean;
 };
 
@@ -29,15 +29,13 @@ export function AdminDashboard({
     <AdminPageShell title="Dashboard">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <AdminMetricCard label="Posts" value={posts} href="/admin/posts" delayClass="delay-100" />
-        {!isMember && members !== undefined && (
-          <AdminMetricCard
-            label="Membros"
-            value={members}
-            href="/admin/members"
-            delayClass="delay-200"
-          />
-        )}
-        {!isMember && projects !== undefined && (
+        <AdminMetricCard
+          label="Membros"
+          value={members}
+          href="/admin/members"
+          delayClass="delay-200"
+        />
+        {!isMember && (
           <AdminMetricCard
             label="Projetos"
             value={projects}
@@ -45,14 +43,12 @@ export function AdminDashboard({
             delayClass="delay-300"
           />
         )}
-        {!isMember && users !== undefined && (
-          <AdminMetricCard
-            label="Usuários"
-            value={users}
-            href="/admin/users"
-            delayClass="delay-400"
-          />
-        )}
+        <AdminMetricCard
+          label="Usuários"
+          value={users}
+          href="/admin/users"
+          delayClass="delay-400"
+        />
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
@@ -63,16 +59,14 @@ export function AdminDashboard({
           seeAllHref="/admin/posts"
           delayClass="delay-200"
         />
-        {!isMember && recentMembers && (
-          <AdminRecentList
-            title="Últimos membros"
-            items={recentMembers}
-            emptyMessage="Nenhum membro ainda."
-            seeAllHref="/admin/members"
-            delayClass="delay-300"
-          />
-        )}
-        {!isMember && recentProjects && (
+        <AdminRecentList
+          title="Últimos membros"
+          items={recentMembers}
+          emptyMessage="Nenhum membro ainda."
+          seeAllHref="/admin/members"
+          delayClass="delay-300"
+        />
+        {!isMember && (
           <AdminRecentList
             title="Últimos projetos"
             items={recentProjects}

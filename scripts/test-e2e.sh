@@ -5,6 +5,7 @@ E2E_PORT=3001
 E2E_DB_PORT=5434
 E2E_BASE_URL="http://localhost:${E2E_PORT}"
 NEXT_PID=""
+E2E_COMPOSE=(docker compose --project-name kiwibit-e2e -f docker-compose.e2e.yml)
 
 # ── cleanup ──────────────────────────────────────────────────────────────────
 cleanup() {
@@ -13,7 +14,7 @@ cleanup() {
   if [[ -n "$NEXT_PID" ]] && kill -0 "$NEXT_PID" 2>/dev/null; then
     kill "$NEXT_PID" 2>/dev/null || true
   fi
-  docker compose -f docker-compose.e2e.yml down --volumes --remove-orphans --timeout 10 2>/dev/null || true
+  "${E2E_COMPOSE[@]}" down --volumes --remove-orphans --timeout 10 2>/dev/null || true
   return 0
 }
 trap cleanup EXIT
@@ -37,7 +38,7 @@ export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhos
 
 # ── start database ────────────────────────────────────────────────────────────
 echo "🐳 Starting ephemeral E2E database (port ${E2E_DB_PORT}, no volume)..."
-docker compose -f docker-compose.e2e.yml up -d
+"${E2E_COMPOSE[@]}" up -d
 
 echo "⏳ Waiting for database to be healthy..."
 MAX_DB_WAIT=90

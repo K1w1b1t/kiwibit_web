@@ -59,15 +59,23 @@ describe('AdminDashboardPage', () => {
     }
   });
 
-  it('não consulta dados fora do escopo de um member', async () => {
+  it('limits dashboard members to the signed-in member profile', async () => {
     (requirePanelPageSession as jest.Mock).mockResolvedValue({
-      user: { id: 'uid-1', role: 'member' },
+      user: { id: 'uid-member', role: 'member' },
     });
 
-    await AdminDashboardPage();
+    const element = await AdminDashboardPage();
 
-    expect(prisma.member.count).not.toHaveBeenCalled();
-    expect(prisma.member.findMany).not.toHaveBeenCalled();
+    expect(prisma.member.count).toHaveBeenCalledWith({ where: { userId: 'uid-member' } });
+    expect(prisma.member.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: 'uid-member' } }),
+    );
+    expect(element.props.isMember).toBe(true);
+    expect(element.props.members).toBe(3);
+    expect(prisma.post.count).toHaveBeenCalledWith({ where: { authorId: 'uid-member' } });
+    expect(prisma.post.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { authorId: 'uid-member' } }),
+    );
     expect(prisma.project.count).not.toHaveBeenCalled();
     expect(prisma.project.findMany).not.toHaveBeenCalled();
     expect(prisma.user.count).not.toHaveBeenCalled();
