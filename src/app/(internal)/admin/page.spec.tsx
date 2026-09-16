@@ -72,5 +72,12 @@ describe('AdminDashboardPage', () => {
     );
     expect(element.props.isMember).toBe(true);
     expect(element.props.members).toBe(3);
+    expect(prisma.post.count).toHaveBeenCalledWith({ where: { authorId: 'uid-member' } });
+    expect(prisma.post.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { authorId: 'uid-member' } }),
+    );
+    expect(prisma.project.count).not.toHaveBeenCalled();
+    expect(prisma.project.findMany).not.toHaveBeenCalled();
+    expect(prisma.user.count).not.toHaveBeenCalled();
   });
 });

@@ -5,9 +5,9 @@ import { AdminShell } from '@/widgets/admin-shell/admin-shell';
 /**
  * Guards the whole `/admin` subtree and provides the shared chrome.
  *
- * Individual pages keep their own `requireAdminPageSession()` call: the layout
- * is not a substitute for the per-page guard, since a page can be rendered by
- * other means and AGENTS.md § 4 mandates the server guard at the entrypoint.
+ * Administrator-only pages keep their own `requireAdminPageSession()` call:
+ * the layout guard allows the restricted shared panel, while each page still
+ * declares its required access level at its entrypoint.
  */
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
   const session = await requirePanelPageSession();

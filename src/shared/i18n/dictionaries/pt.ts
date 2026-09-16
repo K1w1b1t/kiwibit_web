@@ -44,6 +44,16 @@ const pt: Dictionary = {
     },
   },
 
+  analytics: {
+    title: 'Quer nos ajudar a melhorar?',
+    description:
+      'Com sua permissão, usamos cookies opcionais para entender o que funciona bem e corrigir problemas. Eles não são usados para publicidade, e o site continua funcionando normalmente se você recusar.',
+    accept: 'Sim, quero ajudar',
+    decline: 'Agora não',
+    preferencesLabel: 'Preferências de cookies',
+    cookiePolicyLink: 'Como usamos cookies',
+  },
+
   header: {
     brand: 'Kiwibit',
     nav: {
