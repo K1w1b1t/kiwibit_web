@@ -45,13 +45,13 @@ const pt: Dictionary = {
   },
 
   analytics: {
-    title: 'Cookies opcionais',
+    title: 'Quer nos ajudar a melhorar?',
     description:
-      'Usamos cookies opcionais para entender o que funciona no site e corrigir problemas. Você pode aceitar ou recusar; os recursos essenciais continuam funcionando.',
-    accept: 'Aceitar cookies',
-    decline: 'Recusar',
+      'Com sua permissão, usamos cookies opcionais para entender o que funciona bem e corrigir problemas. Eles não são usados para publicidade, e o site continua funcionando normalmente se você recusar.',
+    accept: 'Sim, quero ajudar',
+    decline: 'Agora não',
     preferencesLabel: 'Preferências de cookies',
-    cookiePolicyLink: 'Leia nossa Política de Cookies',
+    cookiePolicyLink: 'Como usamos cookies',
   },
 
   header: {

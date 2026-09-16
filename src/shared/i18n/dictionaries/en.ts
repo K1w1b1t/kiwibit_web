@@ -43,13 +43,13 @@ const en = {
   },
 
   analytics: {
-    title: 'Optional cookies',
+    title: 'Help us make this site better',
     description:
-      'We use optional cookies to understand what works on the site and fix problems. You can accept or decline; essential features will still work.',
-    accept: 'Accept cookies',
-    decline: 'Decline',
+      'With your permission, we use optional cookies to learn what works well and fix issues. They are never used for advertising, and the site will work normally if you decline.',
+    accept: 'Yes, I can help',
+    decline: 'No, thanks',
     preferencesLabel: 'Cookie preferences',
-    cookiePolicyLink: 'Read our Cookie Policy',
+    cookiePolicyLink: 'How we use cookies',
   },
 
   header: {
