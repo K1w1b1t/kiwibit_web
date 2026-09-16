@@ -9,9 +9,10 @@ import type { Dictionary } from '@/shared/i18n/dictionaries/en';
 
 interface AnalyticsConsentControlProps {
   dict: Dictionary['analytics'];
+  cookiePolicyHref: string;
 }
 
-export function AnalyticsConsentControl({ dict }: AnalyticsConsentControlProps) {
+export function AnalyticsConsentControl({ dict, cookiePolicyHref }: AnalyticsConsentControlProps) {
   const [decision, setDecision] = useState<AnalyticsConsent>();
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -33,7 +34,13 @@ export function AnalyticsConsentControl({ dict }: AnalyticsConsentControlProps) 
         >
           <strong id="analytics-title">{dict.title}</strong>
           <p className="mt-2 text-sm text-zinc-300">{dict.description}</p>
-          <div className="mt-3 flex gap-3">
+          <a
+            className="mt-3 inline-block text-sm text-emerald-400 underline underline-offset-2"
+            href={cookiePolicyHref}
+          >
+            {dict.cookiePolicyLink}
+          </a>
+          <div className="mt-3 flex flex-wrap justify-end gap-3">
             <button
               type="button"
               className="rounded bg-emerald-500 px-4 py-2 text-black"

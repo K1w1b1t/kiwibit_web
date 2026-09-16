@@ -19,7 +19,10 @@ export default function InternalLayout({ children }: Readonly<{ children: React.
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>{children}</AuthProvider>
-        <AnalyticsConsentControl dict={getDictionary('en').analytics} />
+        <AnalyticsConsentControl
+          cookiePolicyHref="/en/cookies-policy"
+          dict={getDictionary('en').analytics}
+        />
       </body>
     </html>
   );

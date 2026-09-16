@@ -51,6 +51,7 @@ const pt: Dictionary = {
     accept: 'Aceitar cookies',
     decline: 'Recusar',
     preferencesLabel: 'Preferências de cookies',
+    cookiePolicyLink: 'Leia nossa Política de Cookies',
   },
 
   header: {

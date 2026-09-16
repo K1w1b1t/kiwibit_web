@@ -90,7 +90,10 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         <SiteHeader locale={typedLocale} dict={dict.header} />
         {children}
         <SiteFooter locale={typedLocale} dict={dict.footer} headerDict={dict.header} year={year} />
-        <AnalyticsConsentControl dict={dict.analytics} />
+        <AnalyticsConsentControl
+          cookiePolicyHref={'/' + typedLocale + '/cookies-policy'}
+          dict={dict.analytics}
+        />
       </body>
     </html>
   );

@@ -49,6 +49,7 @@ const en = {
     accept: 'Accept cookies',
     decline: 'Decline',
     preferencesLabel: 'Cookie preferences',
+    cookiePolicyLink: 'Read our Cookie Policy',
   },
 
   header: {
