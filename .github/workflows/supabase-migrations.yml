@@ -19,7 +19,6 @@ on:
     branches:
       - release
       - main
-      - master
 
 permissions:
   contents: read
@@ -38,6 +37,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -64,7 +65,7 @@ jobs:
 
   migrate-prod:
     name: Migrate + ensure admin (production)
-    if: github.event.pull_request.merged == true && (github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'master')
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     environment: Production
     env:
@@ -75,6 +76,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
