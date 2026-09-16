@@ -53,29 +53,31 @@ export function AnalyticsConsentControl({ dict, cookiePolicyHref }: AnalyticsCon
               >
                 {dict.description}
               </p>
-              <a
-                className="mt-3 inline-flex rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-emerald-300/60 hover:text-emerald-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-                href={cookiePolicyHref}
-              >
-                {dict.cookiePolicyLink}
-              </a>
             </div>
           </div>
-          <div className="flex flex-col gap-2 border-t border-white/10 bg-white/[0.03] p-3 sm:flex-row sm:justify-end sm:px-5 sm:py-4">
-            <button
-              type="button"
-              className="order-2 min-h-11 rounded-lg border border-zinc-600 px-4 text-sm font-semibold text-white transition hover:border-zinc-400 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:order-1 sm:min-w-36"
-              onClick={() => choose('denied')}
+          <div className="flex flex-col gap-3 border-t border-white/10 bg-white/[0.03] p-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+            <a
+              className="inline-flex self-start rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-emerald-300/60 hover:text-emerald-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+              href={cookiePolicyHref}
             >
-              {dict.decline}
-            </button>
-            <button
-              type="button"
-              className="order-1 min-h-11 rounded-lg border border-emerald-300 bg-emerald-400 px-4 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:order-2 sm:min-w-36"
-              onClick={() => choose('granted')}
-            >
-              {dict.accept}
-            </button>
+              {dict.cookiePolicyLink}
+            </a>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                className="order-2 min-h-11 rounded-lg border border-zinc-600 px-4 text-sm font-semibold text-white transition hover:border-zinc-400 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:order-1 sm:min-w-36"
+                onClick={() => choose('denied')}
+              >
+                {dict.decline}
+              </button>
+              <button
+                type="button"
+                className="order-1 min-h-11 rounded-lg border border-emerald-300 bg-emerald-400 px-4 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:order-2 sm:min-w-36"
+                onClick={() => choose('granted')}
+              >
+                {dict.accept}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
