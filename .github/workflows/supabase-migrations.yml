@@ -1,6 +1,6 @@
 name: Supabase Migrations Deploy
 
-# Applies Prisma migrations and ensures the admin user on every push to
+# Applies Prisma migrations and ensures the admin user after a merged pull request to
 # `release` (staging DB) and `main` (production DB).
 #
 # Secrets are read from GitHub Environments:
@@ -14,16 +14,12 @@ name: Supabase Migrations Deploy
 #   ADMIN_EMAIL      - admin email (defaults to admin@kiwibit.dev)
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - release
       - main
-    paths:
-      - 'prisma/migrations/**'
-      - 'prisma/schema.prisma'
-      - 'prisma/seed-admin.mjs'
-      - '.github/workflows/supabase-migrations.yml'
-  workflow_dispatch:
+      - master
 
 permissions:
   contents: read
@@ -31,7 +27,7 @@ permissions:
 jobs:
   migrate-release:
     name: Migrate + ensure admin (staging)
-    if: github.ref == 'refs/heads/release'
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release'
     runs-on: ubuntu-latest
     environment: Preview
     env:
@@ -68,7 +64,7 @@ jobs:
 
   migrate-prod:
     name: Migrate + ensure admin (production)
-    if: github.ref == 'refs/heads/main'
+    if: github.event.pull_request.merged == true && (github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'master')
     runs-on: ubuntu-latest
     environment: Production
     env:
