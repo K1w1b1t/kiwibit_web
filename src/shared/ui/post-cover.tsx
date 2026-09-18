@@ -35,7 +35,12 @@ export function PostCover({
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-black">
           {/* Decorative fallback; the surrounding card already carries the title. */}
-          <Image src="/kiwi.png" alt="" width={72} height={72} className="opacity-20" />
+          <span
+            className="flex size-24 items-center justify-center rounded-2xl bg-white p-2 shadow-xl shadow-black/30"
+            aria-hidden="true"
+          >
+            <Image src="/kiwi.png" alt="" width={72} height={72} />
+          </span>
         </div>
       )}
     </div>

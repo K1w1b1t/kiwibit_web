@@ -46,7 +46,7 @@ const en = {
     title: 'Help us make this site better',
     description:
       'With your permission, we use optional cookies to learn what works well and fix issues. They are never used for advertising, and the site will work normally if you decline.',
-    accept: 'Yes, I can help',
+    accept: 'Accept',
     decline: 'No, thanks',
     preferencesLabel: 'Cookie preferences',
     cookiePolicyLink: 'How we use cookies',

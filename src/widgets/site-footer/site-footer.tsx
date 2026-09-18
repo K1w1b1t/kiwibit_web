@@ -28,7 +28,12 @@ export function SiteFooter({ locale, dict, headerDict, year }: SiteFooterProps) 
       <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.6fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3">
-            <Image src="/kiwi.png" alt="" width={32} height={32} className="rounded" />
+            <span
+              className="flex size-10 items-center justify-center rounded-lg bg-white p-1"
+              aria-hidden="true"
+            >
+              <Image src="/kiwi.png" alt="" width={32} height={32} />
+            </span>
             <span className="text-sm font-semibold uppercase tracking-[0.25em]">
               {headerDict.brand}
             </span>
