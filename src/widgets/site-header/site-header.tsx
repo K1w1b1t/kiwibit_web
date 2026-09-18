@@ -23,7 +23,12 @@ export function SiteHeader({ locale, dict }: SiteHeaderProps) {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-3 sm:px-10 lg:px-16">
         <Link href={base} className="flex items-center gap-3" aria-label={dict.brand}>
-          <Image src="/kiwi.png" alt="" width={30} height={30} className="rounded" />
+          <span
+            className="flex size-9 items-center justify-center rounded-lg bg-white p-1"
+            aria-hidden="true"
+          >
+            <Image src="/kiwi.png" alt="" width={30} height={30} />
+          </span>
           <span className="text-xs font-semibold uppercase tracking-[0.25em] text-white/90">
             {dict.brand}
           </span>
