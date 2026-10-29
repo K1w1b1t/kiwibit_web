@@ -8,7 +8,7 @@
 
 ## Pré-requisitos
 
-- Node.js (recomenda-se v18+)
+- Node.js 24 LTS (>=24.22.2; run `nvm use` to load `.nvmrc`)
 - npm (ou pnpm/yarn)
 
 ## Instalação e execução
