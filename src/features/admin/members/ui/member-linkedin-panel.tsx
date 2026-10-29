@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/shared/api/api-client';
 import { Button } from '@/shared/ui/button';
@@ -43,6 +43,12 @@ export function MemberLinkedinPanel({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [autoPostChecked, setAutoPostChecked] = useState(autoPostEnabled);
+  const [previousAutoPostEnabled, setPreviousAutoPostEnabled] = useState(autoPostEnabled);
+
+  if (autoPostEnabled !== previousAutoPostEnabled) {
+    setPreviousAutoPostEnabled(autoPostEnabled);
+    setAutoPostChecked(autoPostEnabled);
+  }
 
   // Seed the banner from the OAuth redirect outcome (?linkedin=connected|error|
   // forbidden). Derived once from the URL present on mount; the disconnect action
@@ -55,10 +61,6 @@ export function MemberLinkedinPanel({
     const seed = outcome ? CONNECT_MESSAGES[outcome] : undefined;
     return seed ? { status: seed.status, message: seed.message } : { status: 'idle', message: '' };
   });
-
-  useEffect(() => {
-    setAutoPostChecked(autoPostEnabled);
-  }, [autoPostEnabled]);
 
   const connectUrl = `/api/admin/members/${memberId}/linkedin/connect`;
 
