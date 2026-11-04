@@ -40,11 +40,16 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   if (!isLinkedinConfigured() || !isTokenCryptoConfigured()) {
+    console.warn('[LinkedIn OAuth] connect configuration_missing', {
+      linkedinConfigured: isLinkedinConfigured(),
+      encryptionConfigured: isTokenCryptoConfigured(),
+    });
     return backToEdit(id, 'error');
   }
 
   const member = await prisma.member.findUnique({ where: { id }, select: { userId: true } });
   if (!member || member.userId !== session.user.id) {
+    console.warn('[LinkedIn OAuth] connect ownership_rejected');
     return backToEdit(id, 'forbidden');
   }
 

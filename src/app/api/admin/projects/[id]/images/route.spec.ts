@@ -1,4 +1,6 @@
-import { GET as listImages, POST as addImage, MAX_PROJECT_IMAGES } from './route';
+import { GET as listImages, POST as addImage } from './route';
+
+const MAX_PROJECT_IMAGES = 24;
 import { PUT as updateImage, DELETE as deleteImage } from './[imageId]/route';
 import { PUT as reorderImages } from './order/route';
 import { prisma } from '@/shared/lib/prisma';

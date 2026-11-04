@@ -6,7 +6,7 @@ import { isHttpUrl } from '@/shared/lib/url';
 type Params = { params: Promise<{ id: string }> };
 
 /** Bounded on purpose: a carousel is not a media library, and the reorder writes every row. */
-export const MAX_PROJECT_IMAGES = 24;
+const MAX_PROJECT_IMAGES = 24;
 
 const IMAGE_ORDER = [{ position: 'asc' as const }, { createdAt: 'asc' as const }];
 

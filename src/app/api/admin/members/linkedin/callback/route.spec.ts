@@ -49,6 +49,21 @@ describe('GET /api/admin/members/linkedin/callback', () => {
     expect(res.headers.get('location')).toContain('/admin/members/mid-1/edit?linkedin=error');
   });
 
+  it('logs a safe provider error without recording query parameters', async () => {
+    mockAuth();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const req = new NextRequest(
+      'http://localhost/api/admin/members/linkedin/callback?error=invalid_scope&error_description=private&state=state123',
+      { headers: { cookie: `${linkedinLib.LINKEDIN_OAUTH_COOKIE}=state123:mid-1` } },
+    );
+    await linkedinCallback(req);
+    expect(warn).toHaveBeenCalledWith('[LinkedIn OAuth] callback provider_error', {
+      code: 'invalid_scope',
+    });
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('private');
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('state123');
+  });
+
   it('redirects with forbidden status when signed-in user does not own the member', async () => {
     mockAuth(); // user id is uid-1
     (prisma.member.findUnique as jest.Mock).mockResolvedValue({
