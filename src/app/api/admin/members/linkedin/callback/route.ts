@@ -74,17 +74,39 @@ export async function GET(request: NextRequest) {
 
   const cookie = parseOauthCookie(request.cookies.get(LINKEDIN_OAUTH_COOKIE)?.value);
   // With no cookie there is no member to redirect back to; land on the list.
-  if (!cookie) return NextResponse.redirect(absoluteUrl('/admin/members'));
+  if (!cookie) {
+    console.warn('[LinkedIn OAuth] callback cookie_missing');
+    return NextResponse.redirect(absoluteUrl('/admin/members'));
+  }
   const { state, memberId } = cookie;
 
   const params = request.nextUrl.searchParams;
   // LinkedIn returns `error` when the member declines consent.
-  if (params.get('error') || params.get('state') !== state) {
+  const oauthError = params.get('error');
+  if (oauthError) {
+    const knownErrors = [
+      'access_denied',
+      'invalid_scope',
+      'invalid_request',
+      'unauthorized_client',
+    ];
+    console.warn('[LinkedIn OAuth] callback provider_error', {
+      code: knownErrors.includes(oauthError) ? oauthError : 'other',
+    });
+    return redirectEdit(memberId, 'error');
+  }
+  if (params.get('state') !== state) {
+    console.warn('[LinkedIn OAuth] callback state_mismatch');
     return redirectEdit(memberId, 'error');
   }
 
   const code = params.get('code');
   if (!code || !isLinkedinConfigured() || !isTokenCryptoConfigured()) {
+    console.warn('[LinkedIn OAuth] callback prerequisites_missing', {
+      codePresent: Boolean(code),
+      linkedinConfigured: isLinkedinConfigured(),
+      encryptionConfigured: isTokenCryptoConfigured(),
+    });
     return redirectEdit(memberId, 'error');
   }
 
@@ -94,15 +116,20 @@ export async function GET(request: NextRequest) {
   });
   // Re-check ownership: the cookie is bound to a browser, not re-authorized here.
   if (!member || member.userId !== session.user.id) {
+    console.warn('[LinkedIn OAuth] callback ownership_rejected');
     return redirectEdit(memberId, 'forbidden');
   }
 
+  let stage = 'token_exchange';
   try {
     const token = await exchangeCode(code);
+    stage = 'userinfo';
     const userinfo = await fetchUserinfo(token.accessToken);
+    stage = 'profile';
     const profile = await fetchProfile(token.accessToken);
 
     // Prevent binding the same LinkedIn account to another member
+    stage = 'connection_lookup';
     const existingConnection = await prisma.linkedinConnection.findFirst({
       where: {
         OR: [{ linkedinSub: userinfo.sub }, { linkedinPersonId: profile.id }],
@@ -111,11 +138,13 @@ export async function GET(request: NextRequest) {
       select: { memberId: true },
     });
     if (existingConnection) {
+      console.warn('[LinkedIn OAuth] callback account_already_connected');
       return redirectEdit(memberId, 'error');
     }
 
     const photo = await syncPhoto(userinfo.picture);
 
+    stage = 'persist_connection';
     const expiry = new Date(Date.now() + token.expiresInSeconds * 1000);
     const accessTokenEnc = encryptToken(token.accessToken);
     // The granted scope is authoritative — not the requested intent. Enable the
@@ -158,8 +187,8 @@ export async function GET(request: NextRequest) {
     }
 
     return redirectEdit(memberId, 'connected');
-  } catch (error) {
-    console.error('[LinkedIn OAuth Callback Error]', error);
+  } catch {
+    console.error('[LinkedIn OAuth] callback failed', { stage });
     return redirectEdit(memberId, 'error');
   }
 }

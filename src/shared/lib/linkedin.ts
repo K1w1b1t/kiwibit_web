@@ -117,7 +117,10 @@ export async function exchangeCode(code: string): Promise<TokenResult> {
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body,
   });
-  if (!response.ok) throw new Error(`LinkedIn token exchange failed (${response.status}).`);
+  if (!response.ok) {
+    console.warn('[LinkedIn OAuth] token_exchange http_error', { status: response.status });
+    throw new Error(`LinkedIn token exchange failed (${response.status}).`);
+  }
 
   const json = (await response.json()) as {
     access_token?: unknown;
@@ -142,7 +145,10 @@ export async function fetchUserinfo(accessToken: string): Promise<LinkedinUserin
   const response = await fetch(USERINFO_URL, {
     headers: { authorization: `Bearer ${accessToken}` },
   });
-  if (!response.ok) throw new Error(`LinkedIn userinfo failed (${response.status}).`);
+  if (!response.ok) {
+    console.warn('[LinkedIn OAuth] userinfo http_error', { status: response.status });
+    throw new Error(`LinkedIn userinfo failed (${response.status}).`);
+  }
 
   const json = (await response.json()) as { sub?: unknown; picture?: unknown };
   if (typeof json.sub !== 'string') throw new Error('LinkedIn userinfo is missing sub.');
@@ -163,7 +169,10 @@ export async function fetchProfile(accessToken: string): Promise<LinkedinProfile
       'X-Restli-Protocol-Version': '2.0.0',
     },
   });
-  if (!response.ok) throw new Error(`LinkedIn profile failed (${response.status}).`);
+  if (!response.ok) {
+    console.warn('[LinkedIn OAuth] profile http_error', { status: response.status });
+    throw new Error(`LinkedIn profile failed (${response.status}).`);
+  }
 
   const json = (await response.json()) as { id?: unknown };
   if (typeof json.id !== 'string') throw new Error('LinkedIn profile is missing id.');
