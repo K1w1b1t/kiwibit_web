@@ -365,3 +365,34 @@ Se a pagina tiver que começar simples, a ordem de prioridade e:
 3. Definir responsaveis por aprovacao e resposta.
 4. Publicar um lote inicial de conteudo coerente.
 5. Repetir o ciclo com consistencia.
+
+## OpenID Connect compatibility (issue #116)
+
+Photo connections request only `openid profile`; email is unused. Automatic personal
+publication separately requests `w_member_social`. The callback uses `/v2/userinfo`.
+[Share on LinkedIn](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin)
+explicitly directs implementers to OIDC for the Person URN. This is the product-specific
+basis for using the returned subject as the author identifier, rather than a general
+assumption about OIDC subjects. Confirm this with a consenting test account in staging.
+Keep `/v2/ugcPosts` for Share on LinkedIn; access to the versioned Posts API must
+be established separately before migrating. Article URLs are sent as `originalUrl`;
+remote cover URLs are not valid uploaded LinkedIn media URNs.
+
+Existing connections are not backfilled from their subject. Reconnect replaces the
+token and author identifier together after ownership and exclusive-account checks.
+Missing author IDs remain blocked from posting until reconnection. Existing explicit
+opt-ins remain subject to scope and expiry checks.
+
+Staging acceptance remains pending: connect without publication consent, reconnect
+with consent, publish one test article, revoke consent, disconnect, and reconnect.
+Verify the actual target profile and photo, plus expired-token and rejected-scope
+behavior. OAuth requires the member's interactive consent; mocked tests do not prove
+that the application has the required LinkedIn product access.
+
+Organization publication remains an independent environment-configured destination.
+It requires `w_organization_social`, approved API access, and an authorized page role;
+the two self-service products alone do not establish this access. Organization live
+validation remains pending until those credentials and page permissions are available.
+Neither organization nor personal failures may block blog publication. Diagnostics
+must contain only allowlisted error classifications and HTTP statuses, never provider
+response bodies, OAuth parameters, tokens, or personal data.

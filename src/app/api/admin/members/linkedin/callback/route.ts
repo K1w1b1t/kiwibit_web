@@ -4,7 +4,6 @@ import { prisma } from '@/shared/lib/prisma';
 import { requireAdminSession } from '@/shared/lib/api-helpers';
 import {
   exchangeCode,
-  fetchProfile,
   fetchUserinfo,
   isLinkedinConfigured,
   LINKEDIN_OAUTH_COOKIE,
@@ -87,6 +86,7 @@ export async function GET(request: NextRequest) {
     const knownErrors = [
       'access_denied',
       'invalid_scope',
+      'unauthorized_scope_error',
       'invalid_request',
       'unauthorized_client',
     ];
@@ -125,14 +125,15 @@ export async function GET(request: NextRequest) {
     const token = await exchangeCode(code);
     stage = 'userinfo';
     const userinfo = await fetchUserinfo(token.accessToken);
-    stage = 'profile';
-    const profile = await fetchProfile(token.accessToken);
+    // Share on LinkedIn explicitly references OIDC userinfo for its Person URN.
+    // https://learn.microsoft.com/linkedin/consumer/integrations/self-serve/share-on-linkedin
+    const personId = userinfo.sub;
 
     // Prevent binding the same LinkedIn account to another member
     stage = 'connection_lookup';
     const existingConnection = await prisma.linkedinConnection.findFirst({
       where: {
-        OR: [{ linkedinSub: userinfo.sub }, { linkedinPersonId: profile.id }],
+        OR: [{ linkedinSub: userinfo.sub }, { linkedinPersonId: personId }],
         NOT: { memberId },
       },
       select: { memberId: true },
@@ -164,7 +165,7 @@ export async function GET(request: NextRequest) {
         create: {
           memberId,
           linkedinSub: userinfo.sub,
-          linkedinPersonId: profile.id,
+          linkedinPersonId: personId,
           scope: token.scope,
           autoPostEnabled,
           accessTokenEnc,
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest) {
         },
         update: {
           linkedinSub: userinfo.sub,
-          linkedinPersonId: profile.id,
+          linkedinPersonId: personId,
           scope: token.scope,
           autoPostEnabled,
           accessTokenEnc,
