@@ -98,7 +98,6 @@ describe('GET /api/admin/members/linkedin/callback', () => {
       sub: 'sub-claimed-by-other',
       picture: null,
     });
-    jest.spyOn(linkedinLib, 'fetchProfile').mockResolvedValue({ id: 'person-claimed-by-other' });
 
     (prisma.linkedinConnection.findFirst as jest.Mock).mockResolvedValue({
       memberId: 'other-member-id',
@@ -131,7 +130,6 @@ describe('GET /api/admin/members/linkedin/callback', () => {
       sub: 'sub-my-account',
       picture: null,
     });
-    jest.spyOn(linkedinLib, 'fetchProfile').mockResolvedValue({ id: 'person-my-account' });
 
     (prisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prisma));
     (prisma.linkedinConnection.upsert as jest.Mock).mockResolvedValue({});
@@ -150,7 +148,7 @@ describe('GET /api/admin/members/linkedin/callback', () => {
         where: { memberId: 'mid-1' },
         create: expect.objectContaining({
           linkedinSub: 'sub-my-account',
-          linkedinPersonId: 'person-my-account',
+          linkedinPersonId: 'sub-my-account',
           autoPostEnabled: false,
         }),
       }),
@@ -170,7 +168,6 @@ describe('GET /api/admin/members/linkedin/callback', () => {
       scope: 'openid profile email w_member_social',
     });
     jest.spyOn(linkedinLib, 'fetchUserinfo').mockResolvedValue({ sub: 'sub-x', picture: null });
-    jest.spyOn(linkedinLib, 'fetchProfile').mockResolvedValue({ id: 'person-x' });
 
     (prisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prisma));
     (prisma.linkedinConnection.upsert as jest.Mock).mockResolvedValue({});
