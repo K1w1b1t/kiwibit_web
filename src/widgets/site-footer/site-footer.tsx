@@ -15,8 +15,7 @@ interface SiteFooterProps {
 export function SiteFooter({ locale, dict, headerDict, year }: SiteFooterProps) {
   const base = `/${locale}`;
   const navLinks = [
-    { href: `${base}#services`, label: headerDict.nav.services },
-    { href: `${base}#method`, label: headerDict.nav.method },
+    { href: `${base}#team`, label: locale === 'pt' ? 'Quem somos' : 'About us' },
     { href: `${base}/projects`, label: headerDict.nav.projects },
     { href: `${base}/blog`, label: headerDict.nav.blog },
     { href: `${base}/team`, label: headerDict.nav.team },

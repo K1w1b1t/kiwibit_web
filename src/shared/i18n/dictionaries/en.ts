@@ -1,8 +1,8 @@
 const en = {
   meta: {
-    defaultTitle: 'Kiwibit | Digital products, security & AppSec',
+    defaultTitle: 'Kiwibit | Technology and security community',
     defaultDescription:
-      'Kiwibit is a cybersecurity team offering information security consulting, penetration testing and AppSec for products that cannot fail.',
+      'We are a Brazilian team driven by curiosity about technology. We bring together programming, security engineering and applied research to learn together and contribute to the community.',
     keywords: [
       'cybersecurity',
       'penetration testing',
@@ -16,9 +16,9 @@ const en = {
       'kiwibit',
     ],
     home: {
-      title: 'Digital products & security consulting',
+      title: 'A community to learn, build and share.',
       description:
-        'We build digital products and secure yours: security consulting, pentest and AppSec from a team that writes code every day.',
+        'We are a Brazilian team driven by curiosity about technology. We bring together programming, security engineering and applied research to learn together and contribute to the community.',
     },
     projects: {
       title: 'Products',
@@ -42,6 +42,25 @@ const en = {
     },
   },
 
+  about: {
+    eyebrow: 'Who we are',
+    title: 'A community to learn, build and share.',
+    description:
+      'We are a Brazilian team driven by curiosity about technology. We bring together programming, security engineering and applied research to learn together and contribute to the community.',
+    practice:
+      'We take part in CTFs and bug bounty, investigate vulnerabilities in authorized environments and build tools. Every challenge is a chance to learn and share.',
+    visit:
+      'Kiwibit members at the Public Voting Machine Test, organized by the TSE in Bras\u00edlia.',
+    photos: [
+      'Kiwibit members outside the Superior Electoral Court in Bras\u00edlia.',
+      'Team working in the lab during the Public Voting Machine Test.',
+    ],
+    values:
+      'We value ethics, respect and mutual support. Our tests require authorization. We do not support hacktivism and keep party politics outside the team. We share writeups, tools and free projects, reviewed by moderators on GitHub.',
+    join: 'All experience levels are welcome. Bring curiosity, dedication, a willingness to share your knowledge and agreement with our values. Send us a message to join.',
+    cta: 'Join the community',
+    members: 'Meet the members',
+  },
   analytics: {
     title: 'Help us make this site better',
     description:
@@ -67,13 +86,13 @@ const en = {
   },
 
   hero: {
-    eyebrow: 'Products · Offensive security · AppSec',
-    titleLead: 'We build digital products and',
-    titleAccent: 'the security behind them.',
+    eyebrow: 'Research \u00b7 Technology \u00b7 Community',
+    titleLead: 'Learn together.',
+    titleAccent: 'Build and share.',
     description:
-      'A team that ships digital products and secures yours too, with security consulting, pentest and AppSec from people who write code every day.',
-    primaryCta: 'Explore our products',
-    secondaryCta: 'Our services',
+      'We are a Brazilian team driven by curiosity about technology. We bring together programming, security engineering and applied research to learn together and contribute to the community.',
+    primaryCta: 'Meet the team',
+    secondaryCta: 'Join the community',
   },
 
   radar: {
@@ -212,7 +231,7 @@ const en = {
     join: {
       title: 'Want to join the team?',
       description:
-        'We run a selection process arranged case by case. Reach out and tell us what you are into.',
+        'All experience levels are welcome. Bring dedication, a willingness to share knowledge and respect for our values.',
       cta: 'Start a conversation',
     },
   },
@@ -221,7 +240,7 @@ const en = {
     eyebrow: 'Contact',
     title: "Let's map your risk?",
     description:
-      'Tell us about your product, engagement or partnership idea. We reply within a couple of business days.',
+      'All experience levels are welcome. Bring curiosity, dedication, a willingness to share your knowledge and agreement with our values. Send us a message to join.',
     form: {
       name: 'Name',
       email: 'Email',
