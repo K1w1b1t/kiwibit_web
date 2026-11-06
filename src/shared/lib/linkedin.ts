@@ -42,13 +42,20 @@ export const LINKEDIN_OAUTH_COOKIE = 'linkedin_oauth';
  */
 export function parseOauthCookie(
   value: string | undefined,
-): { state: string; memberId: string } | null {
+): { state: string; memberId: string; flowId?: string; publicationRequested?: boolean } | null {
   if (!value) return null;
 
-  const [state, memberId] = value.split(':');
+  const [state, memberId, flowId, intent] = value.split(':');
   if (!state || !memberId) return null;
 
-  return { state, memberId };
+  return {
+    state,
+    memberId,
+    ...(flowId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(flowId)
+      ? { flowId, publicationRequested: intent === 'publish' }
+      : {}),
+  };
 }
 
 const AUTHORIZE_URL = 'https://www.linkedin.com/oauth/v2/authorization';

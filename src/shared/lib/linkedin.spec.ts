@@ -38,6 +38,21 @@ describe('parseOauthCookie', () => {
   });
 });
 
+describe('OAuth diagnostic metadata', () => {
+  it('keeps correlation separate from OAuth state and ignores arbitrary identifiers', () => {
+    expect(parseOauthCookie('state:member:123e4567-e89b-42d3-a456-426614174000:publish')).toEqual({
+      state: 'state',
+      memberId: 'member',
+      flowId: '123e4567-e89b-42d3-a456-426614174000',
+      publicationRequested: true,
+    });
+    expect(parseOauthCookie('state:member:private-data:publish')).toEqual({
+      state: 'state',
+      memberId: 'member',
+    });
+  });
+});
+
 describe('LinkedIn OAuth lib', () => {
   const original = { ...process.env };
 

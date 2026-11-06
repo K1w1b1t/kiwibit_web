@@ -77,7 +77,8 @@ export async function GET(request: NextRequest) {
     console.warn('[LinkedIn OAuth] callback cookie_missing');
     return NextResponse.redirect(absoluteUrl('/admin/members'));
   }
-  const { state, memberId } = cookie;
+  const { state, memberId, flowId, publicationRequested } = cookie;
+  const diagnostic = { flowId, publicationRequested };
 
   const params = request.nextUrl.searchParams;
   // LinkedIn returns `error` when the member declines consent.
@@ -91,6 +92,7 @@ export async function GET(request: NextRequest) {
       'unauthorized_client',
     ];
     console.warn('[LinkedIn OAuth] callback provider_error', {
+      ...diagnostic,
       code: knownErrors.includes(oauthError) ? oauthError : 'other',
     });
     return redirectEdit(memberId, 'error');
@@ -123,6 +125,15 @@ export async function GET(request: NextRequest) {
   let stage = 'token_exchange';
   try {
     const token = await exchangeCode(code);
+    const grantedScopes = token.scope.split(/[\s,]+/);
+    console.info('[LinkedIn OAuth] callback token_received', {
+      ...diagnostic,
+      tokenExchangeSucceeded: true,
+      profileScopeGranted: grantedScopes.includes('profile'),
+      memberSocialGranted: grantedScopes.includes('w_member_social'),
+      memberSocialRecognized: scopeAllowsAutoPost(token.scope),
+      scopeFormat: !token.scope ? 'missing' : token.scope.includes(',') ? 'commas' : 'spaces',
+    });
     stage = 'userinfo';
     const userinfo = await fetchUserinfo(token.accessToken);
     // Share on LinkedIn explicitly references OIDC userinfo for its Person URN.
@@ -182,6 +193,19 @@ export async function GET(request: NextRequest) {
       });
     });
 
+    console.info('[LinkedIn OAuth] callback connection_saved', {
+      ...diagnostic,
+      authorIdPresent: Boolean(personId),
+      tokenExpired: expiry.getTime() <= Date.now(),
+      autoPostEnabled,
+      photoSynced: Boolean(photo),
+      outcome: autoPostEnabled
+        ? 'autopost_enabled'
+        : publicationRequested
+          ? 'publication_permission_missing'
+          : 'photo_connected',
+    });
+
     // Replaced a bucket-hosted avatar: drop the old object (best-effort).
     if (photo && member.avatarPath) {
       await deleteObjects([member.avatarPath]);
@@ -189,7 +213,7 @@ export async function GET(request: NextRequest) {
 
     return redirectEdit(memberId, 'connected');
   } catch {
-    console.error('[LinkedIn OAuth] callback failed', { stage });
+    console.error('[LinkedIn OAuth] callback failed', { ...diagnostic, stage });
     return redirectEdit(memberId, 'error');
   }
 }
