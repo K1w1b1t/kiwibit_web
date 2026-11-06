@@ -56,19 +56,31 @@ export async function GET(request: NextRequest, { params }: Params) {
   const wantsAutoPost = request.nextUrl.searchParams.get('autopost') === '1';
   const scope = wantsAutoPost ? LINKEDIN_AUTOPOST_SCOPE : LINKEDIN_SCOPE;
 
+  // Independent of the OAuth state: safe to correlate in server diagnostics.
+  const flowId = randomUUID();
+  console.info('[LinkedIn OAuth] connect started', {
+    flowId,
+    publicationRequested: wantsAutoPost,
+    hasAutopostParam: request.nextUrl.searchParams.has('autopost'),
+    hasAutostartParam: request.nextUrl.searchParams.has('autostart'),
+  });
   const state = randomUUID();
   const redirect = NextResponse.redirect(authorizeUrl(state, scope));
 
   // Binds the callback to this browser and this member. Short-lived; cleared on
   // the callback. `lax` so it rides the top-level GET navigation back from
   // LinkedIn; `httpOnly` so client JS cannot read the CSRF value.
-  redirect.cookies.set(LINKEDIN_OAUTH_COOKIE, `${state}:${id}`, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 600,
-  });
+  redirect.cookies.set(
+    LINKEDIN_OAUTH_COOKIE,
+    `${state}:${id}:${flowId}:${wantsAutoPost ? 'publish' : 'photo'}`,
+    {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 600,
+    },
+  );
 
   return redirect;
 }
