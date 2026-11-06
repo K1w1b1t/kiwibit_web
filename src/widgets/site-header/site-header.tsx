@@ -12,8 +12,7 @@ interface SiteHeaderProps {
 export function SiteHeader({ locale, dict }: SiteHeaderProps) {
   const base = `/${locale}`;
   const links = [
-    { href: `${base}#services`, label: dict.nav.services },
-    { href: `${base}#method`, label: dict.nav.method },
+    { href: `${base}#team`, label: locale === 'pt' ? 'Quem somos' : 'About us' },
     { href: `${base}/projects`, label: dict.nav.projects },
     { href: `${base}/blog`, label: dict.nav.blog },
     { href: `${base}/team`, label: dict.nav.team },
@@ -34,7 +33,7 @@ export function SiteHeader({ locale, dict }: SiteHeaderProps) {
           </span>
         </Link>
 
-        <nav className="hidden flex-wrap items-center gap-1 md:flex">
+        <nav className="flex flex-wrap items-center gap-1">
           {links.map((item) => (
             <Link
               key={item.href}

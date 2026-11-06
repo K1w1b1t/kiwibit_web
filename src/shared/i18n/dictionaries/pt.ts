@@ -2,9 +2,9 @@ import type { Dictionary } from './en';
 
 const pt: Dictionary = {
   meta: {
-    defaultTitle: 'Kiwibit | Produtos digitais, segurança e AppSec',
+    defaultTitle: 'Kiwibit | Comunidade de tecnologia e segurança',
     defaultDescription:
-      'A Kiwibit é um time de cibersegurança que oferece consultoria de segurança da informação, pentest e AppSec para produtos que não podem falhar.',
+      'Somos um time brasileiro de pessoas curiosas por tecnologia. Unimos programação, engenharia de segurança e pesquisa aplicada para aprender juntos e contribuir com a comunidade.',
     keywords: [
       'cibersegurança',
       'teste de intrusão',
@@ -18,9 +18,9 @@ const pt: Dictionary = {
       'kiwibit',
     ],
     home: {
-      title: 'Produtos digitais e consultoria de segurança',
+      title: 'Uma comunidade para aprender, construir e compartilhar.',
       description:
-        'Construímos produtos digitais e protegemos os seus: consultoria de segurança, pentest e AppSec de quem escreve código todos os dias.',
+        'Somos um time brasileiro de pessoas curiosas por tecnologia. Unimos programação, engenharia de segurança e pesquisa aplicada para aprender juntos e contribuir com a comunidade.',
     },
     projects: {
       title: 'Produtos',
@@ -42,6 +42,26 @@ const pt: Dictionary = {
       title: 'Termos de Uso',
       description: 'Os termos que regem o uso do site da Kiwibit.',
     },
+  },
+
+  about: {
+    eyebrow: 'Quem somos',
+    title: 'Uma comunidade para aprender, construir e compartilhar.',
+    description:
+      'Somos um time brasileiro de pessoas curiosas por tecnologia. Unimos programação, engenharia de segurança e pesquisa aplicada para aprender juntos e contribuir com a comunidade.',
+    practice:
+      'Participamos de CTFs e bug bounty, investigamos falhas em ambientes autorizados e construímos ferramentas. Cada desafio é uma oportunidade de aprender e compartilhar o que descobrimos.',
+    visit:
+      'Do laboratório à prática: integrantes da Kiwibit no Teste Público da Urna, organizado pelo TSE em Brasília.',
+    photos: [
+      'Integrantes da Kiwibit em frente ao Tribunal Superior Eleitoral, em Brasília.',
+      'Time trabalhando no laboratório durante o Teste Público da Urna.',
+    ],
+    values:
+      'Aprendemos em comunidade. Valorizamos ética, respeito e apoio mútuo. Nossos testes exigem autorização; não apoiamos hacktivismo e deixamos pautas político-partidárias fora do time. Compartilhamos writeups, ferramentas e projetos gratuitos, com revisão dos moderadores no GitHub.',
+    join: 'Todos os níveis são bem-vindos. Basta ter interesse por tecnologia, dedicação, vontade de contribuir com seu conhecimento e concordar com nossos valores. Mande uma mensagem para participar.',
+    cta: 'Quero participar',
+    members: 'Conheça os integrantes',
   },
 
   analytics: {
@@ -69,13 +89,13 @@ const pt: Dictionary = {
   },
 
   hero: {
-    eyebrow: 'Produtos · Segurança ofensiva · AppSec',
-    titleLead: 'Construímos produtos digitais e',
-    titleAccent: 'a segurança por trás deles.',
+    eyebrow: 'Pesquisa · Tecnologia · Comunidade',
+    titleLead: 'Aprender juntos.',
+    titleAccent: 'Construir e compartilhar.',
     description:
-      'Um time que constrói produtos digitais e também protege os seus, com consultoria de segurança, pentest e AppSec de quem escreve código todos os dias.',
-    primaryCta: 'Conheça os produtos',
-    secondaryCta: 'Nossos serviços',
+      'Somos um time brasileiro de pessoas curiosas por tecnologia. Unimos programação, engenharia de segurança e pesquisa aplicada para aprender juntos e contribuir com a comunidade.',
+    primaryCta: 'Conheça o time',
+    secondaryCta: 'Quero participar',
   },
 
   radar: {
@@ -216,16 +236,16 @@ const pt: Dictionary = {
     join: {
       title: 'Quer entrar para o time?',
       description:
-        'Temos um processo seletivo combinado caso a caso. Fale com a gente e conte com o que você curte trabalhar.',
+        'Todos os níveis são bem-vindos. Traga dedicação, vontade de compartilhar conhecimento e respeito aos nossos valores.',
       cta: 'Iniciar uma conversa',
     },
   },
 
   contact: {
     eyebrow: 'Contato',
-    title: 'Vamos mapear o seu risco?',
+    title: 'Vamos conversar?',
     description:
-      'Conte sobre seu produto, sobre um trabalho ou uma ideia de parceria. Respondemos em poucos dias úteis.',
+      'Todos os níveis são bem-vindos. Basta ter interesse por tecnologia, dedicação, vontade de contribuir com seu conhecimento e concordar com nossos valores. Mande uma mensagem para participar.',
     form: {
       name: 'Nome',
       email: 'E-mail',
