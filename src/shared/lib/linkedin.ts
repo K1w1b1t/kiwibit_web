@@ -10,12 +10,9 @@ import { decryptToken } from '@/shared/lib/token-crypto';
  * SERVER ONLY. `LINKEDIN_CLIENT_SECRET` must never reach the browser — nothing
  * here is `NEXT_PUBLIC_` and the module is imported solely from route handlers.
  *
- * Scope combines the OIDC set (name/email/`picture`) with `r_liteprofile`, which
- * lets the callback fetch the app-scoped Person ID used by posting APIs.
- * Auto-posting adds a separate LinkedIn product approval flow and re-consent.
+ * Uses OIDC profile data without requesting email or legacy profile access.
  */
-export const LINKEDIN_PROFILE_ID_SCOPE = 'r_liteprofile';
-export const LINKEDIN_SCOPE = `openid profile email ${LINKEDIN_PROFILE_ID_SCOPE}`;
+export const LINKEDIN_SCOPE = 'openid profile';
 
 /**
  * Extended scope for auto-posting to the member's OWN profile (issue #81). Adds
@@ -57,7 +54,6 @@ export function parseOauthCookie(
 const AUTHORIZE_URL = 'https://www.linkedin.com/oauth/v2/authorization';
 const TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
 const USERINFO_URL = 'https://api.linkedin.com/v2/userinfo';
-const PROFILE_URL = 'https://api.linkedin.com/v2/me';
 
 /** Fixed redirect URI — LinkedIn matches it exactly; the member id travels in `state`. */
 export function redirectUri(): string {
@@ -159,27 +155,6 @@ export async function fetchUserinfo(accessToken: string): Promise<LinkedinUserin
   };
 }
 
-export type LinkedinProfile = { id: string };
-
-/** Reads the Profile API Person ID required for `urn:li:person:{id}` authors. */
-export async function fetchProfile(accessToken: string): Promise<LinkedinProfile> {
-  const response = await fetch(PROFILE_URL, {
-    headers: {
-      authorization: `Bearer ${accessToken}`,
-      'X-Restli-Protocol-Version': '2.0.0',
-    },
-  });
-  if (!response.ok) {
-    console.warn('[LinkedIn OAuth] profile http_error', { status: response.status });
-    throw new Error(`LinkedIn profile failed (${response.status}).`);
-  }
-
-  const json = (await response.json()) as { id?: unknown };
-  if (typeof json.id !== 'string') throw new Error('LinkedIn profile is missing id.');
-
-  return { id: json.id };
-}
-
 export type LinkedInTarget = 'personal' | 'company';
 
 export type LinkedInAutoPostInput = {
@@ -254,12 +229,11 @@ function buildPayload(input: LinkedInAutoPostInput, authorUrn: string) {
             description: { text: summaryText.slice(0, 200) },
             originalUrl: input.url,
             title: { text: input.title.slice(0, 200) },
-            ...(input.imageUrl ? { media: input.imageUrl } : {}),
           },
         ],
       },
     },
-    visibility: 'PUBLIC',
+    visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
   };
 }
 
@@ -284,7 +258,7 @@ async function postUgc(
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.9',
+        'X-Restli-Protocol-Version': '2.0.0',
       },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(10000),
@@ -304,7 +278,7 @@ async function postUgc(
         expired: true,
         status: response.status,
         code: 'LINKEDIN_TOKEN_EXPIRED',
-        detail: rawBody.slice(0, 500),
+        detail: 'LinkedIn rejected the publication request.',
       };
     }
 
@@ -312,14 +286,13 @@ async function postUgc(
       ok: false,
       status: response.status,
       code: 'LINKEDIN_POST_FAILED',
-      detail: rawBody.slice(0, 500),
+      detail: 'LinkedIn rejected the publication request.',
     };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown LinkedIn API error';
+  } catch {
     return {
       ok: false,
       code: 'LINKEDIN_POST_ERROR',
-      detail: message.slice(0, 500),
+      detail: 'LinkedIn publication request failed.',
     };
   }
 }

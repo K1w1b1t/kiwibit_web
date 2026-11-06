@@ -1,7 +1,6 @@
 import {
   authorizeUrl,
   exchangeCode,
-  fetchProfile,
   fetchUserinfo,
   isLinkedinConfigured,
   LINKEDIN_AUTOPOST_SCOPE,
@@ -115,16 +114,6 @@ describe('LinkedIn OAuth lib', () => {
       sub: 'linkedin-sub',
       picture: 'https://cdn/pic.jpg',
     });
-  });
-
-  it('reads the profile person id used for author URNs', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ id: 'person-123' }), {
-        status: 200,
-      }),
-    );
-
-    await expect(fetchProfile('tok')).resolves.toEqual({ id: 'person-123' });
   });
 
   it('tolerates a missing picture but requires sub', async () => {
