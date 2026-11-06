@@ -1,14 +1,11 @@
+import { HomeAbout } from '@/widgets/home-about/home-about';
 import type { Metadata } from 'next';
 import { isLocale } from '@/shared/i18n/config';
 import { getDictionary } from '@/shared/i18n/get-dictionary';
-import { localizedAlternates, professionalServiceJsonLd } from '@/shared/lib/seo';
+import { localizedAlternates } from '@/shared/lib/seo';
 import { HomeBlog } from '@/widgets/home-blog/home-blog';
 import { HomeContact } from '@/widgets/home-contact/home-contact';
 import { HomeHero } from '@/widgets/home-hero/home-hero';
-import { HomeMethod } from '@/widgets/home-method/home-method';
-import { HomeProjectsTeaser } from '@/widgets/home-projects-teaser/home-projects-teaser';
-import { HomeServices } from '@/widgets/home-services/home-services';
-import { HomeTeam } from '@/widgets/home-team/home-team';
 
 export const dynamic = 'force-static';
 
@@ -36,20 +33,12 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     return null;
   }
   const dict = getDictionary(locale);
-  const jsonLd = professionalServiceJsonLd(locale, dict.meta.home.description);
 
   return (
     <main>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
       <HomeHero locale={locale} dict={dict.hero} radarDict={dict.radar} />
-      <HomeProjectsTeaser locale={locale} dict={dict.projectsTeaser} />
-      <HomeServices dict={dict.services} />
-      <HomeMethod dict={dict.method} />
+      <HomeAbout locale={locale} dict={dict.about} />
       <HomeBlog locale={locale} dict={dict.blog} />
-      <HomeTeam locale={locale} dict={dict.team} />
       <HomeContact dict={dict.contact} />
     </main>
   );

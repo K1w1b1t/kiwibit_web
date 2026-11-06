@@ -42,7 +42,14 @@ function storageImagePatterns(): NonNullable<NonNullable<NextConfig['images']>['
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
-    remotePatterns: storageImagePatterns(),
+    remotePatterns: [
+      ...storageImagePatterns(),
+      {
+        protocol: 'https',
+        hostname: 'objectstorage.sa-saopaulo-1.oraclecloud.com',
+        pathname: '/n/gr8jqsbktuzk/b/kiwibit-media-staging/o/team/issue-118/**',
+      },
+    ],
   },
 };
 
