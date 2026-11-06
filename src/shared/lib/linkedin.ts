@@ -27,7 +27,7 @@ export const LINKEDIN_MEMBER_POST_SCOPE = 'w_member_social';
 
 /** True when a granted `scope` string includes the member-post permission. */
 export function scopeAllowsAutoPost(scope: string): boolean {
-  return scope.split(/\s+/).includes(LINKEDIN_MEMBER_POST_SCOPE);
+  return scope.split(/[\s,]+/).includes(LINKEDIN_MEMBER_POST_SCOPE);
 }
 
 /**
