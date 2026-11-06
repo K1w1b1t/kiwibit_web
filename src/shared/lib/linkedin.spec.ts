@@ -212,6 +212,16 @@ describe('triggerLinkedInAutoPost', () => {
 });
 
 describe('scopeAllowsAutoPost', () => {
+  it.each([
+    ['openid,profile,w_member_social', true],
+    ['openid, profile w_member_social', true],
+    ['  w_member_social,profile\topenid  ', true],
+    ['openid,profile', false],
+    ['openid,profile,w_member_social_extra', false],
+    ['openid,profile,not_w_member_social', false],
+  ])('recognizes exact permissions in %s', (scope, expected) => {
+    expect(scopeAllowsAutoPost(scope)).toBe(expected);
+  });
   it('is true only when w_member_social is granted', () => {
     expect(scopeAllowsAutoPost('openid profile email w_member_social')).toBe(true);
     expect(scopeAllowsAutoPost('openid profile email')).toBe(false);
