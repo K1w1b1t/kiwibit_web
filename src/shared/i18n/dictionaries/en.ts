@@ -49,10 +49,9 @@ const en = {
       'We are a Brazilian team driven by curiosity about technology. We bring together programming, security engineering and applied research to learn together and contribute to the community.',
     practice:
       'We take part in CTFs and bug bounty, investigate vulnerabilities in authorized environments and build tools. Every challenge is a chance to learn and share.',
-    visit:
-      'Kiwibit members at the Public Voting Machine Test, organized by the TSE in Bras\u00edlia.',
+    visit: 'Kiwibit members at the Public Voting Machine Test, organized by the TSE in Brasília.',
     photos: [
-      'Kiwibit members outside the Superior Electoral Court in Bras\u00edlia.',
+      'João Pedro beside an electronic voting machine during the public test at the TSE.',
       'Team working in the lab during the Public Voting Machine Test.',
     ],
     values:

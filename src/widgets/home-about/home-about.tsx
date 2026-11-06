@@ -15,15 +15,15 @@ export function HomeAbout({ locale, dict }: { locale: Locale; dict: Dictionary['
         <SectionHeading eyebrow={dict.eyebrow} title={dict.title} description={dict.description} />
         <p className="mb-10 max-w-3xl text-lg leading-relaxed text-white/75">{dict.practice}</p>
         <div className="grid items-start gap-6 md:grid-cols-2">
-          {['team-outside-tse-v1.webp', 'team-laboratory-tse-v1.webp'].map((name, index) => (
+          {['joao-tse-v1.webp', 'team-laboratory-tse-v1.webp'].map((name, index) => (
             <figure key={name}>
               <Image
                 src={`${base}/${name}`}
                 alt={dict.photos[index]}
                 width={1600}
-                height={index === 0 ? 1200 : 1066}
+                height={1066}
                 sizes="(max-width: 767px) 100vw, 50vw"
-                className="h-auto w-full rounded-2xl border border-white/15"
+                className="aspect-[3/2] w-full rounded-2xl border border-white/15 object-cover"
               />
               <figcaption className="mt-3 text-sm leading-relaxed text-white/60">
                 {dict.photos[index]}
