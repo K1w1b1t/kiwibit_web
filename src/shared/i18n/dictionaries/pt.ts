@@ -54,7 +54,7 @@ const pt: Dictionary = {
     visit:
       'Do laboratório à prática: integrantes da Kiwibit no Teste Público da Urna, organizado pelo TSE em Brasília.',
     photos: [
-      'Integrantes da Kiwibit em frente ao Tribunal Superior Eleitoral, em Brasília.',
+      'João Pedro ao lado de uma urna eletrônica durante o teste público no TSE.',
       'Time trabalhando no laboratório durante o Teste Público da Urna.',
     ],
     values:
