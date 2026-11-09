@@ -84,7 +84,7 @@ export default async function EditMemberPage({ params }: Params) {
         memberId={member.id}
         account={member.user}
         canAssignPrivileged={session.user.role === 'admin'}
-        canChangeRole={!isMember}
+        canChangeRole={!isMember && member.user?.id !== session.user.id}
       />
       {!isMember && (
         <>

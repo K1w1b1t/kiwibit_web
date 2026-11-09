@@ -12,6 +12,14 @@ describe('Users CRUD — /api/admin/users', () => {
   const ref = useAdminClient();
   let createdId: string;
 
+  it('rejects changing the signed-in administrator role', async () => {
+    const session = await (await ref.client.get('/api/auth/session')).json();
+    const res = await ref.client.put(`/api/admin/users/${session.user.id}`, { role: 'editor' });
+    expect(res.status).toBe(403);
+    const unchanged = await (await ref.client.get(`/api/admin/users/${session.user.id}`)).json();
+    expect(unchanged.role).toBe('admin');
+  });
+
   // ── LIST ──────────────────────────────────────────────────────────────────
   it('GET /api/admin/users returns a paginated list', async () => {
     await expectPaginatedList(await ref.client.get('/api/admin/users'));

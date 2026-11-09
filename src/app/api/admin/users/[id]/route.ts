@@ -83,6 +83,14 @@ export async function PUT(request: Request, { params }: Params) {
   const fields = validateUpdateUserFields(body, session.user.role);
   if (fields.failure) return failureResponse(fields.failure);
 
+  if (
+    existing.id === session.user.id &&
+    fields.data.role !== undefined &&
+    fields.data.role !== existing.role
+  ) {
+    return apiError('FORBIDDEN', 'You cannot change your own role.', 403);
+  }
+
   const demotesAnAdmin =
     existing.role === 'admin' && fields.data.role !== undefined && fields.data.role !== 'admin';
   if (demotesAnAdmin && (await isLastAdmin())) {
