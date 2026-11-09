@@ -85,3 +85,67 @@ describe('Projects CRUD — /api/admin/projects', () => {
     expect(body.items).toHaveLength(0);
   });
 });
+
+describe('Bilingual projects and home highlights', () => {
+  const ref = useAdminClient();
+  let projectId: string;
+  it('creates a bilingual highlight and returns translations publicly', async () => {
+    projectId = await expectCreated(
+      ref.client.post('/api/admin/projects', {
+        titlePt: `Projeto ${TAG}`,
+        descriptionPt: 'Descrição em português do projeto de teste.',
+        titleEn: `Project ${TAG}`,
+        descriptionEn: 'English description of the test project.',
+        isFeatured: true,
+        featuredOrder: 1,
+      }),
+      (data) => expect(data.titleEn).toBe(`Project ${TAG}`),
+    );
+    const project = await (await anonClient().get(`/api/projects/${projectId}`)).json();
+    expect(project.titleEn).toBe(`Project ${TAG}`);
+    const list = await (await anonClient().get(`/api/projects?featured=true&search=${TAG}`)).json();
+    expect(list.items.map((item: { id: string }) => item.id)).toContain(projectId);
+  });
+  it('localizes the detail and its metadata from the URL', async () => {
+    const english = await (await anonClient().get(`/en/projects/${projectId}`)).text();
+    const portuguese = await (await anonClient().get(`/pt/projects/${projectId}`)).text();
+    expect(english).toContain(`Project ${TAG}`);
+    expect(portuguese).toContain(`Projeto ${TAG}`);
+  });
+  it('preserves omitted translations and rejects removing the last language', async () => {
+    expect(
+      (
+        await ref.client.put(`/api/admin/projects/${projectId}`, {
+          titlePt: null,
+          descriptionPt: null,
+        })
+      ).status,
+    ).toBe(200);
+    const project = await (await anonClient().get(`/api/projects/${projectId}`)).json();
+    expect(project.titleEn).toBe(`Project ${TAG}`);
+    expect(project.titlePt).toBeNull();
+    expect(
+      (
+        await ref.client.put(`/api/admin/projects/${projectId}`, {
+          titleEn: null,
+          descriptionEn: null,
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (await ref.client.put(`/api/admin/projects/${projectId}`, { featuredOrder: -1 })).status,
+    ).toBe(400);
+  });
+  it('supports English-only creation without legacy fields', async () => {
+    const id = await expectCreated(
+      ref.client.post('/api/admin/projects', {
+        titleEn: `English ${TAG}`,
+        descriptionEn: 'A complete English-only project description.',
+      }),
+      (data) => expect(data.title).toBe(`English ${TAG}`),
+    );
+    await expectDeleteOk(ref.client.delete(`/api/admin/projects/${id}`));
+  });
+  it('removes the fixture', () =>
+    expectDeleteOk(ref.client.delete(`/api/admin/projects/${projectId}`)));
+});

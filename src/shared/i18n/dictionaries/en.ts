@@ -21,8 +21,8 @@ const en = {
         'We are a Brazilian team driven by curiosity about technology. We bring together programming, security engineering and applied research to learn together and contribute to the community.',
     },
     projects: {
-      title: 'Products',
-      description: 'Products and security tooling built and maintained by the Kiwibit team.',
+      title: 'Projects',
+      description: 'Projects and security tooling built and maintained by the Kiwibit team.',
     },
     blog: {
       title: 'Blog',
@@ -162,19 +162,27 @@ const en = {
   },
 
   projectsTeaser: {
-    eyebrow: 'Products',
-    title: 'Products and tools we build and maintain.',
+    eyebrow: 'Projects',
+    title: 'Projects and tools we build and maintain.',
     description:
-      'We don’t just secure software, we build it too. Explore the products and security tools we develop and use every day.',
-    cta: 'Explore our products',
+      'We don’t just secure software, we build it too. Explore the projects and security tools we develop and use every day.',
+    cta: 'Explore our projects',
   },
 
   projects: {
+    catalogEyebrow: 'All projects',
     eyebrow: 'Highlights',
-    title: 'Products',
-    subtitle: 'Products and security tooling, built and maintained in the open.',
+    title: 'Projects',
+    subtitle: 'Projects and security tooling, built and maintained in the open.',
     viewAll: 'View all projects',
+    showcase: {
+      role: 'carousel',
+      previous: 'Previous project',
+      next: 'Next project',
+      goTo: 'Go to project',
+    },
     labels: {
+      viewProject: 'View project',
       project: 'Project',
       live: 'Live',
       repository: 'Repository',

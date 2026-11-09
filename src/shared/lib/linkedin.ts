@@ -244,28 +244,62 @@ function buildPayload(input: LinkedInAutoPostInput, authorUrn: string) {
   };
 }
 
+/** Current supported Marketing API version, verified against LinkedIn's versioning docs. */
+const LINKEDIN_POSTS_VERSION = '202610';
+
+function buildCompanyPayload(input: LinkedInAutoPostInput, authorUrn: string) {
+  return {
+    author: authorUrn,
+    commentary: ensureLinkedInText(input)
+      .slice(0, 1500)
+      .replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`),
+    visibility: 'PUBLIC',
+    distribution: {
+      feedDistribution: 'MAIN_FEED',
+      targetEntities: [],
+      thirdPartyDistributionChannels: [],
+    },
+    content: {
+      article: {
+        source: input.url,
+        title: input.title.slice(0, 200),
+        ...(input.summary && { description: input.summary.slice(0, 200) }),
+      },
+    },
+    lifecycleState: 'PUBLISHED',
+    isReshareDisabledByAuthor: false,
+  };
+}
+
 const UGC_POSTS_URL = 'https://api.linkedin.com/v2/ugcPosts';
 
 /**
- * Low-level UGC post. Shared by the env-based company path and the per-member
- * personal path — it only knows a token and an author URN, never where they came
- * from. Never throws: network/parse failures come back as a result object so a
- * blog publish is never blocked by LinkedIn.
+ * Shared transport: organization posts use the versioned Posts API; personal
+ * posts retain their existing Share on LinkedIn endpoint. Never throws, so
+ * provider failures cannot prevent local content from being saved.
  */
-async function postUgc(
+async function postLinkedIn(
   token: string,
   authorUrn: string,
   input: LinkedInAutoPostInput,
+  company = false,
 ): Promise<LinkedInAutoPostResult> {
-  const payload = buildPayload(input, authorUrn);
+  if (company && !/^urn:li:organization:\d+$/.test(authorUrn))
+    return {
+      ok: false,
+      code: 'LINKEDIN_COMPANY_AUTHOR_INVALID',
+      detail: 'Expected an organization author URN.',
+    };
+  const payload = company ? buildCompanyPayload(input, authorUrn) : buildPayload(input, authorUrn);
 
   try {
-    const response = await fetch(UGC_POSTS_URL, {
+    const response = await fetch(company ? 'https://api.linkedin.com/rest/posts' : UGC_POSTS_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
+        ...(company && { 'Linkedin-Version': LINKEDIN_POSTS_VERSION }),
       },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(10000),
@@ -320,7 +354,7 @@ export async function triggerLinkedInAutoPost(
     return { ok: false, skipped: true, target };
   }
 
-  const result = await postUgc(token, authorUrn, input);
+  const result = await postLinkedIn(token, authorUrn, input, target === 'company');
   return { ...result, target };
 }
 
@@ -388,7 +422,7 @@ export async function triggerPersonalAutoPost(
     };
   }
 
-  const result = await postUgc(token, `urn:li:person:${connection.linkedinPersonId}`, input);
+  const result = await postLinkedIn(token, `urn:li:person:${connection.linkedinPersonId}`, input);
   return { ...result, target: 'personal' };
 }
 

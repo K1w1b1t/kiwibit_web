@@ -7,6 +7,8 @@ import { PageSizeSelector, Pagination } from '@/shared/ui/pagination';
 export type ProjectRow = {
   id: string;
   title: string;
+  isFeatured: boolean;
+  featuredOrder: number;
   updatedAt: Date;
   /** Cover thumbnail, when the project has images. */
   coverUrl: string | null;
@@ -41,6 +43,15 @@ const COLUMNS: ReadonlyArray<Column<ProjectRow>> = [
     key: 'title',
     header: 'Título',
     cell: (project) => <span className="text-white/90">{project.title}</span>,
+  },
+  {
+    key: 'featured',
+    header: 'Home',
+    cell: (project) => (
+      <span className={project.isFeatured ? 'text-accent' : 'text-white/40'}>
+        {project.isFeatured ? `Destaque · ${project.featuredOrder}` : '—'}
+      </span>
+    ),
   },
   {
     key: 'images',
