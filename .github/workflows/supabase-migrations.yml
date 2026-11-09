@@ -8,7 +8,8 @@ name: Supabase Migrations Deploy
 #   Environment "Production" (branch main / production)
 #
 # Per-environment secrets (same names in both environments):
-#   SUPABASE_DB_URL  - DB connection string (Session pooler, port 5432, ?sslmode=require)
+#   SUPABASE_DB_URL  - DB connection string (Session pooler, port 5432).
+#   SSL is enforced by the workflow even if sslmode was omitted from the secret.
 #   ADMIN_PASSWORD   - admin password
 # Optional per-environment secret:
 #   ADMIN_EMAIL      - admin email (defaults to admin@kiwibit.dev)
@@ -54,6 +55,18 @@ jobs:
           test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Preview env)"; exit 1; }
           test -n "$ADMIN_PASSWORD" || { echo "Missing ADMIN_PASSWORD (Preview env)"; exit 1; }
 
+      - name: Require SSL for database connections
+        run: &requireDatabaseSsl |
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from 'node:fs';
+          import { requireDatabaseSsl } from './src/shared/lib/database-url.ts';
+
+          const databaseUrl = requireDatabaseSsl(process.env.DATABASE_URL);
+          const maskedValue = databaseUrl.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+          console.log(`::add-mask::${maskedValue}`);
+          appendFileSync(process.env.GITHUB_ENV, `DATABASE_URL=${databaseUrl}\n`);
+          NODE
+
       - name: Generate Prisma Client
         run: npx prisma generate
 
@@ -92,6 +105,9 @@ jobs:
         run: |
           test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Production env)"; exit 1; }
           test -n "$ADMIN_PASSWORD" || { echo "Missing ADMIN_PASSWORD (Production env)"; exit 1; }
+
+      - name: Require SSL for database connections
+        run: *requireDatabaseSsl
 
       - name: Generate Prisma Client
         run: npx prisma generate
