@@ -10,7 +10,7 @@ import type { Dictionary } from '@/shared/i18n/get-dictionary';
 import { ProjectCover } from './project-cover';
 
 interface HomeProjectsProps {
-  variant?: 'showcase' | 'grid';
+  variant?: 'showcase' | 'list';
   locale: Locale;
   dict: Dictionary['projects'];
 }
@@ -32,7 +32,7 @@ function ProjectsLoadingState() {
   );
 }
 
-export function HomeProjects({ locale, dict, variant = 'grid' }: HomeProjectsProps) {
+export function HomeProjects({ locale, dict, variant = 'list' }: HomeProjectsProps) {
   const showcase = variant === 'showcase';
   const { items, isLoading, error } = useFeaturedProjects(6, showcase);
   const {
@@ -56,29 +56,31 @@ export function HomeProjects({ locale, dict, variant = 'grid' }: HomeProjectsPro
     >
       {showcase && <span id="products" className="absolute top-0 scroll-mt-20" />}
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
-          <div className="max-w-2xl">
-            <p className="mb-3 flex items-center gap-3 font-mono text-xs uppercase tracking-[0.24em] text-accent">
-              <span className="h-px w-8 bg-accent" />
-              {dict.eyebrow}
-            </p>
-            <h2
-              id="projects-heading"
-              className="text-4xl font-black uppercase tracking-[-0.04em] sm:text-5xl"
+        {showcase && (
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="mb-3 flex items-center gap-3 font-mono text-xs uppercase tracking-[0.24em] text-accent">
+                <span className="h-px w-8 bg-accent" />
+                {dict.eyebrow}
+              </p>
+              <h2
+                id="projects-heading"
+                className="text-4xl font-black uppercase tracking-[-0.04em] sm:text-5xl"
+              >
+                {dict.title}
+                <span className="text-accent">.</span>
+              </h2>
+              {showcase && <p className="mt-4 text-white/60">{dict.subtitle}</p>}
+            </div>
+            <Link
+              href={`/${locale}/projects`}
+              className="inline-flex items-center gap-3 rounded-full border border-white/25 px-5 py-3 text-xs font-semibold uppercase tracking-widest transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
             >
-              {dict.title}
-              <span className="text-accent">.</span>
-            </h2>
-            {showcase && <p className="mt-4 text-white/60">{dict.subtitle}</p>}
+              {dict.viewAll}
+              <ArrowDownRight size={16} aria-hidden="true" />
+            </Link>
           </div>
-          <Link
-            href={`/${locale}/projects`}
-            className="inline-flex items-center gap-3 rounded-full border border-white/25 px-5 py-3 text-xs font-semibold uppercase tracking-widest transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
-          >
-            {dict.viewAll}
-            <ArrowDownRight size={16} aria-hidden="true" />
-          </Link>
-        </div>
+        )}
         {isLoading && <ProjectsLoadingState />}
         {!isLoading && error && (
           <p
@@ -117,7 +119,7 @@ export function HomeProjects({ locale, dict, variant = 'grid' }: HomeProjectsPro
             className={
               showcase
                 ? 'relative flex snap-x snap-mandatory items-stretch gap-5 overflow-x-auto pb-3 focus-visible:outline-2 focus-visible:outline-accent'
-                : 'grid gap-5 md:grid-cols-2 xl:grid-cols-3'
+                : 'flex flex-col gap-6'
             }
           >
             {items
@@ -129,7 +131,7 @@ export function HomeProjects({ locale, dict, variant = 'grid' }: HomeProjectsPro
                   className={
                     showcase
                       ? 'group flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.07] to-white/[0.02] md:w-[88%] lg:grid lg:grid-cols-[1.15fr_1fr]'
-                      : 'flex flex-col overflow-hidden rounded-2xl border border-white/15 bg-white/[0.03]'
+                      : 'flex flex-col overflow-hidden rounded-2xl border border-white/15 bg-white/[0.03] md:grid md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]'
                   }
                 >
                   <ProjectCover

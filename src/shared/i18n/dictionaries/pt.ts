@@ -175,6 +175,7 @@ const pt: Dictionary = {
   },
 
   projects: {
+    catalogEyebrow: 'Todos os projetos',
     eyebrow: 'Destaques',
     title: 'Projetos',
     subtitle: 'Projetos e ferramentas de segurança, construídos e mantidos de forma aberta.',

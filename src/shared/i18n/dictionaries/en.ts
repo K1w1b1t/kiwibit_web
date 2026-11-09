@@ -170,6 +170,7 @@ const en = {
   },
 
   projects: {
+    catalogEyebrow: 'All projects',
     eyebrow: 'Highlights',
     title: 'Projects',
     subtitle: 'Projects and security tooling, built and maintained in the open.',
