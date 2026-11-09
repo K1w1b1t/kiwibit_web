@@ -14,18 +14,8 @@ type Existing = PostTranslations & {
   coverImageAlt?: string | null;
 };
 
-export function parsePostTranslations(
-  raw: Record<string, unknown>,
-  existing?: Existing,
-): {
-  data: Required<PostTranslations> & {
-    title: string;
-    content: string;
-    coverImageAlt: string | null;
-  };
-  error?: string;
-} {
-  const data: Required<PostTranslations> = {
+function initialTranslations(existing?: Existing): Required<PostTranslations> {
+  return {
     titlePt: existing?.titlePt ?? (existing?.titleEn ? null : (existing?.title ?? null)),
     contentPt: existing?.contentPt ?? (existing?.contentEn ? null : (existing?.content ?? null)),
     titleEn: existing?.titleEn ?? null,
@@ -33,6 +23,12 @@ export function parsePostTranslations(
     coverImageAltPt: existing?.coverImageAltPt ?? existing?.coverImageAlt ?? null,
     coverImageAltEn: existing?.coverImageAltEn ?? null,
   };
+}
+
+function applyLocalizedFields(
+  raw: Record<string, unknown>,
+  data: Required<PostTranslations>,
+): string | undefined {
   let error: string | undefined;
   for (const field of fields) {
     if (raw[field] === undefined) continue;
@@ -40,6 +36,10 @@ export function parsePostTranslations(
       error = `${field} must be a string or null.`;
     data[field] = typeof raw[field] === 'string' ? raw[field].trim() || null : null;
   }
+  return error;
+}
+
+function applyLegacyFields(raw: Record<string, unknown>, data: Required<PostTranslations>): void {
   for (const [legacy, localized] of [
     ['title', 'titlePt'],
     ['content', 'contentPt'],
@@ -48,6 +48,14 @@ export function parsePostTranslations(
     if (raw[localized] === undefined && raw[legacy] !== undefined)
       data[localized] = typeof raw[legacy] === 'string' ? raw[legacy].trim() || null : null;
   }
+}
+
+function validateTranslations(
+  raw: Record<string, unknown>,
+  data: Required<PostTranslations>,
+  previousError?: string,
+): string | undefined {
+  let error = previousError;
   for (const locale of ['Pt', 'En'] as const) {
     const title = data[`title${locale}`];
     const content = data[`content${locale}`];
@@ -62,6 +70,24 @@ export function parsePostTranslations(
   }
   if (!data.titlePt && !data.titleEn)
     error = 'A complete Portuguese or English translation is required.';
+  return error;
+}
+
+export function parsePostTranslations(
+  raw: Record<string, unknown>,
+  existing?: Existing,
+): {
+  data: Required<PostTranslations> & {
+    title: string;
+    content: string;
+    coverImageAlt: string | null;
+  };
+  error?: string;
+} {
+  const data = initialTranslations(existing);
+  const fieldError = applyLocalizedFields(raw, data);
+  applyLegacyFields(raw, data);
+  const error = validateTranslations(raw, data, fieldError);
   return {
     data: {
       ...data,

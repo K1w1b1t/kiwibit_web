@@ -22,8 +22,7 @@ export type UpdatePostPayload = PostTranslations & {
   coverImageAlt: string | null;
 };
 
-/** Create omits empty optionals — the POST route ignores absent keys. */
-export function toCreatePostPayload(values: ValidatedValues): CreatePostPayload {
+function toTranslationPayload(values: ValidatedValues): PostTranslations {
   return {
     ...(values.titlePt !== undefined && { titlePt: values.titlePt || null }),
     ...(values.titleEn !== undefined && { titleEn: values.titleEn || null }),
@@ -35,6 +34,13 @@ export function toCreatePostPayload(values: ValidatedValues): CreatePostPayload 
     ...(values.coverImageAltEn !== undefined && {
       coverImageAltEn: values.coverImageAltEn || null,
     }),
+  };
+}
+
+/** Create omits empty optionals — the POST route ignores absent keys. */
+export function toCreatePostPayload(values: ValidatedValues): CreatePostPayload {
+  return {
+    ...toTranslationPayload(values),
     title: values.title,
     content: values.content,
     status: values.status,
@@ -50,16 +56,7 @@ export function toCreatePostPayload(values: ValidatedValues): CreatePostPayload 
  */
 export function toUpdatePostPayload(values: ValidatedValues): UpdatePostPayload {
   return {
-    ...(values.titlePt !== undefined && { titlePt: values.titlePt || null }),
-    ...(values.titleEn !== undefined && { titleEn: values.titleEn || null }),
-    ...(values.contentPt !== undefined && { contentPt: values.contentPt || null }),
-    ...(values.contentEn !== undefined && { contentEn: values.contentEn || null }),
-    ...(values.coverImageAltPt !== undefined && {
-      coverImageAltPt: values.coverImageAltPt || null,
-    }),
-    ...(values.coverImageAltEn !== undefined && {
-      coverImageAltEn: values.coverImageAltEn || null,
-    }),
+    ...toTranslationPayload(values),
     title: values.title,
     content: values.content,
     status: values.status,
