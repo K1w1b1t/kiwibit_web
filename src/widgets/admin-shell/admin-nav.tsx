@@ -45,6 +45,9 @@ export function AdminNav({ role }: Readonly<{ role: UserRole }>) {
           })}
         </nav>
 
+        <Link href="/admin/account" className={`${LINK_BASE} ${LINK_IDLE}`}>
+          Minha conta
+        </Link>
         <SignOutButton />
       </div>
     </header>

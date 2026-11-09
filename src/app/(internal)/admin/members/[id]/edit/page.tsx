@@ -29,7 +29,7 @@ export default async function EditMemberPage({ params }: Params) {
       githubUrl: true,
       linkedinUrl: true,
       // The screen must always show whether an account is associated.
-      user: { select: { id: true, email: true, role: true } },
+      user: { select: { id: true, name: true, email: true, role: true } },
       // Never select the token here — only whether/when it was connected, the
       // granted scope (to know if auto-post is available), and the opt-in state.
       linkedinConnection: {
@@ -70,6 +70,7 @@ export default async function EditMemberPage({ params }: Params) {
           <DeleteButton
             endpoint={`/api/admin/members/${member.id}`}
             resourceLabel="membro"
+            description="O membro e sua conta serão excluídos. Seus posts permanecerão com autor excluído. Esta ação não pode ser desfeita."
             redirectTo="/admin/members"
           />
         )
@@ -79,13 +80,14 @@ export default async function EditMemberPage({ params }: Params) {
         initial={member}
         updateEndpoint={isMember ? '/api/member/profile' : undefined}
       />
+      <MemberAccountPanel
+        memberId={member.id}
+        account={member.user}
+        canAssignPrivileged={session.user.role === 'admin'}
+        canChangeRole={!isMember && member.user?.id !== session.user.id}
+      />
       {!isMember && (
         <>
-          <MemberAccountPanel
-            memberId={member.id}
-            account={member.user}
-            canAssignPrivileged={session.user.role === 'admin'}
-          />
           <MemberLinkedinPanel
             memberId={member.id}
             isOwner={isLinkedinOwner}

@@ -35,6 +35,7 @@ function mockEditorAuth() {
 
 beforeEach(() => {
   (prisma.member.findUnique as jest.Mock).mockResolvedValue(UNLINKED_MEMBER);
+  (prisma.member.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
 });
 
 // ── POST /api/admin/members/[id]/account ──────────────────────────────────────
@@ -137,10 +138,18 @@ describe('POST /api/admin/members/[id]/account', () => {
         }),
       }),
     );
-    expect(prisma.member.update).toHaveBeenCalledWith({
-      where: { id: 'mid-1' },
+    expect(prisma.member.updateMany).toHaveBeenCalledWith({
+      where: { id: 'mid-1', userId: null },
       data: { userId: 'uid-2' },
     });
+  });
+
+  it('returns a conflict if another request linked the account first', async () => {
+    mockAuth();
+    (prisma.user.create as jest.Mock).mockResolvedValue({ id: 'uid-2' });
+    (prisma.member.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+    const response = await createAccount(makeReq(URL_, VALID_BODY), paramsFor('mid-1'));
+    expect(response.status).toBe(409);
   });
 
   it('defaults the role to member when omitted', async () => {

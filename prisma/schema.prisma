@@ -97,6 +97,13 @@ model Project {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  titlePt String? @map("title_pt")
+  titleEn String? @map("title_en")
+  descriptionPt String? @map("description_pt")
+  descriptionEn String? @map("description_en")
+  isFeatured Boolean @default(false) @map("is_featured")
+  featuredOrder Int @default(1) @map("featured_order")
+
   images ProjectImage[]
 
   @@map("projects")
@@ -137,7 +144,13 @@ model Post {
   id             String     @id @default(uuid()) @db.Uuid
   title          String
   content        String
-  authorId       String     @map("author_id") @db.Uuid
+  titlePt String? @map("title_pt")
+  titleEn String? @map("title_en")
+  contentPt String? @map("content_pt")
+  contentEn String? @map("content_en")
+  coverImageAltPt String? @map("cover_image_alt_pt")
+  coverImageAltEn String? @map("cover_image_alt_en")
+  authorId       String?    @map("author_id") @db.Uuid
   /// Only `published` rows are exposed by the public GET /api/posts.
   status         PostStatus @default(draft)
   /// Set the first time a post is published; kept on unpublish.
@@ -150,7 +163,7 @@ model Post {
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @updatedAt @map("updated_at")
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([authorId])
   @@map("posts")

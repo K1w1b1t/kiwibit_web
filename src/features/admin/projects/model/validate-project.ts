@@ -1,6 +1,11 @@
+import { parseProjectInput, PROJECT_LIMITS } from '@/entities/project/model/project-input';
+import type { ProjectTranslations } from '@/entities/project/model/localized-project';
+export { PROJECT_LIMITS } from '@/entities/project/model/project-input';
 import { isHttpUrl } from '@/shared/lib/url';
 
-export type ProjectFormValues = {
+export type ProjectFormValues = ProjectTranslations & {
+  isFeatured?: boolean;
+  featuredOrder?: number;
   title: string;
   description: string;
   repoUrl: string;
@@ -17,15 +22,22 @@ export type ProjectValidationResult =
 
 export const EMPTY_PROJECT_FIELD_ERRORS: ProjectFieldErrors = {};
 
-export const PROJECT_LIMITS = {
-  titleMin: 2,
-  titleMax: 160,
-  descriptionMin: 10,
-  descriptionMax: 4000,
-} as const;
-
 /** Mirrors the server rules in `POST/PUT /api/admin/projects`. */
 export function validateProject(values: ProjectFormValues): ProjectValidationResult {
+  if (values.titlePt !== undefined || values.titleEn !== undefined) {
+    const translated = parseProjectInput(values);
+    if (!translated.data)
+      return { valid: false, fieldErrors: { [translated.field]: translated.error } };
+    return {
+      valid: true,
+      data: {
+        ...values,
+        ...translated.data,
+        repoUrl: translated.data.repoUrl ?? '',
+        liveUrl: translated.data.liveUrl ?? '',
+      },
+    };
+  }
   const title = values.title.trim();
   const description = values.description.trim();
   const repoUrl = values.repoUrl.trim();

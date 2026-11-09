@@ -1,3 +1,5 @@
+import type { ProjectTranslations } from '@/entities/project/model/localized-project';
+import type { PostTranslations } from '@/entities/post/model/localized-post';
 export type PaginatedResponse<T> = {
   items: T[];
   page: number;
@@ -12,7 +14,7 @@ export type HomeProjectImage = {
   isCover: boolean;
 };
 
-export type HomeProject = {
+export type HomeProject = ProjectTranslations & {
   id: string;
   title: string;
   description: string;
@@ -24,10 +26,10 @@ export type HomeProject = {
   updatedAt: string;
 };
 
-export type HomePost = {
+export type HomePost = PostTranslations & {
   id: string;
   title: string;
-  authorId: string;
+  authorId: string | null;
   /** Loaded via a relation select; the author name is shown, never the id. */
   author: { name: string } | null;
   coverImageUrl: string | null;

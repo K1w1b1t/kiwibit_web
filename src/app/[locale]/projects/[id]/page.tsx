@@ -1,3 +1,4 @@
+import { localizeProject } from '@/entities/project/model/localized-project';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -27,6 +28,10 @@ async function findProject(id: string) {
     select: {
       id: true,
       title: true,
+      titlePt: true,
+      titleEn: true,
+      descriptionPt: true,
+      descriptionEn: true,
       description: true,
       repoUrl: true,
       liveUrl: true,
@@ -42,9 +47,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const project = await findProject(id);
   if (!project) return {};
 
+  const localized = localizeProject(project, locale);
   return {
-    title: project.title,
-    description: project.description.slice(0, 160),
+    title: localized.title,
+    description: localized.description.slice(0, 160),
     alternates: localizedAlternates(locale, `/projects/${id}`),
   };
 }
@@ -54,9 +60,10 @@ export default async function ProjectDetailPage({ params }: Readonly<Params>) {
   if (!isLocale(locale)) return null;
 
   const dict = getDictionary(locale);
-  const project = await findProject(id);
+  const rawProject = await findProject(id);
 
-  if (!project) notFound();
+  if (!rawProject) notFound();
+  const project = localizeProject(rawProject, locale);
 
   return (
     <main className="bg-[#050505] px-6 py-16 text-white sm:px-10 lg:px-16">

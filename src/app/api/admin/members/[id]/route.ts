@@ -59,13 +59,29 @@ export async function PUT(request: Request, { params }: Params) {
 
 // DELETE /api/admin/members/[id]
 export async function DELETE(_req: Request, { params }: Params) {
-  const { response } = await requireAdminSession();
-  if (response) return response;
+  const { session, response } = await requireAdminSession();
+  if (response || !session) return response;
 
   const { id } = await params;
-  const existing = await prisma.member.findUnique({ where: { id } });
-  if (!existing) return apiError('NOT_FOUND', 'Member not found.', 404);
-
-  await prisma.member.delete({ where: { id } });
+  const failure = await prisma.$transaction(
+    async (tx) => {
+      const existing = await tx.member.findUnique({ where: { id }, include: { user: true } });
+      if (!existing) return apiError('NOT_FOUND', 'Member not found.', 404);
+      if (existing.userId === session.user.id) {
+        return apiError('BAD_REQUEST', 'You cannot delete your own account.', 400);
+      }
+      if (
+        existing.user?.role === 'admin' &&
+        (await tx.user.count({ where: { role: 'admin' } })) <= 1
+      ) {
+        return apiError('CONFLICT', 'Cannot delete the last admin.', 409);
+      }
+      await tx.member.delete({ where: { id } });
+      if (existing.userId) await tx.user.delete({ where: { id: existing.userId } });
+      return null;
+    },
+    { isolationLevel: 'Serializable' },
+  );
+  if (failure) return failure;
   return NextResponse.json({ success: true });
 }

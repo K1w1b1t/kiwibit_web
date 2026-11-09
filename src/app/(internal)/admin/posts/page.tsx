@@ -42,7 +42,7 @@ export default async function AdminPostsPage({
     title: post.title,
     status: post.status,
     coverImageUrl: post.coverImageUrl,
-    authorName: post.author?.name ?? 'Autor removido',
+    authorName: post.author?.name ?? 'Usuário excluído',
     createdAt: post.createdAt,
   }));
 

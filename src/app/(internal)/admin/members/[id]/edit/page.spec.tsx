@@ -64,6 +64,24 @@ describe('EditMemberPage', () => {
     expect(args.select.user.select.password).toBeUndefined();
   });
 
+  it('does not offer role editing for the signed-in administrator', async () => {
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      ...MEMBER,
+      user: { id: 'uid-1', name: 'Admin', email: 'admin@test.com', role: 'admin' },
+    });
+    const page = await EditMemberPage({ params: Promise.resolve({ id: 'mid-1' }) });
+    expect(page.props.children[1].props.canChangeRole).toBe(false);
+  });
+
+  it('offers role editing to an administrator managing another account', async () => {
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      ...MEMBER,
+      user: { id: 'uid-2', name: 'Alice', email: 'alice@test.com', role: 'member' },
+    });
+    const page = await EditMemberPage({ params: Promise.resolve({ id: 'mid-1' }) });
+    expect(page.props.children[1].props.canChangeRole).toBe(true);
+  });
+
   it('redirects a member away from another member profile', async () => {
     (requirePanelPageSession as jest.Mock).mockResolvedValue({
       user: { id: 'uid-member', role: 'member' },

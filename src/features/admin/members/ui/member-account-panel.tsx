@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { UserRole } from '@prisma/client';
 import { apiClient } from '@/shared/api/api-client';
@@ -14,9 +13,12 @@ import { FormStatus } from '@/shared/ui/form-status';
 import { SelectField } from '@/shared/ui/select-field';
 import { TextField } from '@/shared/ui/text-field';
 import { RoleBadge } from '@/features/admin/users/ui/role-badge';
+import { AdminUserForm } from '@/features/admin/users/ui/admin-user-form';
+import { UserPasswordPanel } from '@/features/admin/users/ui/user-password-panel';
 
 export type LinkedAccount = {
   id: string;
+  name: string;
   email: string;
   role: UserRole;
 };
@@ -25,6 +27,7 @@ type Props = {
   memberId: string;
   account: LinkedAccount | null;
   canAssignPrivileged: boolean;
+  canChangeRole?: boolean;
 };
 
 /**
@@ -33,7 +36,12 @@ type Props = {
  * The relation stays optional 1:1 — a member is a public team profile, which does
  * not require the ability to sign in.
  */
-export function MemberAccountPanel({ memberId, account, canAssignPrivileged }: Readonly<Props>) {
+export function MemberAccountPanel({
+  memberId,
+  account,
+  canAssignPrivileged,
+  canChangeRole = true,
+}: Readonly<Props>) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -93,12 +101,12 @@ export function MemberAccountPanel({ memberId, account, canAssignPrivileged }: R
             {account.email}
             <RoleBadge role={account.role} />
           </p>
-          <Link
-            href={`/admin/users/${account.id}/edit`}
-            className="mt-3 inline-block text-xs uppercase tracking-[0.12em] text-white/40 transition hover:text-white"
-          >
-            Gerenciar conta →
-          </Link>
+          <AdminUserForm
+            initial={account}
+            canAssignPrivileged={canAssignPrivileged}
+            canChangeRole={canChangeRole}
+          />
+          <UserPasswordPanel userId={account.id} userEmail={account.email} />
         </div>
       ) : (
         <div className="mt-3">

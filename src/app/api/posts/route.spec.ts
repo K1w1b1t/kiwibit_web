@@ -43,7 +43,11 @@ describe('GET /api/posts', () => {
     (prisma.post.count as jest.Mock).mockResolvedValue(1);
     await listPosts(makeReq('http://localhost/api/posts?search=hello'));
     expect(prisma.post.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ title: expect.any(Object) }) }),
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([{ titleEn: { contains: 'hello', mode: 'insensitive' } }]),
+        }),
+      }),
     );
   });
 

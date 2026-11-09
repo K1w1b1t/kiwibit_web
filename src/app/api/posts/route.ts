@@ -12,13 +12,22 @@ export async function GET(request: Request) {
   const where: Record<string, unknown> = {
     // Drafts must never leak to the public blog.
     status: 'published',
-    ...(search && { title: { contains: search, mode: 'insensitive' } }),
+    ...(search && {
+      OR: ['title', 'titlePt', 'titleEn'].map((field) => ({
+        [field]: { contains: search, mode: 'insensitive' },
+      })),
+    }),
     ...(authorId && { authorId }),
   };
   return runPaginatedQuery(prisma.post as unknown as PaginatableDelegate, where, page, limit, {
     select: {
       id: true,
       title: true,
+      titlePt: true,
+      titleEn: true,
+      coverImageAltPt: true,
+      coverImageAltEn: true,
+
       authorId: true,
       // The public blog shows the author's name, never the raw id.
       author: { select: { name: true } },

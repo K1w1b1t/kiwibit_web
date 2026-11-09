@@ -412,6 +412,35 @@ describe('PUT /api/admin/users/[id]', () => {
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
+  it.each(['admin', 'editor', 'member_manager', 'member'] as const)(
+    'rejects a %s changing their own role',
+    async (role) => {
+      (requirePanelSession as jest.Mock).mockResolvedValue({
+        session: { user: { id: 'uid-2', role } },
+        response: null,
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...USER, role });
+      const nextRole = role === 'member' ? 'admin' : 'member';
+      const res = await updateUser(
+        makeReq('http://localhost/api/admin/users/uid-2', { role: nextRole }, 'PUT'),
+        paramsFor('uid-2'),
+      );
+      expect(res.status).toBe(403);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    },
+  );
+
+  it('allows an unchanged own role when updating account details', async () => {
+    mockMemberAuth();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(USER);
+    (prisma.user.update as jest.Mock).mockResolvedValue(USER);
+    const res = await updateUser(
+      makeReq('http://localhost/api/admin/users/uid-2', { role: 'member', name: 'Updated' }, 'PUT'),
+      paramsFor('uid-2'),
+    );
+    expect(res.status).toBe(200);
+  });
+
   it('hashes password when password field is provided', async () => {
     mockAuth();
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(USER);

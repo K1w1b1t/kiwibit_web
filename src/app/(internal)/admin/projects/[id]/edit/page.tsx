@@ -18,6 +18,12 @@ export default async function EditProjectPage({ params }: Readonly<Params>) {
     select: {
       id: true,
       title: true,
+      titlePt: true,
+      titleEn: true,
+      descriptionPt: true,
+      descriptionEn: true,
+      isFeatured: true,
+      featuredOrder: true,
       description: true,
       repoUrl: true,
       liveUrl: true,

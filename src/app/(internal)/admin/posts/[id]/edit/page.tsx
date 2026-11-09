@@ -18,6 +18,13 @@ export default async function EditPostPage({ params }: Readonly<Params>) {
       id: true,
       authorId: true,
       title: true,
+      titlePt: true,
+      titleEn: true,
+      contentPt: true,
+      contentEn: true,
+      coverImageAltPt: true,
+      coverImageAltEn: true,
+
       content: true,
       status: true,
       coverImageUrl: true,

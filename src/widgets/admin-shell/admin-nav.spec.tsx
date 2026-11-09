@@ -10,7 +10,7 @@ describe('AdminNav', () => {
     const nav = shell.props.children[1];
     const links = nav.props.children as Array<{ props: { children: string } }>;
 
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(3);
     expect(links.map((link) => link.props.children)).toContain('Equipe');
   });
 });

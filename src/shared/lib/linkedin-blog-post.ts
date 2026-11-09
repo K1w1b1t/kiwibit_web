@@ -20,24 +20,26 @@ import {
  * Always called inside `runAfterResponse` — it must never throw into the request.
  */
 export async function publishBlogPostToLinkedIn(
-  post: LinkedInBlogPost & { authorId: string },
+  post: LinkedInBlogPost & { authorId: string | null },
 ): Promise<LinkedInAutoPostResult[]> {
-  const member = await prisma.member.findUnique({
-    where: { userId: post.authorId },
-    select: {
-      id: true,
-      linkedinConnection: {
+  const member = post.authorId
+    ? await prisma.member.findUnique({
+        where: { userId: post.authorId },
         select: {
-          linkedinSub: true,
-          linkedinPersonId: true,
-          scope: true,
-          autoPostEnabled: true,
-          accessTokenEnc: true,
-          accessTokenExpiry: true,
+          id: true,
+          linkedinConnection: {
+            select: {
+              linkedinSub: true,
+              linkedinPersonId: true,
+              scope: true,
+              autoPostEnabled: true,
+              accessTokenEnc: true,
+              accessTokenExpiry: true,
+            },
+          },
         },
-      },
-    },
-  });
+      })
+    : null;
 
   const connection = member?.linkedinConnection ?? null;
   const results = await triggerLinkedInAutoPostForBlog(post, connection);

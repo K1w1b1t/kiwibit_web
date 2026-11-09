@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   EMPTY_MEMBER_FIELD_ERRORS,
   validateMember,
@@ -55,6 +56,7 @@ function toFormValues(initial?: MemberInitial): MemberFormValues {
  * shape (`undefined` vs `null` for cleared optionals) and the labels.
  */
 export function AdminMemberForm({ initial, updateEndpoint }: Readonly<Props>) {
+  const router = useRouter();
   const isEdit = initial !== undefined;
   const endpoint = isEdit
     ? (updateEndpoint ?? `/api/admin/members/${initial.id}`)
@@ -64,7 +66,8 @@ export function AdminMemberForm({ initial, updateEndpoint }: Readonly<Props>) {
   const { status, message, fieldErrors, isSubmitting, submit } = useResourceForm<
     MemberFormValues,
     unknown,
-    MemberFieldErrors
+    MemberFieldErrors,
+    { id: string }
   >({
     validate: validateMember,
     toPayload: isEdit ? toUpdateMemberPayload : toCreateMemberPayload,
@@ -72,8 +75,7 @@ export function AdminMemberForm({ initial, updateEndpoint }: Readonly<Props>) {
     endpoint,
     successMessage: isEdit ? 'Alterações salvas.' : 'Membro criado com sucesso.',
     emptyFieldErrors: EMPTY_MEMBER_FIELD_ERRORS,
-    // Create clears the form for the next entry; edit keeps what was typed.
-    onSuccess: isEdit ? undefined : () => setForm(toFormValues()),
+    onSuccess: isEdit ? undefined : (created) => router.push(`/admin/members/${created.id}/edit`),
   });
 
   function update<K extends keyof MemberFormValues>(field: K, value: MemberFormValues[K]) {

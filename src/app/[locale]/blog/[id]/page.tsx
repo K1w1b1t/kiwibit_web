@@ -1,3 +1,4 @@
+import { localizePost } from '@/entities/post/model/localized-post';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -20,6 +21,13 @@ async function findPost(id: string) {
     select: {
       id: true,
       title: true,
+      titlePt: true,
+      titleEn: true,
+      contentPt: true,
+      contentEn: true,
+      coverImageAltPt: true,
+      coverImageAltEn: true,
+
       content: true,
       coverImageUrl: true,
       coverImageAlt: true,
@@ -43,6 +51,13 @@ async function findSuggestions(excludeId: string) {
     select: {
       id: true,
       title: true,
+      titlePt: true,
+      titleEn: true,
+      contentPt: true,
+      contentEn: true,
+      coverImageAltPt: true,
+      coverImageAltEn: true,
+
       coverImageUrl: true,
       coverImageAlt: true,
       author: { select: { name: true } },
@@ -54,7 +69,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale, id } = await params;
   if (!isLocale(locale)) return {};
 
-  const post = await findPost(id);
+  const rawPost = await findPost(id);
+  const post = rawPost ? localizePost(rawPost, locale) : null;
   if (!post) return {};
 
   return {
@@ -69,11 +85,12 @@ export default async function PostDetailPage({ params }: Readonly<Params>) {
   if (!isLocale(locale)) return null;
 
   const dict = getDictionary(locale);
-  const post = await findPost(id);
+  const rawPost = await findPost(id);
+  const post = rawPost ? localizePost(rawPost, locale) : null;
 
   if (!post) notFound();
 
-  const suggestions = await findSuggestions(post.id);
+  const suggestions = (await findSuggestions(post.id)).map((item) => localizePost(item, locale));
   const publishedOn = post.publishedAt ?? post.updatedAt;
 
   return (
@@ -94,7 +111,7 @@ export default async function PostDetailPage({ params }: Readonly<Params>) {
         </h1>
 
         <p className="mt-4 text-sm text-white/60">
-          {dict.blog.post.by} {post.author?.name ?? '—'}
+          {dict.blog.post.by} {post.author?.name ?? dict.blog.labels.deletedUser}
           <span className="mx-2 text-white/25">•</span>
           {new Date(publishedOn).toLocaleDateString(htmlLang[locale])}
         </p>
@@ -132,7 +149,7 @@ export default async function PostDetailPage({ params }: Readonly<Params>) {
                 />
                 <h3 className="text-base font-semibold group-hover:text-white">{item.title}</h3>
                 <p className="mt-2 text-sm text-slate-400">
-                  {dict.blog.post.by} {item.author?.name ?? '—'}
+                  {dict.blog.post.by} {item.author?.name ?? dict.blog.labels.deletedUser}
                 </p>
               </Link>
             ))}

@@ -396,3 +396,50 @@ validation remains pending until those credentials and page permissions are avai
 Neither organization nor personal failures may block blog publication. Diagnostics
 must contain only allowlisted error classifications and HTTP statuses, never provider
 response bodies, OAuth parameters, tokens, or personal data.
+
+## Project announcements on the company page (issue #127)
+
+A successful `POST /api/admin/projects` schedules one company-page announcement
+with `runAfterResponse`. The announcement uses the complete Portuguese translation
+when available, otherwise English, otherwise the legacy text, with a link to the
+corresponding public project detail. Updates and gallery uploads do not announce
+again. No personal profile connection is read or used for projects.
+
+Company publication uses `POST https://api.linkedin.com/rest/posts`, explicit
+article title/description/source, the `202610` Marketing API version, and an
+organization author URN. Personal blog sharing keeps its existing UGC endpoint.
+Project images are uploaded after creation, so the initial announcement does not
+include a thumbnail. Remote image URLs are not LinkedIn uploaded image URNs.
+
+Activation requires an approved Community Management API application and consent
+from a member with the appropriate Page role, granting `w_organization_social`.
+The personal `w_member_social` permission is insufficient.
+
+1. Open the official [Token Generator](https://www.linkedin.com/developers/tools/oauth/token-generator).
+2. Select the application's three-legged OAuth flow and `w_organization_social`.
+   Complete consent as an authorized administrator of the target company page.
+   If the scope is unavailable, request Community Management access through the
+   application's Products tab in [My Apps](https://www.linkedin.com/developers/apps).
+3. Store the token as the server-side Vercel Secret
+   `LINKEDIN_COMPANY_ACCESS_TOKEN`; never paste it into source, logs, or chat.
+4. Set `LINKEDIN_COMPANY_AUTHOR_URN=urn:li:organization:<numeric-page-id>` and
+   `LINKEDIN_COMPANY_AUTO_POST_ENABLED=true` for the intended environment.
+   Redeploy to apply environment changes. Keep test/preview destinations disabled
+   unless using an explicitly authorized test page and token.
+5. Create one real project after activation and verify that the announcement is
+   authored by the company page and links to the correct project. Confirm the
+   token's expiry in the official tool and renew it when necessary.
+
+Without configuration the destination is skipped. Rejected, expired, and timed-out
+requests do not undo project creation. Diagnostics report only allowlisted error
+codes and HTTP statuses, never provider bodies or tokens. There is no automatic
+retry or historical backfill: an ambiguous network result could already have
+created a remote post, so retrying blindly would risk duplicates. Real delivery
+requires deployment, valid credentials and LinkedIn approval; mocked tests do not
+establish any of those external conditions.
+
+Official references:
+[Posts API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api?view=li-lms-2026-10),
+[API versions](https://learn.microsoft.com/en-us/linkedin/marketing/versioning?view=li-lms-unversioned),
+[Token Generator instructions](https://learn.microsoft.com/en-us/linkedin/shared/authentication/developer-portal-tools),
+[Community Management review](https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review?view=li-lms-2026-05).

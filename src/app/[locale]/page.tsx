@@ -1,3 +1,4 @@
+import { HomeProjects } from '@/widgets/home-projects/home-projects';
 import { HomeAbout } from '@/widgets/home-about/home-about';
 import type { Metadata } from 'next';
 import { isLocale } from '@/shared/i18n/config';
@@ -37,6 +38,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <main>
       <HomeHero locale={locale} dict={dict.hero} radarDict={dict.radar} />
+      <HomeProjects locale={locale} dict={dict.projects} variant="showcase" />
       <HomeAbout locale={locale} dict={dict.about} />
       <HomeBlog locale={locale} dict={dict.blog} />
       <HomeContact dict={dict.contact} />

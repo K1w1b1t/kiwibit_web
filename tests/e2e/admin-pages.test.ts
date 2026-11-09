@@ -51,18 +51,17 @@ describe('admin pages', () => {
       const res = await client.get('/admin');
       const html = await res.text();
 
-      for (const label of ['Dashboard', 'Blog', 'Projetos', 'Equipe', 'Usuários']) {
+      for (const label of ['Dashboard', 'Blog', 'Projetos', 'Equipe', 'Minha conta']) {
         expect(html).toContain(label);
       }
       expect(html).toContain('/admin/members');
     });
 
-    it('lista usuários com o e-mail do admin de e2e', async () => {
+    it('redireciona a lista antiga para membros', async () => {
       const res = await client.get('/admin/users');
       const html = await res.text();
 
-      expect(html).toContain('Usuários');
-      expect(html).toContain('e2e-admin@kiwibit.test');
+      expect(html).toContain('Membros');
     });
 
     it('renderiza o formulário de novo membro', async () => {

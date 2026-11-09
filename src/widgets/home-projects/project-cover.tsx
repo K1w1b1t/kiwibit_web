@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { PostCover } from '@/shared/ui/post-cover';
 import Link from 'next/link';
 import type { HomeProjectImage } from '@/features/home/model/types';
 
@@ -7,6 +7,7 @@ type Props = {
   projectTitle: string;
   /** Wraps the cover in a link to the project page. */
   href: string;
+  showcase?: boolean;
 };
 
 /**
@@ -20,22 +21,23 @@ type Props = {
  * requests/month, and the Vercel edge cache is what keeps origin reads
  * negligible.
  */
-export function ProjectCover({ images, projectTitle, href }: Readonly<Props>) {
+export function ProjectCover({ images, projectTitle, href, showcase = false }: Readonly<Props>) {
   const cover = images.find((image) => image.isCover) ?? images[0];
-  if (!cover) return null;
-
   return (
-    <Link
-      href={href}
-      className="relative mb-4 block aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/10 bg-black/40"
-    >
-      {/* No dimensions are stored, so a fixed aspect box plus `fill` is used. */}
-      <Image
-        src={cover.url}
-        alt={cover.alt ?? projectTitle}
-        fill
-        sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-        className="object-cover transition duration-300 hover:scale-105"
+    <Link href={href} className={showcase ? 'block overflow-hidden lg:h-full' : 'block'}>
+      <PostCover
+        url={cover?.url ?? null}
+        alt={cover?.alt ?? projectTitle}
+        sizes={
+          showcase
+            ? '(min-width: 1024px) 45vw, 90vw'
+            : '(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw'
+        }
+        className={
+          showcase
+            ? 'aspect-video w-full lg:aspect-auto lg:h-full lg:min-h-96'
+            : 'aspect-video w-full'
+        }
       />
     </Link>
   );

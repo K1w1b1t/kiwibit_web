@@ -21,6 +21,8 @@ export default async function AdminProjectsPage({
       select: {
         id: true,
         title: true,
+        isFeatured: true,
+        featuredOrder: true,
         updatedAt: true,
         images: {
           orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
@@ -37,6 +39,8 @@ export default async function AdminProjectsPage({
   const rows = projects.map((project) => ({
     id: project.id,
     title: project.title,
+    isFeatured: project.isFeatured,
+    featuredOrder: project.featuredOrder,
     updatedAt: project.updatedAt,
     // Degrades gracefully: a project with images but no cover flag still shows one.
     coverUrl: (project.images.find((image) => image.isCover) ?? project.images[0])?.url ?? null,

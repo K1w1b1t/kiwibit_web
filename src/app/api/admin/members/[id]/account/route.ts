@@ -74,13 +74,20 @@ export async function POST(request: Request, { params }: Params) {
         select: { id: true, name: true, email: true, role: true },
       });
 
-      await tx.member.update({ where: { id }, data: { userId: user.id } });
+      const linked = await tx.member.updateMany({
+        where: { id, userId: null },
+        data: { userId: user.id },
+      });
+      if (linked.count !== 1) throw new Error('MEMBER_ALREADY_LINKED');
 
       return user;
     });
 
     return NextResponse.json({ success: true, data: created }, { status: 201 });
   } catch (caught) {
+    if (caught instanceof Error && caught.message === 'MEMBER_ALREADY_LINKED') {
+      return apiError('CONFLICT', 'This member already has an account.', 409);
+    }
     if (isUniqueConstraintError(caught)) {
       return apiError('CONFLICT', 'Email already in use.', 409);
     }
