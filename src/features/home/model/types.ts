@@ -1,3 +1,4 @@
+import type { PostTranslations } from '@/entities/post/model/localized-post';
 export type PaginatedResponse<T> = {
   items: T[];
   page: number;
@@ -24,7 +25,7 @@ export type HomeProject = {
   updatedAt: string;
 };
 
-export type HomePost = {
+export type HomePost = PostTranslations & {
   id: string;
   title: string;
   authorId: string;

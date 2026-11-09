@@ -1,3 +1,4 @@
+import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { NextResponse } from 'next/server';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
@@ -23,7 +24,11 @@ export async function GET(request: Request) {
   const authorId = searchParams.get('authorId') ?? undefined;
   const status = searchParams.get('status') ?? undefined;
   const where: Record<string, unknown> = {
-    ...(search && { title: { contains: search, mode: 'insensitive' } }),
+    ...(search && {
+      OR: ['title', 'titlePt', 'titleEn'].map((field) => ({
+        [field]: { contains: search, mode: 'insensitive' },
+      })),
+    }),
     ...(authorId && { authorId }),
     // Unlike the public route, the admin list shows drafts — unfiltered by default.
     ...(isPostStatus(status) && { status }),
@@ -40,10 +45,10 @@ export async function POST(request: Request) {
   const { body, error } = await parseJsonBody(request);
   if (error) return error;
 
-  const { title, content, status, coverImageUrl, coverImagePath, coverImageAlt } = body as Record<
-    string,
-    unknown
-  >;
+  const translated = parsePostTranslations(body as Record<string, unknown>);
+  if (translated.error) return apiError('BAD_REQUEST', translated.error, 400);
+  const { title, content } = translated.data;
+  const { status, coverImageUrl, coverImagePath } = body as Record<string, unknown>;
 
   if (typeof title !== 'string' || title.trim() === '')
     return apiError('BAD_REQUEST', 'title is required.', 400);
@@ -59,14 +64,12 @@ export async function POST(request: Request) {
 
   const post = await prisma.post.create({
     data: {
-      title,
-      content,
+      ...translated.data,
       authorId: session.user.id,
       status: resolvedStatus,
       publishedAt: resolvePublishedAt(resolvedStatus, null, new Date()),
       ...(typeof coverImageUrl === 'string' && { coverImageUrl }),
       ...(typeof coverImagePath === 'string' && { coverImagePath }),
-      ...(typeof coverImageAlt === 'string' && { coverImageAlt }),
     },
   });
 

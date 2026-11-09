@@ -1,8 +1,10 @@
+import type { PostTranslations } from '@/entities/post/model/localized-post';
+import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { isHttpUrl } from '@/shared/lib/url';
 import { isPostStatus } from '@/shared/lib/post-status';
 import type { PostStatus } from '@prisma/client';
 
-export type PostFormValues = {
+export type PostFormValues = PostTranslations & {
   title: string;
   content: string;
   status: string;
@@ -12,7 +14,13 @@ export type PostFormValues = {
   coverImageAlt: string;
 };
 
-export type PostField = 'title' | 'content' | 'status' | 'coverImageUrl' | 'coverImageAlt';
+export type PostField =
+  | keyof PostTranslations
+  | 'title'
+  | 'content'
+  | 'status'
+  | 'coverImageUrl'
+  | 'coverImageAlt';
 
 export type PostFieldErrors = Partial<Record<PostField, string>>;
 
@@ -31,12 +39,14 @@ export const POST_LIMITS = {
 
 /** Mirrors the server rules in `POST/PUT /api/admin/posts`. */
 export function validatePost(values: PostFormValues): PostValidationResult {
-  const title = values.title.trim();
-  const content = values.content.trim();
+  const translated = parsePostTranslations({ ...values });
+  const title = translated.data.title;
+  const content = translated.data.content;
   const coverImageUrl = values.coverImageUrl.trim();
-  const coverImageAlt = values.coverImageAlt.trim();
+  const coverImageAlt = translated.data.coverImageAlt ?? '';
 
   const fieldErrors: PostFieldErrors = {};
+  if (translated.error) fieldErrors.title = translated.error;
 
   if (title.length < POST_LIMITS.titleMin) {
     fieldErrors.title = `Título precisa ter pelo menos ${POST_LIMITS.titleMin} caracteres.`;
@@ -67,6 +77,7 @@ export function validatePost(values: PostFormValues): PostValidationResult {
   return {
     valid: true,
     data: {
+      ...translated.data,
       title,
       content,
       status: values.status as PostStatus,

@@ -130,3 +130,35 @@ describe('Posts CRUD — /api/admin/posts', () => {
     expect(body.items).toHaveLength(0);
   });
 });
+
+describe('Bilingual posts', () => {
+  const ref = useAdminClient();
+  it('creates English-only content, preserves translations on partial updates, and searches English titles', async () => {
+    const response = await ref.client.post('/api/admin/posts', {
+      titleEn: `English translation ${TAG}`,
+      contentEn: 'A complete English article for bilingual integration testing.',
+      status: 'draft',
+    });
+    expect(response.status).toBe(201);
+    const { data } = await response.json();
+    try {
+      expect(data.titlePt).toBeNull();
+      expect(data.title).toBe(data.titleEn);
+      const update = await ref.client.put(`/api/admin/posts/${data.id}`, {
+        coverImageAltEn: 'English cover',
+      });
+      expect(update.status).toBe(200);
+      expect((await update.json()).data.titlePt).toBeNull();
+      const list = await (
+        await ref.client.get(`/api/admin/posts?search=${encodeURIComponent(data.titleEn)}`)
+      ).json();
+      expect(list.items.some((item: { id: string }) => item.id === data.id)).toBe(true);
+      expect(
+        (await ref.client.put(`/api/admin/posts/${data.id}`, { titleEn: null, contentEn: null }))
+          .status,
+      ).toBe(400);
+    } finally {
+      await ref.client.delete(`/api/admin/posts/${data.id}`);
+    }
+  });
+});
