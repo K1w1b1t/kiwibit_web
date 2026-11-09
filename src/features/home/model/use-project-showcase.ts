@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 export function useProjectShowcase(itemKey: string) {
   const track = useRef<HTMLElement>(null);
@@ -43,5 +43,11 @@ export function useProjectShowcase(itemKey: string) {
         : 'smooth',
     });
   }
-  return { track, ...position, updatePosition, goTo };
+  function onControlKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    event.preventDefault();
+    const lastIndex = Math.max(0, (track.current?.children.length ?? 1) - 1);
+    goTo(Math.max(0, Math.min(lastIndex, position.index + (event.key === 'ArrowRight' ? 1 : -1))));
+  }
+  return { track, ...position, updatePosition, goTo, onControlKeyDown };
 }

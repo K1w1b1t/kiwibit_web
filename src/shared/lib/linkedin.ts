@@ -252,7 +252,7 @@ function buildCompanyPayload(input: LinkedInAutoPostInput, authorUrn: string) {
     author: authorUrn,
     commentary: ensureLinkedInText(input)
       .slice(0, 1500)
-      .replace(/[\\|{}@\[\]()<>#*_~]/g, '\\$&'),
+      .replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`),
     visibility: 'PUBLIC',
     distribution: {
       feedDistribution: 'MAIN_FEED',

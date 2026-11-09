@@ -42,6 +42,7 @@ export function HomeProjects({ locale, dict, variant = 'list' }: Readonly<HomePr
     atEnd,
     updatePosition,
     goTo,
+    onControlKeyDown,
   } = useProjectShowcase(
     `${variant}:${locale}:${isLoading}:${items.map((item) => item.id).join(',')}`,
   );
@@ -99,19 +100,6 @@ export function HomeProjects({ locale, dict, variant = 'list' }: Readonly<HomePr
             onScroll={updatePosition}
             aria-roledescription={showcase ? dict.showcase.role : undefined}
             aria-label={dict.title}
-            tabIndex={showcase ? 0 : undefined}
-            onKeyDown={(event) => {
-              if (!showcase || event.target !== event.currentTarget) return;
-              if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
-                event.preventDefault();
-                goTo(
-                  Math.max(
-                    0,
-                    Math.min(items.length - 1, activeIndex + (event.key === 'ArrowRight' ? 1 : -1)),
-                  ),
-                );
-              }
-            }}
             className={
               showcase
                 ? 'relative flex snap-x snap-mandatory items-stretch gap-5 overflow-x-auto pb-3 focus-visible:outline-2 focus-visible:outline-accent'
@@ -204,6 +192,7 @@ export function HomeProjects({ locale, dict, variant = 'list' }: Readonly<HomePr
                   key={item.id}
                   type="button"
                   onClick={() => goTo(index)}
+                  onKeyDown={onControlKeyDown}
                   aria-label={`${dict.showcase.goTo} ${index + 1}`}
                   aria-current={activeIndex === index ? 'true' : undefined}
                   className="flex min-h-11 min-w-11 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-accent"
@@ -223,6 +212,7 @@ export function HomeProjects({ locale, dict, variant = 'list' }: Readonly<HomePr
                   aria-label={direction < 0 ? dict.showcase.previous : dict.showcase.next}
                   disabled={direction < 0 ? atStart : atEnd}
                   onClick={() => goTo(activeIndex + direction)}
+                  onKeyDown={onControlKeyDown}
                   className="rounded-full border border-white/25 p-3 transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default disabled:opacity-25"
                 >
                   {direction < 0 ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
