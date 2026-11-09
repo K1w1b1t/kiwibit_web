@@ -20,7 +20,6 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavItem[] = [
   { label: 'Blog', href: '/admin/posts' },
   { label: 'Projetos', href: '/admin/projects', roles: ADMIN_ONLY_ROLES },
   { label: 'Equipe', href: '/admin/members' },
-  { label: 'Usuários', href: '/admin/users' },
 ];
 
 export function isVisibleNavItem(role: UserRole, item: AdminNavItem): boolean {

@@ -49,6 +49,13 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+      } else {
+        const current = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: { role: true },
+        });
+        if (!current) throw new Error('Account no longer exists');
+        token.role = current.role;
       }
       return token;
     },

@@ -150,7 +150,7 @@ model Post {
   contentEn String? @map("content_en")
   coverImageAltPt String? @map("cover_image_alt_pt")
   coverImageAltEn String? @map("cover_image_alt_en")
-  authorId       String     @map("author_id") @db.Uuid
+  authorId       String?    @map("author_id") @db.Uuid
   /// Only `published` rows are exposed by the public GET /api/posts.
   status         PostStatus @default(draft)
   /// Set the first time a post is published; kept on unpublish.
@@ -163,7 +163,7 @@ model Post {
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @updatedAt @map("updated_at")
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([authorId])
   @@map("posts")

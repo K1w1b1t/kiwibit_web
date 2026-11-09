@@ -28,7 +28,7 @@ describe('postsToDashboardItems', () => {
     const [item] = postsToDashboardItems([
       { id: 'p1', title: 'A', status: 'draft', createdAt, author: null },
     ]);
-    expect(item.meta).toContain('Autor removido');
+    expect(item.meta).toContain('Usuário excluído');
   });
 
   it('aponta para a edição do post', () => {

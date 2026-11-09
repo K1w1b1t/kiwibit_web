@@ -206,6 +206,7 @@ const en = {
     labels: {
       article: 'Article',
       author: 'Author',
+      deletedUser: 'Deleted user',
       updated: 'Updated',
       readMore: 'Read article',
     },

@@ -35,6 +35,7 @@ type Props = {
    * 403 the server returns, so the UI does not offer what will be rejected.
    */
   canAssignPrivileged: boolean;
+  canChangeRole?: boolean;
 };
 
 function toFormValues(initial?: UserInitial): UserFormValues {
@@ -46,7 +47,11 @@ function toFormValues(initial?: UserInitial): UserFormValues {
   };
 }
 
-export function AdminUserForm({ initial, canAssignPrivileged }: Readonly<Props>) {
+export function AdminUserForm({
+  initial,
+  canAssignPrivileged,
+  canChangeRole = true,
+}: Readonly<Props>) {
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<UserFormValues>(() => toFormValues(initial));
   const [revealPassword, setRevealPassword] = useState(false);
@@ -60,7 +65,14 @@ export function AdminUserForm({ initial, canAssignPrivileged }: Readonly<Props>)
     // The validator narrows `role`, so the payload builders receive a UserRole.
     toPayload: (values) =>
       isEdit
-        ? toUpdateUserPayload(values as UserFormValues & { role: UserRole })
+        ? canChangeRole &&
+          (canAssignPrivileged || values.role !== initial.role || !isPrivilegedRole(initial.role))
+          ? toUpdateUserPayload(values as UserFormValues & { role: UserRole })
+          : {
+              name: values.name,
+              email: values.email,
+              ...(values.password && { password: values.password }),
+            }
         : toCreateUserPayload(values as UserFormValues & { role: UserRole }),
     method: isEdit ? 'PUT' : 'POST',
     endpoint: isEdit ? `/api/admin/users/${initial.id}` : '/api/admin/users',
@@ -119,22 +131,24 @@ export function AdminUserForm({ initial, canAssignPrivileged }: Readonly<Props>)
           className="animate-fade-up delay-300"
         />
 
-        <SelectField
-          id={`${idPrefix}-role`}
-          label="Função"
-          required
-          options={roleOptions}
-          value={form.role}
-          onChange={(event) => update('role', event.target.value)}
-          disabled={isSubmitting}
-          error={fieldErrors.role}
-          hint={
-            canAssignPrivileged
-              ? undefined
-              : 'Somente administradores podem atribuir funções privilegiadas.'
-          }
-          className="animate-fade-up delay-400"
-        />
+        {canChangeRole && (
+          <SelectField
+            id={`${idPrefix}-role`}
+            label="Função"
+            required
+            options={roleOptions}
+            value={form.role}
+            onChange={(event) => update('role', event.target.value)}
+            disabled={isSubmitting}
+            error={fieldErrors.role}
+            hint={
+              canAssignPrivileged
+                ? undefined
+                : 'Somente administradores podem atribuir funções privilegiadas.'
+            }
+            className="animate-fade-up delay-400"
+          />
+        )}
 
         <div className="animate-fade-up delay-400">
           <TextField

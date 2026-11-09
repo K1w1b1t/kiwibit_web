@@ -29,7 +29,7 @@ export type HomeProject = ProjectTranslations & {
 export type HomePost = PostTranslations & {
   id: string;
   title: string;
-  authorId: string;
+  authorId: string | null;
   /** Loaded via a relation select; the author name is shown, never the id. */
   author: { name: string } | null;
   coverImageUrl: string | null;

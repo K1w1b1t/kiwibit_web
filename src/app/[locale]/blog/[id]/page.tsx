@@ -111,7 +111,7 @@ export default async function PostDetailPage({ params }: Readonly<Params>) {
         </h1>
 
         <p className="mt-4 text-sm text-white/60">
-          {dict.blog.post.by} {post.author?.name ?? '—'}
+          {dict.blog.post.by} {post.author?.name ?? dict.blog.labels.deletedUser}
           <span className="mx-2 text-white/25">•</span>
           {new Date(publishedOn).toLocaleDateString(htmlLang[locale])}
         </p>
@@ -149,7 +149,7 @@ export default async function PostDetailPage({ params }: Readonly<Params>) {
                 />
                 <h3 className="text-base font-semibold group-hover:text-white">{item.title}</h3>
                 <p className="mt-2 text-sm text-slate-400">
-                  {dict.blog.post.by} {item.author?.name ?? '—'}
+                  {dict.blog.post.by} {item.author?.name ?? dict.blog.labels.deletedUser}
                 </p>
               </Link>
             ))}

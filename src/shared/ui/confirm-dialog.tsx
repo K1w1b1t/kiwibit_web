@@ -45,7 +45,7 @@ export function ConfirmDialog({
         event.preventDefault();
         if (!isBusy) onCancel();
       }}
-      className="card-glow max-w-md rounded-2xl border border-white/10 bg-[#0e0e0e] p-6 text-white backdrop:bg-black/70"
+      className="card-glow m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#0e0e0e] p-6 text-white backdrop:bg-black/70"
     >
       <h2 className="text-lg font-black uppercase tracking-[-0.02em]">{title}</h2>
       {description && <p className="mt-2 text-sm text-white/60">{description}</p>}
