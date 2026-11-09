@@ -120,7 +120,7 @@ export function AdminProjectForm({ initial }: Readonly<Props>) {
               setForm((current) => ({ ...current, isFeatured: event.target.checked }))
             }
           />
-          Destacar na home
+          <span>Destacar na home</span>
         </label>
         <TextField
           id={`${idPrefix}-order`}

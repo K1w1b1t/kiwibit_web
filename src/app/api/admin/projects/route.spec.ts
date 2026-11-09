@@ -1,3 +1,7 @@
+import { publishProjectToLinkedIn } from '@/features/admin/projects/model/publish-project-to-linkedin';
+jest.mock('@/features/admin/projects/model/publish-project-to-linkedin', () => ({
+  publishProjectToLinkedIn: jest.fn().mockResolvedValue({ ok: true }),
+}));
 import { GET as listProjects, POST as createProject } from './route';
 import { GET as getProject, PUT as updateProject, DELETE as deleteProject } from './[id]/route';
 import { apiError } from '@/shared/lib/api-helpers';
@@ -266,5 +270,55 @@ describe('DELETE /api/admin/projects/[id]', () => {
     );
 
     expect(order).toEqual(['findImages', 'deleteProject']);
+  });
+});
+
+describe('Project announcement lifecycle', () => {
+  it('announces only after a successful creation', async () => {
+    mockAuth();
+    (prisma.project.create as jest.Mock).mockResolvedValue(PROJECT);
+    const response = await createProject(
+      makeReq('http://localhost/api/admin/projects', {
+        title: 'Project',
+        description: 'Project description',
+      }),
+    );
+    expect(response.status).toBe(201);
+    expect(publishProjectToLinkedIn).toHaveBeenCalledTimes(1);
+    expect(publishProjectToLinkedIn).toHaveBeenCalledWith(PROJECT);
+  });
+  it('keeps creation successful when the provider fails', async () => {
+    mockAuth();
+    (prisma.project.create as jest.Mock).mockResolvedValue(PROJECT);
+    jest.mocked(publishProjectToLinkedIn).mockRejectedValueOnce(new Error('provider unavailable'));
+    expect(
+      (
+        await createProject(
+          makeReq('http://localhost/api/admin/projects', {
+            title: 'Project',
+            description: 'Project description',
+          }),
+        )
+      ).status,
+    ).toBe(201);
+  });
+  it('does not announce invalid input', async () => {
+    mockAuth();
+    await createProject(makeReq('http://localhost/api/admin/projects', {}));
+    expect(publishProjectToLinkedIn).not.toHaveBeenCalled();
+  });
+  it('does not announce edits', async () => {
+    mockAuth();
+    (prisma.project.findUnique as jest.Mock).mockResolvedValue(PROJECT);
+    (prisma.project.update as jest.Mock).mockResolvedValue(PROJECT);
+    await updateProject(
+      makeReq(
+        'http://localhost/api/admin/projects/pid-1',
+        { description: 'Updated project description' },
+        'PUT',
+      ),
+      paramsFor('pid-1'),
+    );
+    expect(publishProjectToLinkedIn).not.toHaveBeenCalled();
   });
 });

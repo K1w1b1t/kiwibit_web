@@ -10,12 +10,11 @@ export function localizeProject<
 >(project: T, locale: Locale): T {
   const preferred = locale === 'en' ? 'En' : 'Pt';
   const other = preferred === 'En' ? 'Pt' : 'En';
-  const language =
-    project[`title${preferred}`]?.trim() && project[`description${preferred}`]?.trim()
-      ? preferred
-      : project[`title${other}`]?.trim() && project[`description${other}`]?.trim()
-        ? other
-        : null;
+  let language: 'Pt' | 'En' | null = null;
+  if (project[`title${preferred}`]?.trim() && project[`description${preferred}`]?.trim())
+    language = preferred;
+  else if (project[`title${other}`]?.trim() && project[`description${other}`]?.trim())
+    language = other;
   return {
     ...project,
     title: (language ? project[`title${language}`]?.trim() : null) || project.title,

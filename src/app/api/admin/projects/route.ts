@@ -1,3 +1,5 @@
+import { publishProjectToLinkedIn } from '@/features/admin/projects/model/publish-project-to-linkedin';
+import { runAfterResponse } from '@/shared/lib/after-response';
 import { parseProjectInput } from '@/entities/project/model/project-input';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
@@ -42,5 +44,6 @@ export async function POST(request: Request) {
     },
   });
 
+  runAfterResponse(() => publishProjectToLinkedIn(project));
   return NextResponse.json({ success: true, data: project }, { status: 201 });
 }

@@ -193,7 +193,7 @@ describe('triggerLinkedInAutoPost', () => {
   it('marks expired tokens without throwing', async () => {
     process.env.LINKEDIN_COMPANY_ACCESS_TOKEN = 'token';
     process.env.LINKEDIN_COMPANY_AUTO_POST_ENABLED = 'true';
-    process.env.LINKEDIN_COMPANY_AUTHOR_URN = 'urn:li:organization:abc123';
+    process.env.LINKEDIN_COMPANY_AUTHOR_URN = 'urn:li:organization:123456';
 
     const fetchMock = jest.fn().mockResolvedValue({
       ok: false,
@@ -361,5 +361,82 @@ describe('triggerLinkedInAutoPostForBlog', () => {
     expect(personal).toMatchObject({ ok: true, sent: true });
     expect(company).toMatchObject({ skipped: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Company Posts API', () => {
+  const env = { ...process.env };
+  const originalFetch = global.fetch;
+  beforeEach(() => {
+    process.env = {
+      ...env,
+      LINKEDIN_COMPANY_ACCESS_TOKEN: 'company-test-token',
+      LINKEDIN_COMPANY_AUTO_POST_ENABLED: 'true',
+      LINKEDIN_COMPANY_AUTHOR_URN: 'urn:li:organization:123456',
+    };
+  });
+  afterEach(() => {
+    process.env = { ...env };
+    global.fetch = originalFetch;
+  });
+  const input = {
+    title: 'Project [one]',
+    summary: 'A new project',
+    url: 'https://www.kiwibit.com.br/pt/projects/one',
+  };
+  it('sends a versioned organization post with explicit article metadata', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    global.fetch = fetchMock;
+    await expect(triggerLinkedInAutoPost('company', input)).resolves.toMatchObject({
+      ok: true,
+      sent: true,
+      target: 'company',
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.linkedin.com/rest/posts',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Linkedin-Version': '202610',
+          Authorization: 'Bearer company-test-token',
+          'X-Restli-Protocol-Version': '2.0.0',
+        }),
+      }),
+    );
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload).toMatchObject({
+      author: 'urn:li:organization:123456',
+      visibility: 'PUBLIC',
+      lifecycleState: 'PUBLISHED',
+      distribution: { feedDistribution: 'MAIN_FEED' },
+      content: { article: { source: input.url, title: input.title, description: input.summary } },
+    });
+    expect(payload.commentary).toContain('Project \\[one\\]');
+  });
+  it('refuses a personal URN for the organization destination', async () => {
+    process.env.LINKEDIN_COMPANY_AUTHOR_URN = 'urn:li:person:123456';
+    global.fetch = jest.fn();
+    await expect(triggerLinkedInAutoPost('company', input)).resolves.toMatchObject({
+      ok: false,
+      code: 'LINKEDIN_COMPANY_AUTHOR_INVALID',
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+  it.each([401, 403, 429, 500])('returns safe failure metadata for HTTP %s', async (status) => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status,
+      text: async () => 'private-token provider-response',
+    });
+    const result = await triggerLinkedInAutoPost('company', input);
+    expect(result).toMatchObject({ ok: false, status });
+    expect(JSON.stringify(result)).not.toContain('private-token');
+  });
+  it('handles a network timeout without throwing', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('private-token'));
+    await expect(triggerLinkedInAutoPost('company', input)).resolves.toMatchObject({
+      ok: false,
+      code: 'LINKEDIN_POST_ERROR',
+    });
   });
 });

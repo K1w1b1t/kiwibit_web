@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 export function useProjectShowcase(itemKey: string) {
-  const track = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ index: 0, atStart: true, atEnd: false });
   function updatePosition() {
     const element = track.current;

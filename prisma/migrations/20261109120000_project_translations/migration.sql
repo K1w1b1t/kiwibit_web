@@ -8,4 +8,5 @@ ALTER TABLE "projects"
 
 -- Preserve legacy values and all existing gallery relations.
 UPDATE "projects"
-SET "title_pt" = "title", "description_pt" = "description";
+SET "title_pt" = "title", "description_pt" = "description"
+WHERE "title_pt" IS NULL AND "description_pt" IS NULL;

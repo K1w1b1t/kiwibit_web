@@ -32,7 +32,7 @@ function ProjectsLoadingState() {
   );
 }
 
-export function HomeProjects({ locale, dict, variant = 'list' }: HomeProjectsProps) {
+export function HomeProjects({ locale, dict, variant = 'list' }: Readonly<HomeProjectsProps>) {
   const showcase = variant === 'showcase';
   const { items, isLoading, error } = useFeaturedProjects(6, showcase);
   const {
@@ -83,12 +83,9 @@ export function HomeProjects({ locale, dict, variant = 'list' }: HomeProjectsPro
         )}
         {isLoading && <ProjectsLoadingState />}
         {!isLoading && error && (
-          <p
-            role="status"
-            className="rounded-2xl border border-amber-300/40 bg-amber-500/10 p-6 text-amber-100"
-          >
+          <output className="rounded-2xl border border-amber-300/40 bg-amber-500/10 p-6 text-amber-100">
             {dict.error}
-          </p>
+          </output>
         )}
         {!isLoading && !error && items.length === 0 && (
           <p className="rounded-2xl border border-white/15 bg-white/5 p-8 text-white/70">
@@ -96,13 +93,12 @@ export function HomeProjects({ locale, dict, variant = 'list' }: HomeProjectsPro
           </p>
         )}
         {showItems && (
-          <div
+          <section
             ref={track}
             id="projects-track"
             onScroll={updatePosition}
-            role={showcase ? 'region' : undefined}
             aria-roledescription={showcase ? dict.showcase.role : undefined}
-            aria-label={showcase ? dict.title : undefined}
+            aria-label={dict.title}
             tabIndex={showcase ? 0 : undefined}
             onKeyDown={(event) => {
               if (!showcase || event.target !== event.currentTarget) return;
@@ -198,7 +194,7 @@ export function HomeProjects({ locale, dict, variant = 'list' }: HomeProjectsPro
                   </div>
                 </article>
               ))}
-          </div>
+          </section>
         )}
         {hasControls && (
           <div className="mt-5 flex items-center justify-between gap-4">
