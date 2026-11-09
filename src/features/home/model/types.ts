@@ -1,3 +1,4 @@
+import type { ProjectTranslations } from '@/entities/project/model/localized-project';
 import type { PostTranslations } from '@/entities/post/model/localized-post';
 export type PaginatedResponse<T> = {
   items: T[];
@@ -13,7 +14,7 @@ export type HomeProjectImage = {
   isCover: boolean;
 };
 
-export type HomeProject = {
+export type HomeProject = ProjectTranslations & {
   id: string;
   title: string;
   description: string;

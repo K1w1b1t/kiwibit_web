@@ -97,6 +97,13 @@ model Project {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  titlePt String? @map("title_pt")
+  titleEn String? @map("title_en")
+  descriptionPt String? @map("description_pt")
+  descriptionEn String? @map("description_en")
+  isFeatured Boolean @default(false) @map("is_featured")
+  featuredOrder Int @default(1) @map("featured_order")
+
   images ProjectImage[]
 
   @@map("projects")

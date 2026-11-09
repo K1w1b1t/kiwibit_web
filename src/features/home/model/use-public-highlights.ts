@@ -70,8 +70,10 @@ function usePublicList<T>(endpoint: string): PublicListState<T> {
   return { items, isLoading, error };
 }
 
-export function useFeaturedProjects(limit = 6): PublicListState<HomeProject> {
-  return usePublicList<HomeProject>(`/api/projects?page=1&limit=${limit}`);
+export function useFeaturedProjects(limit = 6, featured = false): PublicListState<HomeProject> {
+  return usePublicList<HomeProject>(
+    `/api/projects?page=1&limit=${limit}${featured ? '&featured=true' : ''}`,
+  );
 }
 
 export function useHighlightedPosts(limit = 4): PublicListState<HomePost> {

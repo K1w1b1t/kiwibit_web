@@ -1,3 +1,4 @@
+import { parseProjectInput } from '@/entities/project/model/project-input';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import {
@@ -17,10 +18,9 @@ export async function GET(request: Request) {
   const { page, limit, search } = parsePaginationParams(request);
   const where: Record<string, unknown> = search
     ? {
-        OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-        ],
+        OR: ['title', 'description', 'titlePt', 'titleEn', 'descriptionPt', 'descriptionEn'].map(
+          (field) => ({ [field]: { contains: search, mode: 'insensitive' } }),
+        ),
       }
     : {};
   return runPaginatedQuery(prisma.project as unknown as PaginatableDelegate, where, page, limit);
@@ -34,19 +34,11 @@ export async function POST(request: Request) {
   const { body, error } = await parseJsonBody(request);
   if (error) return error;
 
-  const { title, description, repoUrl, liveUrl } = body as Record<string, unknown>;
-
-  if (typeof title !== 'string' || title.trim() === '')
-    return apiError('BAD_REQUEST', 'title is required.', 400);
-  if (typeof description !== 'string' || description.trim() === '')
-    return apiError('BAD_REQUEST', 'description is required.', 400);
-
+  const translated = parseProjectInput(body);
+  if (!translated.data) return apiError('BAD_REQUEST', translated.error, 400);
   const project = await prisma.project.create({
     data: {
-      title,
-      description,
-      ...(typeof repoUrl === 'string' && { repoUrl }),
-      ...(typeof liveUrl === 'string' && { liveUrl }),
+      ...translated.data,
     },
   });
 

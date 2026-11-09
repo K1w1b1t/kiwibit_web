@@ -1,12 +1,7 @@
+import { parseProjectInput } from '@/entities/project/model/project-input';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
-import {
-  requireAdminSession,
-  apiError,
-  parseJsonBody,
-  failureResponse,
-} from '@/shared/lib/api-helpers';
-import { validateUpdateProjectBody } from '@/features/admin/projects/model/validate-project-body';
+import { requireAdminSession, apiError, parseJsonBody } from '@/shared/lib/api-helpers';
 import { deleteObjects } from '@/shared/lib/storage';
 
 type Params = { params: Promise<{ id: string }> };
@@ -38,10 +33,12 @@ export async function PUT(request: Request, { params }: Params) {
   const existing = await prisma.project.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'Project not found.', 404);
 
-  const parsed = validateUpdateProjectBody(body);
-  if (parsed.failure) return failureResponse(parsed.failure);
-
-  const updated = await prisma.project.update({ where: { id }, data: parsed.data });
+  const translated = parseProjectInput(body, existing);
+  if (!translated.data) return apiError('BAD_REQUEST', translated.error, 400);
+  const updated = await prisma.project.update({
+    where: { id },
+    data: translated.data,
+  });
 
   return NextResponse.json({ success: true, data: updated });
 }

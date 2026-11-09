@@ -23,8 +23,8 @@ const pt: Dictionary = {
         'Somos um time brasileiro de pessoas curiosas por tecnologia. Unimos programação, engenharia de segurança e pesquisa aplicada para aprender juntos e contribuir com a comunidade.',
     },
     projects: {
-      title: 'Produtos',
-      description: 'Produtos e ferramentas de segurança construídos e mantidos pelo time Kiwibit.',
+      title: 'Projetos',
+      description: 'Projetos e ferramentas de segurança construídos e mantidos pelo time Kiwibit.',
     },
     blog: {
       title: 'Blog',
@@ -167,19 +167,26 @@ const pt: Dictionary = {
   },
 
   projectsTeaser: {
-    eyebrow: 'Produtos',
-    title: 'Produtos e ferramentas que construímos e mantemos.',
+    eyebrow: 'Projetos',
+    title: 'Projetos e ferramentas que construímos e mantemos.',
     description:
-      'A gente não só protege software, também constrói. Conheça os produtos e as ferramentas de segurança que desenvolvemos e usamos no dia a dia.',
-    cta: 'Conheça os produtos',
+      'A gente não só protege software, também constrói. Conheça os projetos e as ferramentas de segurança que desenvolvemos e usamos no dia a dia.',
+    cta: 'Conheça os projetos',
   },
 
   projects: {
     eyebrow: 'Destaques',
-    title: 'Produtos',
-    subtitle: 'Produtos e ferramentas de segurança, construídos e mantidos de forma aberta.',
+    title: 'Projetos',
+    subtitle: 'Projetos e ferramentas de segurança, construídos e mantidos de forma aberta.',
     viewAll: 'Ver todos os projetos',
+    showcase: {
+      role: 'carrossel',
+      previous: 'Projeto anterior',
+      next: 'Próximo projeto',
+      goTo: 'Ir para o projeto',
+    },
     labels: {
+      viewProject: 'Ver projeto',
       project: 'Projeto',
       live: 'Ao vivo',
       repository: 'Repositório',

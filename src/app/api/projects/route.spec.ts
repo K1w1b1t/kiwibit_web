@@ -79,3 +79,37 @@ describe('GET /api/projects/[id]', () => {
     expect(body.title).toBe('KiwiBit');
   });
 });
+
+describe('Project showcase query', () => {
+  it('filters and orders selected projects', async () => {
+    (prisma.project.findMany as jest.Mock).mockResolvedValue([PROJECT]);
+    (prisma.project.count as jest.Mock).mockResolvedValue(1);
+    await listProjects(makeReq('http://localhost/api/projects?featured=true&limit=6'));
+    expect(prisma.project.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { isFeatured: true },
+        take: 6,
+        orderBy: [{ featuredOrder: 'asc' }, { createdAt: 'desc' }, { id: 'asc' }],
+      }),
+    );
+  });
+  it('falls back to recent projects when no highlights exist', async () => {
+    (prisma.project.findMany as jest.Mock).mockResolvedValue([PROJECT]);
+    (prisma.project.count as jest.Mock).mockResolvedValue(0);
+    await listProjects(makeReq('http://localhost/api/projects?featured=true'));
+    expect(prisma.project.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {}, orderBy: { createdAt: 'desc' } }),
+    );
+  });
+  it('searches both translations and never exposes bucket keys', async () => {
+    (prisma.project.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.project.count as jest.Mock).mockResolvedValue(0);
+    await listProjects(makeReq('http://localhost/api/projects?search=English'));
+    const args = (prisma.project.findMany as jest.Mock).mock.calls.at(-1)[0];
+    expect(args.where.OR).toEqual(
+      expect.arrayContaining([{ titleEn: { contains: 'English', mode: 'insensitive' } }]),
+    );
+    expect(args.select.images.select.storagePath).toBeUndefined();
+    expect(args.select.titlePt).toBe(true);
+  });
+});
