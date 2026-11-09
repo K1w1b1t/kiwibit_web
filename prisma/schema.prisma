@@ -137,6 +137,12 @@ model Post {
   id             String     @id @default(uuid()) @db.Uuid
   title          String
   content        String
+  titlePt String? @map("title_pt")
+  titleEn String? @map("title_en")
+  contentPt String? @map("content_pt")
+  contentEn String? @map("content_en")
+  coverImageAltPt String? @map("cover_image_alt_pt")
+  coverImageAltEn String? @map("cover_image_alt_en")
   authorId       String     @map("author_id") @db.Uuid
   /// Only `published` rows are exposed by the public GET /api/posts.
   status         PostStatus @default(draft)

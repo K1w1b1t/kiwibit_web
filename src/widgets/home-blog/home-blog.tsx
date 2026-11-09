@@ -1,5 +1,6 @@
 'use client';
 
+import { localizePost } from '@/entities/post/model/localized-post';
 import Link from 'next/link';
 import { PostCover } from '@/shared/ui/post-cover';
 import { useHighlightedPosts } from '@/features/home/model/use-public-highlights';
@@ -81,37 +82,39 @@ export function HomeBlog({ locale, dict, showHeader = true }: HomeBlogProps) {
 
         {!isLoading && !error && items.length > 0 && (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {items.map((post) => (
-              <article
-                key={post.id}
-                id={`post-${post.id}`}
-                className="flex h-full flex-col rounded-2xl border border-slate-700/70 bg-slate-900/70 p-5"
-              >
-                <PostCover
-                  url={post.coverImageUrl}
-                  alt={post.coverImageAlt ?? post.title}
-                  sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
-                  className="mb-4 aspect-[16/9] w-full rounded-xl border border-white/10"
-                />
-                <p className="text-xs uppercase tracking-[0.16em] text-accent">
-                  {dict.labels.article}
-                </p>
-                <h3 className="mt-3 text-lg font-semibold">{post.title}</h3>
-                <p className="mt-3 text-sm text-slate-300">
-                  {dict.labels.author}: {post.author?.name ?? '—'}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {dict.labels.updated}{' '}
-                  {new Date(post.updatedAt).toLocaleDateString(htmlLang[locale])}
-                </p>
-                <Link
-                  href={`/${locale}/blog/${post.id}`}
-                  className="mt-6 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:border-white/80"
+            {items
+              .map((item) => localizePost(item, locale))
+              .map((post) => (
+                <article
+                  key={post.id}
+                  id={`post-${post.id}`}
+                  className="flex h-full flex-col rounded-2xl border border-slate-700/70 bg-slate-900/70 p-5"
                 >
-                  {dict.labels.readMore}
-                </Link>
-              </article>
-            ))}
+                  <PostCover
+                    url={post.coverImageUrl}
+                    alt={post.coverImageAlt ?? post.title}
+                    sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+                    className="mb-4 aspect-[16/9] w-full rounded-xl border border-white/10"
+                  />
+                  <p className="text-xs uppercase tracking-[0.16em] text-accent">
+                    {dict.labels.article}
+                  </p>
+                  <h3 className="mt-3 text-lg font-semibold">{post.title}</h3>
+                  <p className="mt-3 text-sm text-slate-300">
+                    {dict.labels.author}: {post.author?.name ?? '—'}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {dict.labels.updated}{' '}
+                    {new Date(post.updatedAt).toLocaleDateString(htmlLang[locale])}
+                  </p>
+                  <Link
+                    href={`/${locale}/blog/${post.id}`}
+                    className="mt-6 inline-flex w-fit rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:border-white/80"
+                  >
+                    {dict.labels.readMore}
+                  </Link>
+                </article>
+              ))}
           </div>
         )}
       </div>

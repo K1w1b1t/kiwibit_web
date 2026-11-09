@@ -1,3 +1,4 @@
+import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { NextResponse } from 'next/server';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
@@ -47,7 +48,13 @@ export async function PUT(request: Request, { params }: Params) {
     return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
   }
 
-  const parsed = validateUpdatePostBody(body);
+  const translated = parsePostTranslations(body as Record<string, unknown>, existing);
+  if (translated.error) return apiError('BAD_REQUEST', translated.error, 400);
+  const parsed = validateUpdatePostBody({
+    ...(body as Record<string, unknown>),
+    title: translated.data.title,
+    content: translated.data.content,
+  });
   if (parsed.failure) return failureResponse(parsed.failure);
   if (session.user.role === 'member' && parsed.data.status === 'published') {
     return apiError('FORBIDDEN', 'Only administrators can publish posts.', 403);
@@ -55,7 +62,10 @@ export async function PUT(request: Request, { params }: Params) {
 
   const updated = await prisma.post.update({
     where: { id },
-    data: toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
+    data: {
+      ...toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
+      ...translated.data,
+    },
   });
 
   if (updated.status === 'published' && existing.status !== 'published') {

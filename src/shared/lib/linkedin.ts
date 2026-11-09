@@ -408,7 +408,7 @@ export async function triggerLinkedInAutoPostForBlog(
   const input: LinkedInAutoPostInput = {
     title: post.title,
     summary: post.content.replace(/\s+/g, ' ').trim().slice(0, 180),
-    url: `${siteBase}/blog/${post.id}`,
+    url: `${siteBase}/${'titleEn' in post && post.titleEn && !('titlePt' in post && post.titlePt) ? 'en' : 'pt'}/blog/${post.id}`,
     imageUrl: post.coverImageUrl ?? null,
   };
 

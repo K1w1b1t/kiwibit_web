@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { PostTranslations } from '@/entities/post/model/localized-post';
 import type { PostStatus } from '@prisma/client';
 import {
   EMPTY_POST_FIELD_ERRORS,
@@ -22,7 +23,7 @@ import { SelectField } from '@/shared/ui/select-field';
 import { TextAreaField } from '@/shared/ui/text-area-field';
 import { TextField } from '@/shared/ui/text-field';
 
-export type PostInitial = {
+export type PostInitial = PostTranslations & {
   id: string;
   title: string;
   content: string;
@@ -39,6 +40,12 @@ type Props = {
 
 function toFormValues(initial?: PostInitial): PostFormValues {
   return {
+    titlePt: initial?.titlePt ?? (initial?.titleEn ? '' : (initial?.title ?? '')),
+    titleEn: initial?.titleEn ?? '',
+    contentPt: initial?.contentPt ?? (initial?.contentEn ? '' : (initial?.content ?? '')),
+    contentEn: initial?.contentEn ?? '',
+    coverImageAltPt: initial?.coverImageAltPt ?? initial?.coverImageAlt ?? '',
+    coverImageAltEn: initial?.coverImageAltEn ?? '',
     title: initial?.title ?? '',
     content: initial?.content ?? '',
     // New posts start as drafts so nothing goes live by accident.
@@ -98,16 +105,46 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
         }}
         className="space-y-4"
       >
-        <TextField
-          id={`${idPrefix}-title`}
-          label="Título"
-          required
-          value={form.title}
-          onChange={(event) => update('title', event.target.value)}
-          disabled={isSubmitting}
-          error={fieldErrors.title}
-          className="animate-fade-up delay-200"
-        />
+        <p className="text-sm text-white/60">
+          Preencha título e conteúdo em pelo menos um idioma. A tradução ausente usa o outro idioma.
+        </p>
+        {(['Pt', 'En'] as const).map((language) => (
+          <fieldset key={language} className="space-y-4 rounded-xl border border-white/10 p-4">
+            <legend className="px-2 font-semibold">
+              {language === 'Pt' ? 'Português' : 'Inglês'}
+            </legend>
+            <TextField
+              id={`${idPrefix}-title-${language}`}
+              label="Título"
+              value={form[`title${language}`] ?? ''}
+              onChange={(event) => update(`title${language}`, event.target.value)}
+              disabled={isSubmitting}
+              error={fieldErrors[`title${language}`]}
+            />
+            <TextAreaField
+              id={`${idPrefix}-content-${language}`}
+              label="Conteúdo"
+              rows={10}
+              value={form[`content${language}`] ?? ''}
+              onChange={(event) => update(`content${language}`, event.target.value)}
+              disabled={isSubmitting}
+              error={fieldErrors[`content${language}`]}
+            />
+            <TextField
+              id={`${idPrefix}-alt-${language}`}
+              label="Texto alternativo da capa"
+              value={form[`coverImageAlt${language}`] ?? ''}
+              onChange={(event) => update(`coverImageAlt${language}`, event.target.value)}
+              disabled={isSubmitting}
+              error={fieldErrors[`coverImageAlt${language}`]}
+            />
+          </fieldset>
+        ))}
+        {fieldErrors.title && (
+          <p role="alert" className="text-sm text-amber-200">
+            {fieldErrors.title}
+          </p>
+        )}
 
         <SelectField
           id={`${idPrefix}-status`}
@@ -120,18 +157,6 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
           error={fieldErrors.status}
           hint="Rascunho não aparece no blog público."
           className="animate-fade-up delay-200"
-        />
-
-        <TextAreaField
-          id={`${idPrefix}-content`}
-          label="Conteúdo"
-          required
-          rows={14}
-          value={form.content}
-          onChange={(event) => update('content', event.target.value)}
-          disabled={isSubmitting}
-          error={fieldErrors.content}
-          className="animate-fade-up delay-300"
         />
 
         <div className="animate-fade-up delay-400 space-y-3">
@@ -150,16 +175,6 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
                 coverImagePath: next.path,
               }))
             }
-          />
-
-          <TextField
-            id={`${idPrefix}-cover-alt`}
-            label="Texto alternativo da capa"
-            value={form.coverImageAlt}
-            onChange={(event) => update('coverImageAlt', event.target.value)}
-            disabled={isSubmitting}
-            placeholder="Descreva a imagem para leitores de tela"
-            error={fieldErrors.coverImageAlt}
           />
         </div>
 
