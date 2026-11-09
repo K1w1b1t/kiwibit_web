@@ -62,6 +62,8 @@ jobs:
           import { requireDatabaseSsl } from './src/shared/lib/database-url.ts';
 
           const databaseUrl = requireDatabaseSsl(process.env.DATABASE_URL);
+          const maskedValue = databaseUrl.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+          console.log(`::add-mask::${maskedValue}`);
           appendFileSync(process.env.GITHUB_ENV, `DATABASE_URL=${databaseUrl}\n`);
           NODE
 
