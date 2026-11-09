@@ -36,7 +36,6 @@ describe('AdminDashboardPage', () => {
     expect(el.props.posts).toBe(5);
     expect(el.props.members).toBe(3);
     expect(el.props.projects).toBe(2);
-    expect(el.props.users).toBe(4);
   });
 
   it('passa as listas recentes já mapeadas', async () => {

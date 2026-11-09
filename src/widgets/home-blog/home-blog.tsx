@@ -101,7 +101,7 @@ export function HomeBlog({ locale, dict, showHeader = true }: HomeBlogProps) {
                   </p>
                   <h3 className="mt-3 text-lg font-semibold">{post.title}</h3>
                   <p className="mt-3 text-sm text-slate-300">
-                    {dict.labels.author}: {post.author?.name ?? '—'}
+                    {dict.labels.author}: {post.author?.name ?? dict.labels.deletedUser}
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
                     {dict.labels.updated}{' '}

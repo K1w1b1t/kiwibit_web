@@ -8,7 +8,6 @@ type Props = {
   posts: number;
   members: number;
   projects: number;
-  users: number;
   recentPosts: readonly DashboardItem[];
   recentMembers: readonly DashboardItem[];
   recentProjects: readonly DashboardItem[];
@@ -19,7 +18,6 @@ export function AdminDashboard({
   posts,
   members,
   projects,
-  users,
   recentPosts,
   recentMembers,
   recentProjects,
@@ -43,12 +41,6 @@ export function AdminDashboard({
             delayClass="delay-300"
           />
         )}
-        <AdminMetricCard
-          label="Usuários"
-          value={users}
-          href="/admin/users"
-          delayClass="delay-400"
-        />
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
@@ -84,12 +76,6 @@ export function AdminDashboard({
             className="inline-block rounded-full bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-white/90"
           >
             Novo membro
-          </Link>
-          <Link
-            href="/admin/users/new"
-            className="inline-block rounded-full border border-white/35 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:border-white/80"
-          >
-            Novo usuário
           </Link>
         </div>
       )}

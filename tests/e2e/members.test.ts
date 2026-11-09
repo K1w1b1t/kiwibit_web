@@ -71,3 +71,63 @@ describe('Members CRUD — /api/admin/members', () => {
     expect(body.items).toHaveLength(0);
   });
 });
+
+describe('member account deletion', () => {
+  const ref = useAdminClient();
+
+  it('removes the linked account, preserves posts, and invalidates its session', async () => {
+    const email = `${TAG}-author@kiwibit.test`;
+    const password = 'Password#123!';
+    const response = await ref.client.post('/api/admin/members', {
+      name: 'Author',
+      account: { email, password, role: 'editor' },
+    });
+    expect(response.status).toBe(201);
+    const { data: member } = await response.json();
+    const author = anonClient();
+    const { csrfToken } = await (await author.get('/api/auth/csrf')).json();
+    await author.postForm('/api/auth/callback/credentials', {
+      csrfToken,
+      email,
+      password,
+      redirect: 'false',
+      json: 'true',
+      callbackUrl: '/',
+    });
+    const created = await author.post('/api/admin/posts', {
+      title: 'Retained author post',
+      content: 'Content',
+      status: 'published',
+    });
+    expect(created.status).toBe(201);
+    const { data: post } = await created.json();
+    expect((await ref.client.delete(`/api/admin/members/${member.id}`)).status).toBe(200);
+    expect((await ref.client.get(`/api/admin/users/${member.user.id}`)).status).toBe(404);
+    const retained = await (await anonClient().get(`/api/posts/${post.id}`)).json();
+    expect(retained.authorId).toBeNull();
+    expect(retained.author).toBeNull();
+    expect((await author.get('/api/admin/posts')).status).toBe(401);
+    expect((await ref.client.get(`/api/admin/posts/${post.id}`)).status).toBe(200);
+  });
+});
+
+describe('optional account management', () => {
+  const ref = useAdminClient();
+  it('creates an account later and rejects a second account', async () => {
+    const response = await ref.client.post('/api/admin/members', { name: 'Optional account' });
+    expect(response.status).toBe(201);
+    const { data: member } = await response.json();
+    const body = {
+      email: `${TAG}-optional@kiwibit.test`,
+      password: 'Password#123!',
+      role: 'member',
+    };
+    expect((await ref.client.post(`/api/admin/members/${member.id}/account`, body)).status).toBe(
+      201,
+    );
+    expect((await ref.client.post(`/api/admin/members/${member.id}/account`, body)).status).toBe(
+      409,
+    );
+    expect((await ref.client.delete(`/api/admin/members/${member.id}`)).status).toBe(200);
+  });
+});

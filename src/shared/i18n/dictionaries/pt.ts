@@ -212,6 +212,7 @@ const pt: Dictionary = {
     labels: {
       article: 'Artigo',
       author: 'Autor',
+      deletedUser: 'Usuário excluído',
       updated: 'Atualizado',
       readMore: 'Ler artigo',
     },

@@ -463,3 +463,31 @@ type ErrorResponse = ApiError;
 - Autenticacao/autorizacao com sessao server-side para `/admin/*`
 - Prisma + banco Postgres (Supabase) para persistencia
 - CI com aplicacao de migrations em merge para `release` e `main`
+
+## Member accounts and retained post authors
+
+Account management is available from the member edit page and from **Minha conta**.
+The former `/admin/users` pages redirect to members or the current account. The
+user APIs remain available with their existing authorization requirements.
+Deleting a member also deletes its linked account; associated posts remain with a
+null author and are displayed as a deleted user. The current user's own account
+and the last administrator cannot be deleted through the member action.
+
+Before releasing, inventory each target database using a read-only connection.
+Do not publish individual account information in the PR. If any non-admin account
+has no member, resolve that account explicitly before release; never create a
+public member profile automatically.
+
+```sql
+SELECT u.role, count(*) AS accounts,
+       count(*) FILTER (WHERE m.id IS NULL) AS without_member,
+       count(*) FILTER (WHERE m.id IS NULL AND EXISTS
+         (SELECT 1 FROM posts p WHERE p.author_id = u.id)) AS without_member_with_posts
+FROM users u LEFT JOIN members m ON m.user_id = u.id GROUP BY u.role;
+SELECT count(*) AS members, count(*) FILTER (WHERE user_id IS NULL) AS without_account
+FROM members;
+```
+
+Deploy the `preserve_posts_on_user_deletion` migration before the application.
+Rolling back application code must preserve the nullable author column and foreign
+key, because retained posts can already have a null author.

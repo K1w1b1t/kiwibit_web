@@ -52,7 +52,7 @@ export function postsToDashboardItems(posts: readonly RecentPost[]): DashboardIt
   return posts.map((post) => ({
     id: post.id,
     title: post.title,
-    meta: `${post.author?.name ?? 'Autor removido'} · ${shortDate(post.createdAt)}`,
+    meta: `${post.author?.name ?? 'Usuário excluído'} · ${shortDate(post.createdAt)}`,
     tag: post.status === 'published' ? 'Publicado' : 'Rascunho',
     href: `/admin/posts/${post.id}/edit`,
   }));

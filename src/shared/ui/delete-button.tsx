@@ -12,6 +12,7 @@ type Props = {
   /** Navigate here after deleting; omit to just refresh in place. */
   redirectTo?: string;
   label?: string;
+  description?: string;
 };
 
 /**
@@ -23,6 +24,7 @@ export function DeleteButton({
   resourceLabel,
   redirectTo,
   label = 'Excluir',
+  description = 'Esta ação não pode ser desfeita.',
 }: Readonly<Props>) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -70,7 +72,7 @@ export function DeleteButton({
       <ConfirmDialog
         open={open}
         title={`Excluir ${resourceLabel}?`}
-        description="Esta ação não pode ser desfeita."
+        description={description}
         confirmLabel="Excluir"
         isBusy={isBusy}
         onConfirm={() => void handleConfirm()}
