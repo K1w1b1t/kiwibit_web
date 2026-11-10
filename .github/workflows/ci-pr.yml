@@ -36,6 +36,9 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:cov
 
+      - name: Verify native provider patch integrity
+        run: npm run test:mcp-patch
+
       - name: Verify OAuth provider refresh lifecycle
         run: npm run test:mcp-provider
 

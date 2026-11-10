@@ -1,6 +1,6 @@
-import { handleMcp } from '@/features/mcp/model/mcp-handler';
-
+export {
+  handleMcp as POST,
+  handleMcp as GET,
+  handleMcp as DELETE,
+} from '@/features/mcp/model/mcp-handler';
 export const runtime = 'nodejs';
-export const POST = handleMcp;
-export const GET = handleMcp;
-export const DELETE = handleMcp;

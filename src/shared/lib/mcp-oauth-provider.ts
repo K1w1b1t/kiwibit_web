@@ -31,11 +31,11 @@ function buildMcpAuth() {
     allowPublicClientPrelogin: true,
     postLogin: {
       page: '/api/mcp-auth/browser',
-      shouldRedirect: async () => false,
-      consentReferenceId: async ({ session }) => {
+      shouldRedirect: () => Promise.resolve(false),
+      consentReferenceId: ({ session }) => {
         if (typeof session.connectionId !== 'string')
           throw new APIError('UNAUTHORIZED', { code: 'MCP_CONNECTION_BINDING_MISSING' });
-        return session.connectionId;
+        return Promise.resolve(session.connectionId);
       },
     },
   };

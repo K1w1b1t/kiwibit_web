@@ -5,6 +5,62 @@ import { readBoundedBody } from '@/shared/lib/read-bounded-body';
 import { acceptMcpConsent, showMcpConsent } from './browser-authorization';
 import { recordMcpSecurityOutcome } from '@/shared/lib/mcp-security';
 
+const permittedPaths: Record<string, readonly string[]> = {
+  GET: ['/oauth2/authorize', '/browser'],
+  POST: ['/oauth2/token', '/oauth2/revoke', '/browser'],
+};
+
+async function validGrantUser(body: string | undefined) {
+  if (!body) return true;
+  const form = new URLSearchParams(body);
+  const grantType = form.get('grant_type');
+  if (grantType !== 'authorization_code' && grantType !== 'refresh_token') return true;
+  try {
+    await getMcpAuth().api.validatePanelGrantUser({
+      body: {
+        grantType,
+        value: form.get(grantType === 'authorization_code' ? 'code' : 'refresh_token') ?? '',
+      },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function forwardProviderRequest(request: Request, path: string) {
+  const headers = new Headers(request.headers);
+  headers.delete('cookie');
+  const body = request.method === 'POST' ? await readBoundedBody(request, 16000) : undefined;
+  if (path === '/oauth2/token' && !(await validGrantUser(body))) {
+    return Response.json(
+      { error: 'invalid_grant' },
+      { status: 400, headers: { 'cache-control': 'no-store' } },
+    );
+  }
+  const response = await getMcpAuth().handler(
+    new Request(request.url, { method: request.method, headers, body }),
+  );
+  response.headers.set('cache-control', 'no-store');
+  return response;
+}
+
+function oauthFailure(error: unknown) {
+  const disabled = error instanceof Error && error.message === 'MCP_DISABLED';
+  if (!disabled) recordMcpSecurityOutcome('OAUTH_REJECTED');
+  return Response.json(
+    {
+      error: {
+        code: disabled ? 'NOT_FOUND' : 'MCP_UNAVAILABLE',
+        message: disabled
+          ? 'MCP is disabled.'
+          : 'Authorization is unavailable. Restart the connection flow.',
+      },
+    },
+    { status: disabled ? 404 : 503, headers: { 'cache-control': 'no-store' } },
+  );
+}
+
 export async function handleMcpOAuth(request: Request) {
   try {
     const settings = getMcpSettings();
@@ -12,13 +68,7 @@ export async function handleMcpOAuth(request: Request) {
     if (url.origin !== settings.origin || url.search.length > 16000)
       return new Response('Invalid canonical origin.', { status: 400 });
     const path = url.pathname.slice('/api/mcp-auth'.length);
-    const permitted =
-      request.method === 'GET'
-        ? ['/oauth2/authorize', '/browser']
-        : request.method === 'POST'
-          ? ['/oauth2/token', '/oauth2/revoke', '/browser']
-          : [];
-    if (!permitted.includes(path)) return new Response(null, { status: 404 });
+    if (!permittedPaths[request.method]?.includes(path)) return new Response(null, { status: 404 });
     const limit = await takeMcpRateLimit(
       path === '/oauth2/token' ? 'oauth-token-ip' : 'oauth-authorization-ip',
       mcpRequestIp(request),
@@ -34,47 +84,8 @@ export async function handleMcpOAuth(request: Request) {
       return request.method === 'GET'
         ? await showMcpConsent(request)
         : await acceptMcpConsent(request);
-    const headers = new Headers(request.headers);
-    headers.delete('cookie');
-    let body: string | undefined;
-    if (request.method === 'POST') body = await readBoundedBody(request, 16000);
-    if (path === '/oauth2/token' && body) {
-      const form = new URLSearchParams(body);
-      const grantType = form.get('grant_type');
-      if (grantType === 'authorization_code' || grantType === 'refresh_token') {
-        try {
-          await getMcpAuth().api.validatePanelGrantUser({
-            body: {
-              grantType,
-              value: form.get(grantType === 'authorization_code' ? 'code' : 'refresh_token') ?? '',
-            },
-          });
-        } catch {
-          return Response.json(
-            { error: 'invalid_grant' },
-            { status: 400, headers: { 'cache-control': 'no-store' } },
-          );
-        }
-      }
-    }
-    const response = await getMcpAuth().handler(
-      new Request(request.url, { method: request.method, headers, body }),
-    );
-    response.headers.set('cache-control', 'no-store');
-    return response;
+    return await forwardProviderRequest(request, path);
   } catch (error) {
-    const disabled = error instanceof Error && error.message === 'MCP_DISABLED';
-    if (!disabled) recordMcpSecurityOutcome('OAUTH_REJECTED');
-    return Response.json(
-      {
-        error: {
-          code: disabled ? 'NOT_FOUND' : 'MCP_UNAVAILABLE',
-          message: disabled
-            ? 'MCP is disabled.'
-            : 'Authorization is unavailable. Restart the connection flow.',
-        },
-      },
-      { status: disabled ? 404 : 503, headers: { 'cache-control': 'no-store' } },
-    );
+    return oauthFailure(error);
   }
 }

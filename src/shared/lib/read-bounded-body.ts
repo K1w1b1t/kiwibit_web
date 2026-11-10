@@ -9,7 +9,7 @@ export async function readBoundedBody(request: Request, maximum: number): Promis
       if (part.done) break;
       size += part.value.byteLength;
       if (size > maximum) {
-        await reader.cancel();
+        await reader.cancel(); // NOSONAR: Cancel the active stream before throwing and releasing its reader.
         throw new Error('REQUEST_TOO_LARGE');
       }
       chunks.push(part.value);

@@ -5,24 +5,26 @@ import { managedObjectKey } from '@/shared/lib/storage';
 export async function trackPostImages(transaction: Prisma.TransactionClient, post: Post) {
   const references = [...postImageReferences(post)];
   const paths = [...new Set([post.coverImagePath, ...references.map(managedObjectKey)])];
-  for (const path of paths) {
-    if (!path || !/^posts\/(?:mcp\/)?[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|avif)$/.test(path))
-      continue;
-    const url =
-      references.find((value) => managedObjectKey(value) === path) ?? post.coverImageUrl ?? '';
-    await transaction.mcpImagePreparation.upsert({
-      where: { storagePath: path },
-      create: {
-        storagePath: path,
-        url,
-        mimeType: 'application/octet-stream',
-        connectionId: 'panel-cleanup',
-        state: 'attached',
-        expiresAt: new Date(),
-      },
-      update: {},
-    });
-  }
+  await Promise.all(
+    paths.map(async (path) => {
+      if (!path || !/^posts\/(?:mcp\/)?[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|avif)$/.test(path))
+        return;
+      const url =
+        references.find((value) => managedObjectKey(value) === path) ?? post.coverImageUrl ?? '';
+      await transaction.mcpImagePreparation.upsert({
+        where: { storagePath: path },
+        create: {
+          storagePath: path,
+          url,
+          mimeType: 'application/octet-stream',
+          connectionId: 'panel-cleanup',
+          state: 'attached',
+          expiresAt: new Date(),
+        },
+        update: {},
+      });
+    }),
+  );
 }
 
 /** Shared database lock for media attachment, panel writes, and object cleanup. */
@@ -58,16 +60,18 @@ export async function syncPostMedia(transaction: Prisma.TransactionClient, post:
   await transaction.postMedia.deleteMany({
     where: { postId: post.id, url: { notIn: references } },
   });
-  for (const image of preparations) {
-    await transaction.postMedia.upsert({
-      where: { postId_storagePath: { postId: post.id, storagePath: image.storagePath } },
-      create: {
-        postId: post.id,
-        preparationId: image.id,
-        storagePath: image.storagePath,
-        url: image.url,
-      },
-      update: {},
-    });
-  }
+  await Promise.all(
+    preparations.map((image) =>
+      transaction.postMedia.upsert({
+        where: { postId_storagePath: { postId: post.id, storagePath: image.storagePath } },
+        create: {
+          postId: post.id,
+          preparationId: image.id,
+          storagePath: image.storagePath,
+          url: image.url,
+        },
+        update: {},
+      }),
+    ),
+  );
 }

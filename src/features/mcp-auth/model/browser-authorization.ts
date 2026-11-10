@@ -32,13 +32,12 @@ export async function showMcpConsent(request: Request) {
   if (query.length > 16000 || !(await verifyOAuthQueryParams(query, settings.secret)))
     return new Response('Invalid authorization transaction.', { status: 400, headers: noStore });
   const user = await browserUser();
-  if (!user)
+  if (!user) {
+    const callback = `/api/mcp-auth/browser?${query}`;
     return NextResponse.redirect(
-      new URL(
-        `/login?callbackUrl=${encodeURIComponent(`/api/mcp-auth/browser?${query}`)}`,
-        settings.origin,
-      ),
+      new URL(`/login?callbackUrl=${encodeURIComponent(callback)}`, settings.origin),
     );
+  }
   const params = new URLSearchParams(query);
   const clientId = params.get('client_id');
   const redirect = params.get('redirect_uri');

@@ -1,3 +1,5 @@
+import type { McpImagePreparation } from '@prisma/client';
+import type { z } from 'zod';
 import { createHash } from 'node:crypto';
 import { prisma } from '@/shared/lib/prisma';
 import { getMcpSettings } from '@/shared/config/mcp';
@@ -10,6 +12,48 @@ import { createPostWithMedia } from '@/entities/post/model/create-post-with-medi
 import { takeMcpRateLimit } from '@/shared/lib/mcp-rate-limit';
 import { createPostDraftSchema, McpToolError, type McpPrincipal } from './tool-schemas';
 import { recordMcpSecurityOutcome } from '@/shared/lib/mcp-security';
+
+function validateManagedImageUrls(usedUrls: ReadonlySet<string>, allowed: ReadonlySet<string>) {
+  const origins = managedStorageOrigins();
+  for (const url of usedUrls) {
+    let origin: string;
+    try {
+      origin = new URL(url, getMcpSettings().origin).origin;
+    } catch {
+      throw new McpToolError('INVALID_IMAGE_REFERENCE');
+    }
+    if (origins.includes(origin) && !allowed.has(url))
+      throw new McpToolError('FOREIGN_IMAGE_REFERENCE');
+  }
+}
+
+function resolveDraftImages(
+  input: z.infer<typeof createPostDraftSchema>,
+  images: McpImagePreparation[],
+) {
+  const body: Record<string, unknown> = { ...input };
+  for (const field of ['contentPt', 'contentEn'] as const) {
+    let content = input[field];
+    if (content === undefined) continue;
+    for (const image of images) content = content.replaceAll(`mcp-image:${image.id}`, image.url);
+    if (content.includes('mcp-image:')) throw new McpToolError('INVALID_IMAGE_REFERENCE');
+    body[field] = content;
+  }
+  const normalized = normalizePostContent(body);
+  const translated = parsePostTranslations(normalized.body);
+  if (normalized.error || translated.error) throw new McpToolError('INVALID_DRAFT');
+  const cover = images.find((image) => image.id === input.coverImageRef);
+  const postData = {
+    ...translated.data,
+    contentFormat: input.contentFormat,
+    coverImageUrl: cover?.url ?? null,
+    coverImagePath: cover?.storagePath ?? null,
+  };
+  const usedUrls = postImageReferences(postData);
+  validateManagedImageUrls(usedUrls, new Set(images.map((image) => image.url)));
+  const consumed = images.filter((image) => usedUrls.has(image.url));
+  return { postData, consumed };
+}
 
 export async function createPostDraft(principal: McpPrincipal, raw: unknown) {
   const parsed = createPostDraftSchema.safeParse(raw);
@@ -48,39 +92,7 @@ export async function createPostDraft(principal: McpPrincipal, raw: unknown) {
         },
       });
       if (images.length !== references.length) throw new McpToolError('INVALID_IMAGE_REFERENCE');
-      const body: Record<string, unknown> = { ...input };
-      for (const field of ['contentPt', 'contentEn'] as const) {
-        let content = input[field];
-        if (content === undefined) continue;
-        for (const image of images)
-          content = content.replaceAll(`mcp-image:${image.id}`, image.url);
-        if (content.includes('mcp-image:')) throw new McpToolError('INVALID_IMAGE_REFERENCE');
-        body[field] = content;
-      }
-      const normalized = normalizePostContent(body);
-      const translated = parsePostTranslations(normalized.body);
-      if (normalized.error || translated.error) throw new McpToolError('INVALID_DRAFT');
-      const cover = images.find((image) => image.id === input.coverImageRef);
-      const postData = {
-        ...translated.data,
-        contentFormat: input.contentFormat,
-        coverImageUrl: cover?.url ?? null,
-        coverImagePath: cover?.storagePath ?? null,
-      };
-      const usedUrls = postImageReferences(postData);
-      const allowed = new Set(images.map((image) => image.url));
-      const origins = managedStorageOrigins();
-      for (const url of usedUrls) {
-        let origin: string;
-        try {
-          origin = new URL(url, getMcpSettings().origin).origin;
-        } catch {
-          throw new McpToolError('INVALID_IMAGE_REFERENCE');
-        }
-        if (origins.includes(origin) && !allowed.has(url))
-          throw new McpToolError('FOREIGN_IMAGE_REFERENCE');
-      }
-      const consumed = images.filter((image) => usedUrls.has(image.url));
+      const { postData, consumed } = resolveDraftImages(input, images);
       const changed = await tx.mcpImagePreparation.updateMany({
         where: {
           id: { in: consumed.map((image) => image.id) },

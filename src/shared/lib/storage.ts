@@ -204,10 +204,8 @@ export async function deleteObjects(keys: readonly string[]): Promise<boolean> {
 
   for (const key of usable) {
     try {
-      const response = await client.fetch(writeUrl(config, key), {
-        method: 'DELETE',
-        signal: AbortSignal.timeout(15000),
-      });
+      const options = { method: 'DELETE', signal: AbortSignal.timeout(15000) };
+      const response = await client.fetch(writeUrl(config, key), options); // NOSONAR: Keep storage concurrency bounded and deletion best-effort.
       // 404 means it is already gone, which satisfies the intent.
       if (!response.ok && response.status !== 404) allOk = false;
     } catch {

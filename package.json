@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "postinstall": "patch-package --error-on-fail",
+    "postinstall": "node scripts/apply-mcp-provider-patch.mts",
     "prepare": "husky",
     "dev": "next dev",
     "build": "prisma generate --schema=prisma/schema.prisma && next build --webpack",
@@ -25,7 +25,8 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-pattern \"docs/design_examples_disabled/**\" --ignore-pattern \"coverage/**\"",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:mcp-patch": "node --test tests/security/mcp-provider-patch.test.mts"
   },
   "dependencies": {
     "@better-auth/cimd": "1.7.19",
@@ -45,7 +46,6 @@
     "markdown-it": "^15.0.3",
     "next": "^16.4.3",
     "next-auth": "^4.24.15",
-    "patch-package": "8.0.1",
     "pg": "^8.20.0",
     "posthog-js": "^1.433.5",
     "posthog-node": "^5.21.0",

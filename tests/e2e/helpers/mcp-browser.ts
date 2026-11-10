@@ -37,7 +37,7 @@ export async function verifyMcpBrowserFlow(pool: Pool, clientId: string) {
     for (let attempt = 0; attempt < 150; attempt += 1) {
       if (await operation()) return;
       if (driverError) throw new Error('ChromeDriver unavailable');
-      await delay();
+      await delay(); // NOSONAR: Sequential backoff prevents overlapping polls and busy waiting.
     }
     throw new Error('Browser condition timed out');
   }
@@ -83,14 +83,12 @@ export async function verifyMcpBrowserFlow(pool: Pool, clientId: string) {
       ['email', ADMIN_EMAIL],
       ['password', ADMIN_PASSWORD],
     ]) {
-      const element = await webdriver<Record<string, string>>(`/session/${sessionId}/element`, {
-        using: 'css selector',
-        value: `input[type=${type}]`,
-      });
-      await webdriver(
-        `/session/${sessionId}/element/${element['element-6066-11e4-a52e-4f735466cecf']}/value`,
-        { text },
+      const element = await webdriver<Record<string, string>>( // NOSONAR: Browser focus and React updates require ordered field interactions.
+        `/session/${sessionId}/element`,
+        { using: 'css selector', value: `input[type=${type}]` },
       );
+      const valuePath = `/session/${sessionId}/element/${element['element-6066-11e4-a52e-4f735466cecf']}/value`;
+      await webdriver(valuePath, { text }); // NOSONAR: Complete keyboard input before locating the next field.
     }
     await execute('document.querySelector("button[type=submit]").click()');
     await waitFor(() => execute<boolean>('return location.pathname==="/admin"'));

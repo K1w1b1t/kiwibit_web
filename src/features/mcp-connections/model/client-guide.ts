@@ -11,7 +11,8 @@ export function buildMcpClientGuide(client: McpClient, origin: string) {
   if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password)
     throw new Error('Invalid site origin');
   const endpoint = `${parsed.origin}/api/mcp`;
-  const quotedEndpoint = `'${endpoint.replaceAll("'", "'\\''")}'`;
+  const escapedEndpoint = endpoint.replaceAll("'", String.raw`'\''`);
+  const quotedEndpoint = `'${escapedEndpoint}'`;
   const name = `kiwibit-${parsed.host.replace(/[^a-zA-Z0-9-]/g, '-')}`;
   const common = [
     'Entre no Kiwibit com a sua conta quando o navegador abrir.',

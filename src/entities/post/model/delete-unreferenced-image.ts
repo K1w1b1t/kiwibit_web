@@ -39,12 +39,20 @@ export async function deleteUnreferencedPostImage(path: string) {
           },
           update: { state: 'attached' },
         });
-        for (const post of referenced)
-          await tx.postMedia.upsert({
-            where: { postId_storagePath: { postId: post.id, storagePath: path } },
-            create: { postId: post.id, storagePath: path, url: image.url, preparationId: image.id },
-            update: { preparationId: image.id },
-          });
+        await Promise.all(
+          referenced.map((post) =>
+            tx.postMedia.upsert({
+              where: { postId_storagePath: { postId: post.id, storagePath: path } },
+              create: {
+                postId: post.id,
+                storagePath: path,
+                url: image.url,
+                preparationId: image.id,
+              },
+              update: { preparationId: image.id },
+            }),
+          ),
+        );
         return false;
       }
       const existing = await tx.mcpImagePreparation.findUnique({ where: { storagePath: path } });

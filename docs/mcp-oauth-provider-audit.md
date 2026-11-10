@@ -19,7 +19,7 @@ npm run test:mcp-provider
 
 Use Node.js 24.22.2, as required by this repository. The suite pins Better Auth,
 its MCP plugin, and its OAuth provider to 1.7.19. The provider is mounted only under `/api/mcp-auth` in Next.js. The repository applies a local dependency patch at install time using
-`patch-package --error-on-fail`; a failed patch must fail installation.
+the dependency-free Node installer (`scripts/apply-mcp-provider-patch.mts`); a failed patch must fail installation. The installer uses Node built-ins and Git, without patch-package or its transitive dependencies.
 
 The fixture uses the provider's public server-side issuance API to create two
 grants with distinct `referenceId` values for the same synthetic user and client.

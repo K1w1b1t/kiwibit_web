@@ -24,7 +24,7 @@ export async function cleanupMcp() {
     for (const image of candidates) {
       if (Date.now() >= deadline) break;
       inspected.add(image.storagePath);
-      if (await deleteUnreferencedPostImage(image.storagePath)) deleted += 1;
+      if (await deleteUnreferencedPostImage(image.storagePath)) deleted += 1; // NOSONAR: Sequential deletion preserves the job deadline and bounds storage concurrency.
     }
   }
   await prisma.mcpBrowserTransaction.deleteMany({ where: { expiresAt: { lt: new Date() } } });

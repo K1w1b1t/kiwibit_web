@@ -30,6 +30,16 @@ export function MemberMcpPanel() {
     setPending(null);
   }
 
+  let formStatus: 'idle' | 'error' | 'success' = 'idle';
+  if (error) formStatus = 'error';
+  else if (message) formStatus = 'success';
+
+  function connectionLabel(connected: boolean) {
+    if (loading) return 'Consultando…';
+    if (error || !data) return 'Status indisponível';
+    return connected ? 'Conectado' : 'Não conectado';
+  }
+
   return (
     <section
       className="card-glow mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6"
@@ -61,7 +71,7 @@ export function MemberMcpPanel() {
       </p>
       <div className="mt-4" role="status" aria-live="polite">
         {loading && <p className="text-sm text-white/60">Consultando conexões…</p>}
-        <FormStatus status={error ? 'error' : message ? 'success' : 'idle'} message={message} />
+        <FormStatus status={formStatus} message={message} />
         {data && !data.enabled && (
           <p className="text-sm text-amber-200">
             Novas conexões ainda não estão disponíveis neste ambiente. Você pode consultar o passo a
@@ -89,15 +99,7 @@ export function MemberMcpPanel() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="font-medium text-white">{MCP_CLIENT_LABELS[client]}</h3>
                 <span className={connected ? 'text-xs text-emerald-300' : 'text-xs text-white/50'}>
-                  {loading
-                    ? 'Consultando…'
-                    : error
-                      ? 'Status indisponível'
-                      : data
-                        ? connected
-                          ? 'Conectado'
-                          : 'Não conectado'
-                        : 'Status indisponível'}
+                  {connectionLabel(connected)}
                 </span>
               </div>
               <Button

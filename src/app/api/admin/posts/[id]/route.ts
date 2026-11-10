@@ -124,9 +124,11 @@ export async function DELETE(_req: Request, { params }: Params) {
   if (existing.coverImagePath) {
     await deleteUnreferencedPostImage(existing.coverImagePath);
   }
-  for (const image of media)
-    if (image.storagePath !== existing.coverImagePath)
-      await deleteUnreferencedPostImage(image.storagePath);
+  await Promise.all(
+    media
+      .filter((image) => image.storagePath !== existing.coverImagePath)
+      .map((image) => deleteUnreferencedPostImage(image.storagePath)),
+  );
 
   return NextResponse.json({ success: true });
 }

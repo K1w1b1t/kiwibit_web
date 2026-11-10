@@ -43,7 +43,7 @@ async function beginAuthorization(browser: ApiClient) {
   }
   expect(page.status).toBe(200);
   const html = await page.text();
-  expect(html.includes('Autorizar conexão')).toBe(true);
+  expect(html.includes('Autorizar conexão')).toBe(true); // NOSONAR: Avoid printing the full consent HTML and its CSRF credentials when this assertion fails.
   return { verifier, fields: hiddenFields(html) };
 }
 

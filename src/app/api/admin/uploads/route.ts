@@ -1,3 +1,4 @@
+import { resolvePostUploadOwner } from '@/features/admin/posts/model/post-upload-owner';
 import { prisma } from '@/shared/lib/prisma';
 import { NextResponse } from 'next/server';
 import { requireAdminSession, requirePanelSession, apiError } from '@/shared/lib/api-helpers';
@@ -37,21 +38,8 @@ export async function POST(request: Request) {
   if (!isUploadScope(scope)) {
     return apiError('BAD_REQUEST', 'scope must be projects, posts or members.', 400);
   }
-  if (session.user.role === 'member' && scope !== 'members') {
-    const postId = form.get('postId');
-    if (
-      scope !== 'posts' ||
-      typeof postId !== 'string' ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId)
-    )
-      return apiError('FORBIDDEN', 'A post owned by the member is required.', 403);
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-      select: { authorId: true },
-    });
-    if (!post || post.authorId !== session.user.id)
-      return apiError('FORBIDDEN', 'A post owned by the member is required.', 403);
-  }
+  const ownership = await resolvePostUploadOwner(session.user, scope, form.get('postId'));
+  if (ownership.error) return ownership.error;
 
   if (!isStorageConfigured()) {
     return apiError('STORAGE_UNAVAILABLE', 'Storage is not configured on this environment.', 503);
@@ -78,20 +66,9 @@ export async function POST(request: Request) {
 
   let preparationId: string | undefined;
   if (scope === 'posts') {
-    let ownerId: string | null = session.user.id;
-    const postId = form.get('postId');
-    if (session.user.role !== 'member' && typeof postId === 'string') {
-      if (!/^[0-9a-f-]{36}$/i.test(postId)) return apiError('BAD_REQUEST', 'Invalid postId.', 400);
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true },
-      });
-      if (!post) return apiError('NOT_FOUND', 'Post not found.', 404);
-      ownerId = post.authorId;
-    }
     const preparation = await prisma.mcpImagePreparation.create({
       data: {
-        userId: ownerId,
+        userId: ownership.ownerId,
         connectionId: 'panel-upload',
         storagePath: key,
         url: '',
