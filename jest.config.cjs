@@ -4,7 +4,19 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.spec.ts', '**/*.spec.tsx'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(htmlparser2|domhandler|domutils|domelementtype|dom-serializer|entities|is-plain-object)/)',
+  ],
   transform: {
+    '^.+\\.js$': [
+      'babel-jest',
+      {
+        plugins: [
+          '@babel/plugin-transform-export-namespace-from',
+          '@babel/plugin-transform-modules-commonjs',
+        ],
+      },
+    ],
     // Sobrepõe o transform do preset: o tsconfig do Next usa jsx "preserve", que não roda em node
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
   },

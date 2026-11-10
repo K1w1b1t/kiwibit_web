@@ -162,3 +162,37 @@ describe('Bilingual posts', () => {
     }
   });
 });
+
+describe('Rich post content — /api/admin/posts', () => {
+  const ref = useAdminClient();
+  it('persists sanitized bilingual HTML, preserves omitted translations and exposes safe public content', async () => {
+    const response = await ref.client.post('/api/admin/posts', {
+      titlePt: `Rich post ${TAG}`,
+      contentPt: '<h2 onclick="alert(1)">Portuguese article content</h2><script>alert(1)</script>',
+      titleEn: `Rich English ${TAG}`,
+      contentEn: '<p><strong>English article content</strong> 🚀</p>',
+      contentFormat: 'html',
+      status: 'published',
+    });
+    expect(response.status).toBe(201);
+    const { data } = await response.json();
+    try {
+      expect(data.contentFormat).toBe('html');
+      expect(data.contentPt).toBe('<h2>Portuguese article content</h2>');
+      const updated = await ref.client.put(`/api/admin/posts/${data.id}`, {
+        contentPt: 'Updated <literal> Portuguese article',
+      });
+      expect(updated.status).toBe(200);
+      const { data: next } = await updated.json();
+      expect(next.contentPt).toContain('&lt;literal&gt;');
+      expect(next.contentEn).toBe(data.contentEn);
+      const publicResponse = await anonClient().get(`/api/posts/${data.id}`);
+      expect(publicResponse.status).toBe(200);
+      const publicPost = await publicResponse.json();
+      expect(publicPost.contentFormat).toBe('html');
+      expect(publicPost.content).not.toMatch(/onclick|<script>/);
+    } finally {
+      await ref.client.delete(`/api/admin/posts/${data.id}`);
+    }
+  });
+});

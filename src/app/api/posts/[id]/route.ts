@@ -1,3 +1,4 @@
+import { sanitizeRichText } from '@/shared/lib/sanitize-rich-text';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { apiError } from '@/shared/lib/api-helpers';
@@ -16,5 +17,14 @@ export async function GET(_req: Request, { params }: Params) {
   // A draft is indistinguishable from a non-existent post to the public — a
   // distinct status would leak that the id exists.
   if (post.status !== 'published') return apiError('NOT_FOUND', 'Post not found.', 404);
-  return NextResponse.json(post);
+  return NextResponse.json(
+    post.contentFormat === 'html'
+      ? {
+          ...post,
+          content: sanitizeRichText(post.content),
+          contentPt: post.contentPt === null ? null : sanitizeRichText(post.contentPt),
+          contentEn: post.contentEn === null ? null : sanitizeRichText(post.contentEn),
+        }
+      : post,
+  );
 }

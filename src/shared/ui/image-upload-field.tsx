@@ -18,6 +18,8 @@ export type ImageValue = {
 };
 
 type Props = {
+  postId?: string;
+  onUploadingChange?: (busy: boolean) => void;
   id: string;
   label: string;
   scope: UploadScope;
@@ -37,6 +39,8 @@ type Props = {
  * the delete logic knows not to try removing it from our bucket.
  */
 export function ImageUploadField({
+  postId,
+  onUploadingChange,
   id,
   label,
   scope,
@@ -59,10 +63,12 @@ export function ImageUploadField({
 
     setUploadError('');
     setIsUploading(true);
+    onUploadingChange?.(true);
 
-    const result = await uploadImage(file, scope);
+    const result = await uploadImage(file, scope, postId);
 
     setIsUploading(false);
+    onUploadingChange?.(false);
     if (!result.ok) {
       setUploadError(result.message);
       return;

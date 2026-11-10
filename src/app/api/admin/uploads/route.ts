@@ -1,3 +1,4 @@
+import { prisma } from '@/shared/lib/prisma';
 import { NextResponse } from 'next/server';
 import { requireAdminSession, requirePanelSession, apiError } from '@/shared/lib/api-helpers';
 import { deleteObjects, isStorageConfigured, putObject } from '@/shared/lib/storage';
@@ -36,7 +37,19 @@ export async function POST(request: Request) {
     return apiError('BAD_REQUEST', 'scope must be projects, posts or members.', 400);
   }
   if (session.user.role === 'member' && scope !== 'members') {
-    return apiError('FORBIDDEN', 'Members can upload images only for their profile.', 403);
+    const postId = form.get('postId');
+    if (
+      scope !== 'posts' ||
+      typeof postId !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId)
+    )
+      return apiError('FORBIDDEN', 'A post owned by the member is required.', 403);
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
+    });
+    if (!post || post.authorId !== session.user.id)
+      return apiError('FORBIDDEN', 'A post owned by the member is required.', 403);
   }
 
   if (!isStorageConfigured()) {

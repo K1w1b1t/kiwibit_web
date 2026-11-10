@@ -140,7 +140,13 @@ enum PostStatus {
   published
 }
 
+enum PostContentFormat {
+  text
+  html
+}
+
 model Post {
+  contentFormat PostContentFormat @default(text) @map("content_format")
   id             String     @id @default(uuid()) @db.Uuid
   title          String
   content        String
