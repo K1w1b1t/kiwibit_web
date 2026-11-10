@@ -4,6 +4,22 @@ import { BASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD } from './helpers/constants';
 
 describe('Authentication', () => {
   describe('Unauthenticated access to protected routes', () => {
+    it('does not accept an arbitrary bearer token as a panel session', async () => {
+      const res = await fetch(`${BASE_URL}/api/admin/users`, {
+        headers: { Authorization: 'Bearer invalid-mcp-token' },
+      });
+      expect(res.status).toBe(401);
+      expect((await res.json()).error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('does not accept a foreign authentication cookie as a panel session', async () => {
+      const res = await fetch(`${BASE_URL}/api/admin/users`, {
+        headers: { Cookie: 'better-auth.session_token=invalid-foreign-session' },
+      });
+      expect(res.status).toBe(401);
+      expect((await res.json()).error.code).toBe('UNAUTHORIZED');
+    });
+
     it('returns 401 for GET /api/admin/users without a session', async () => {
       const client = new ApiClient(BASE_URL);
       const res = await client.get('/api/admin/users');

@@ -59,6 +59,9 @@ beforeEach(() => {
     key: 'projects/x.png',
   });
   (deleteObjects as jest.Mock).mockResolvedValue(true);
+  (prisma.mcpImagePreparation.create as jest.Mock).mockResolvedValue({
+    id: 'synthetic-preparation',
+  });
 });
 
 // ── POST /api/admin/uploads ───────────────────────────────────────────────────

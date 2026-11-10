@@ -21,6 +21,7 @@ const ADMIN_ROUTES = [
   '/admin/posts/new',
   '/admin/projects',
   '/admin/projects/new',
+  '/admin/connections',
 ] as const;
 
 describe('admin pages', () => {
@@ -70,6 +71,19 @@ describe('admin pages', () => {
 
       expect(html).toContain('Novo Membro');
       expect(html).toContain('Criar membro');
+    });
+
+    it('renders separate connection controls for Codex, Claude and Antigravity', async () => {
+      const res = await client.get('/admin/connections');
+      const html = await res.text();
+      for (const label of [
+        'Assistentes de IA',
+        'Conectar Codex',
+        'Conectar Claude Code',
+        'Conectar Antigravity',
+      ]) {
+        expect(html).toContain(label);
+      }
     });
   });
 });

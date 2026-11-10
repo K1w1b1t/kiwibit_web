@@ -14,7 +14,10 @@ import {
   validateUpdatePostBody,
   toPostUpdateData,
 } from '@/features/admin/posts/model/validate-post-body';
-import { deleteObjects } from '@/shared/lib/storage';
+import { deleteUnreferencedPostImage } from '@/entities/post/model/delete-unreferenced-image';
+import { lockPostMedia, syncPostMedia, trackPostImages } from '@/entities/post/model/post-media';
+import type { Post } from '@prisma/client';
+import { postWriteFailure } from '@/features/admin/posts/model/post-write-failure';
 import { publishBlogPostToLinkedIn } from '@/shared/lib/linkedin-blog-post';
 
 type Params = { params: Promise<{ id: string }> };
@@ -63,14 +66,25 @@ export async function PUT(request: Request, { params }: Params) {
     return apiError('FORBIDDEN', 'Only administrators can publish posts.', 403);
   }
 
-  const updated = await prisma.post.update({
-    where: { id },
-    data: {
-      ...toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
-      ...translated.data,
-      contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
-    },
-  });
+  let updated: Post;
+  try {
+    updated = await prisma.$transaction(async (tx) => {
+      await lockPostMedia(tx);
+      await trackPostImages(tx, existing);
+      const updated = await tx.post.update({
+        where: { id },
+        data: {
+          ...toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
+          ...translated.data,
+          contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
+        },
+      });
+      await syncPostMedia(tx, updated);
+      return updated;
+    });
+  } catch (error) {
+    return postWriteFailure(error);
+  }
 
   if (updated.status === 'published' && existing.status !== 'published') {
     runAfterResponse(() => publishBlogPostToLinkedIn(updated));
@@ -80,7 +94,7 @@ export async function PUT(request: Request, { params }: Params) {
   // referenced, but only after the row committed.
   const previousPath = existing.coverImagePath;
   if (previousPath && previousPath !== updated.coverImagePath) {
-    await deleteObjects([previousPath]);
+    await deleteUnreferencedPostImage(previousPath);
   }
 
   return NextResponse.json({ success: true, data: updated });
@@ -94,13 +108,25 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
   const existing = await prisma.post.findUnique({ where: { id } });
   if (!existing) return apiError('NOT_FOUND', 'Post not found.', 404);
-  await prisma.post.delete({ where: { id } });
+  const media = await prisma.$transaction(async (tx) => {
+    await lockPostMedia(tx);
+    await trackPostImages(tx, existing);
+    const media = await tx.postMedia.findMany({
+      where: { postId: id },
+      select: { storagePath: true },
+    });
+    await tx.post.delete({ where: { id } });
+    return media;
+  });
 
   // DB first, then best-effort object cleanup. A null path means the cover was a
   // pasted external URL and is not ours to delete.
   if (existing.coverImagePath) {
-    await deleteObjects([existing.coverImagePath]);
+    await deleteUnreferencedPostImage(existing.coverImagePath);
   }
+  for (const image of media)
+    if (image.storagePath !== existing.coverImagePath)
+      await deleteUnreferencedPostImage(image.storagePath);
 
   return NextResponse.json({ success: true });
 }

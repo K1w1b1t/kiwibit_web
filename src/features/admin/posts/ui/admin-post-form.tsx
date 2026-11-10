@@ -178,6 +178,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
             id={`${idPrefix}-cover`}
             label="Imagem de capa"
             scope="posts"
+            postId={initial?.id}
             shape="wide"
             disabled={isSubmitting}
             error={fieldErrors.coverImageUrl}

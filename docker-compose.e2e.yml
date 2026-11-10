@@ -15,3 +15,21 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  storage:
+    image: localstack/localstack:3.8
+    container_name: kiwibit-storage-e2e
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: us-east-1
+      LOCALSTACK_S3_BUCKET: kiwibit-e2e
+      PERSISTENCE: 0
+    ports:
+      - '127.0.0.1:4567:4566'
+    volumes:
+      - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/01-create-bucket.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'awslocal s3api get-bucket-policy --bucket kiwibit-e2e >/dev/null 2>&1']
+      interval: 3s
+      timeout: 5s
+      retries: 30

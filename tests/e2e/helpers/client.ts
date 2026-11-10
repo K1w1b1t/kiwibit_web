@@ -36,32 +36,41 @@ export class ApiClient {
     return [...this.cookieStore.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
   }
 
-  async get(path: string): Promise<Response> {
+  async get(path: string, headers: Record<string, string> = {}): Promise<Response> {
     const res = await fetch(`${this.baseUrl}${path}`, {
-      headers: { Cookie: this.cookieHeader },
+      headers: { Cookie: this.cookieHeader, ...headers },
     });
     this.storeCookies(res.headers);
     return res;
   }
 
-  async post(path: string, body: unknown): Promise<Response> {
+  async post(path: string, body: unknown, headers: Record<string, string> = {}): Promise<Response> {
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: this.cookieHeader },
+      headers: { 'Content-Type': 'application/json', Cookie: this.cookieHeader, ...headers },
       body: JSON.stringify(body),
     });
     this.storeCookies(res.headers);
     return res;
   }
 
-  async postForm(path: string, data: Record<string, string>): Promise<Response> {
+  async postForm(
+    path: string,
+    data: Record<string, string | string[]>,
+    headers: Record<string, string> = {},
+  ): Promise<Response> {
+    const form = new URLSearchParams();
+    for (const [key, value] of Object.entries(data)) {
+      for (const item of Array.isArray(value) ? value : [value]) form.append(key, item);
+    }
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         Cookie: this.cookieHeader,
+        ...headers,
       },
-      body: new URLSearchParams(data).toString(),
+      body: form.toString(),
       redirect: 'manual',
     });
     this.storeCookies(res.headers);
@@ -78,10 +87,10 @@ export class ApiClient {
     return res;
   }
 
-  async delete(path: string): Promise<Response> {
+  async delete(path: string, headers: Record<string, string> = {}): Promise<Response> {
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: 'DELETE',
-      headers: { Cookie: this.cookieHeader },
+      headers: { Cookie: this.cookieHeader, ...headers },
     });
     this.storeCookies(res.headers);
     return res;

@@ -24,6 +24,8 @@ model User {
 
   posts  Post[]
   member Member?
+  mcpPreparations McpImagePreparation[]
+  mcpBrowserTransactions McpBrowserTransaction[]
 
   @@map("users")
 }
@@ -171,7 +173,75 @@ model Post {
   updatedAt      DateTime   @updatedAt @map("updated_at")
 
   author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  media PostMedia[]
+  mcpRequests McpDraftRequest[]
 
   @@index([authorId])
   @@map("posts")
+}
+
+enum McpPreparationState {
+  uploading
+  prepared
+  attached
+  deleting
+}
+
+model McpImagePreparation {
+  id String @id @default(uuid()) @db.Uuid
+  userId String? @map("user_id") @db.Uuid
+  connectionId String @map("connection_id")
+  storagePath String @unique @map("storage_path")
+  url String
+  mimeType String @map("mime_type")
+  state McpPreparationState @default(uploading)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  media PostMedia[]
+  @@index([state, expiresAt])
+  @@map("mcp_image_preparations")
+}
+
+model PostMedia {
+  id String @id @default(uuid()) @db.Uuid
+  postId String @map("post_id") @db.Uuid
+  preparationId String? @map("preparation_id") @db.Uuid
+  storagePath String @map("storage_path")
+  url String
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  preparation McpImagePreparation? @relation(fields: [preparationId], references: [id], onDelete: SetNull)
+  @@unique([postId, storagePath])
+  @@map("post_media")
+}
+
+model McpDraftRequest {
+  id String @id @default(uuid()) @db.Uuid
+  connectionId String @map("connection_id")
+  key String
+  requestHash String @map("request_hash")
+  postId String? @map("post_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  post Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+  @@unique([connectionId, key])
+  @@map("mcp_draft_requests")
+}
+
+model McpBrowserTransaction {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  queryHash String @map("query_hash")
+  csrfHash String @map("csrf_hash")
+  expiresAt DateTime @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+  @@map("mcp_browser_transactions")
+}
+
+model McpRateLimit {
+  key String @id
+  count Int @default(1)
+  expiresAt DateTime @map("expires_at")
+  @@map("mcp_rate_limits")
 }

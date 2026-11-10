@@ -8,6 +8,7 @@ import {
   isUploadScope,
   sniffImageType,
 } from '@/shared/lib/validate-image-file';
+import { deleteUnreferencedPostImage } from '@/entities/post/model/delete-unreferenced-image';
 
 /**
  * POST /api/admin/uploads — multipart image upload proxied to object storage.
@@ -75,10 +76,42 @@ export async function POST(request: Request) {
   // Key embeds a UUID, so collisions are impossible and objects are immutable.
   const key = `${scope}/${crypto.randomUUID()}.${extensionForType(sniffed)}`;
 
+  let preparationId: string | undefined;
+  if (scope === 'posts') {
+    let ownerId: string | null = session.user.id;
+    const postId = form.get('postId');
+    if (session.user.role !== 'member' && typeof postId === 'string') {
+      if (!/^[0-9a-f-]{36}$/i.test(postId)) return apiError('BAD_REQUEST', 'Invalid postId.', 400);
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { authorId: true },
+      });
+      if (!post) return apiError('NOT_FOUND', 'Post not found.', 404);
+      ownerId = post.authorId;
+    }
+    const preparation = await prisma.mcpImagePreparation.create({
+      data: {
+        userId: ownerId,
+        connectionId: 'panel-upload',
+        storagePath: key,
+        url: '',
+        mimeType: sniffed,
+        state: 'uploading',
+        expiresAt: new Date(Date.now() + 24 * 3600 * 1000),
+      },
+    });
+    preparationId = preparation.id;
+  }
+
   const result = await putObject(key, buffer, sniffed);
   if (!result.ok) {
     return apiError('STORAGE_ERROR', result.message, 502);
   }
+  if (preparationId)
+    await prisma.mcpImagePreparation.update({
+      where: { id: preparationId },
+      data: { state: 'prepared', url: result.url },
+    });
 
   return NextResponse.json(
     { success: true, data: { url: result.url, path: result.key } },
@@ -105,7 +138,8 @@ export async function DELETE(request: Request) {
     return apiError('BAD_REQUEST', 'path is outside the managed prefixes.', 400);
   }
 
-  const ok = await deleteObjects([path]);
+  const ok =
+    scope === 'posts' ? await deleteUnreferencedPostImage(path) : await deleteObjects([path]);
   // Reported to Discord by `deleteObjects`; the caller does not need to retry.
   return NextResponse.json({ success: ok });
 }

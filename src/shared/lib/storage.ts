@@ -88,6 +88,29 @@ export function publicImageHost(): string | null {
   return new URL(config.publicBaseUrl).hostname;
 }
 
+export function managedStorageOrigins(): string[] {
+  const config = readConfig();
+  return config ? [new URL(config.endpoint).origin, new URL(config.publicBaseUrl).origin] : [];
+}
+
+export function managedObjectKey(value: string): string | null {
+  const config = readConfig();
+  if (!config) return null;
+  try {
+    const url = new URL(value);
+    for (const base of [config.publicBaseUrl, `${config.endpoint}/${config.bucket}`]) {
+      const prefix = new URL(`${base.replace(/\/$/, '')}/`);
+      if (url.origin === prefix.origin && url.pathname.startsWith(prefix.pathname)) {
+        const key = decodeURIComponent(url.pathname.slice(prefix.pathname.length));
+        return key && !key.split('/').includes('..') ? key : null;
+      }
+    }
+  } catch {
+    /* External or malformed URLs do not identify managed objects. */
+  }
+  return null;
+}
+
 function makeClient(config: StorageConfig): AwsClient {
   return new AwsClient({
     accessKeyId: config.accessKeyId,
@@ -124,6 +147,7 @@ function sendSigned(url: URL, method: string, headers: Headers, body: Uint8Array
       res.on('error', reject);
     });
     req.on('error', reject);
+    req.setTimeout(15000, () => req.destroy(new Error('STORAGE_TIMEOUT')));
     req.end(body ? Buffer.from(body.buffer, body.byteOffset, body.byteLength) : undefined);
   });
 }
@@ -180,7 +204,10 @@ export async function deleteObjects(keys: readonly string[]): Promise<boolean> {
 
   for (const key of usable) {
     try {
-      const response = await client.fetch(writeUrl(config, key), { method: 'DELETE' });
+      const response = await client.fetch(writeUrl(config, key), {
+        method: 'DELETE',
+        signal: AbortSignal.timeout(15000),
+      });
       // 404 means it is already gone, which satisfies the intent.
       if (!response.ok && response.status !== 404) allOk = false;
     } catch {
