@@ -1,3 +1,4 @@
+import { renderPostContent, richTextToText } from '@/shared/lib/sanitize-rich-text';
 import { localizePost } from '@/entities/post/model/localized-post';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -20,6 +21,7 @@ async function findPost(id: string) {
     where: { id },
     select: {
       id: true,
+      contentFormat: true,
       title: true,
       titlePt: true,
       titleEn: true,
@@ -75,7 +77,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   return {
     title: post.title,
-    description: post.content.slice(0, 160),
+    description: (post.contentFormat !== 'text'
+      ? richTextToText(renderPostContent(post.content, post.contentFormat))
+      : post.content
+    ).slice(0, 160),
     alternates: localizedAlternates(locale, `/blog/${id}`),
   };
 }
@@ -124,9 +129,18 @@ export default async function PostDetailPage({ params }: Readonly<Params>) {
           className="mt-8 aspect-[21/9] w-full rounded-2xl border border-white/10"
         />
 
-        <div className="mt-10 whitespace-pre-line text-lg leading-relaxed text-white/80">
-          {post.content}
-        </div>
+        {post.contentFormat !== 'text' ? (
+          <div
+            className="post-rich-content mt-10 text-lg leading-relaxed text-white/80"
+            dangerouslySetInnerHTML={{
+              __html: renderPostContent(post.content, post.contentFormat),
+            }}
+          />
+        ) : (
+          <div className="mt-10 whitespace-pre-line text-lg leading-relaxed text-white/80">
+            {post.content}
+          </div>
+        )}
       </article>
 
       {suggestions.length > 0 && (

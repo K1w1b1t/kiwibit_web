@@ -1,3 +1,4 @@
+import { prisma } from '@/shared/lib/prisma';
 import { POST as upload, DELETE as discard } from './route';
 import { apiError, requirePanelSession } from '@/shared/lib/api-helpers';
 import { deleteObjects, isStorageConfigured, putObject } from '@/shared/lib/storage';
@@ -234,4 +235,27 @@ describe('DELETE /api/admin/uploads', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: false });
   });
+});
+
+describe('member post uploads', () => {
+  const postId = '11111111-1111-4111-8111-111111111111';
+  async function requestForPost() {
+    const original = uploadRequest(pngBytes(), 'image/png', 'posts');
+    const form = await original.formData();
+    form.set('postId', postId);
+    return new Request(URL_, { method: 'POST', body: form });
+  }
+  it('allows a member to upload for an owned post', async () => {
+    (requirePanelSession as jest.Mock).mockResolvedValue(MEMBER_SESSION);
+    (prisma.post.findUnique as jest.Mock).mockResolvedValue({ authorId: 'uid-member' });
+    expect((await upload(await requestForPost())).status).toBe(201);
+  });
+  it.each([null, { authorId: 'another-user' }])(
+    'rejects missing or foreign posts: %s',
+    async (post) => {
+      (requirePanelSession as jest.Mock).mockResolvedValue(MEMBER_SESSION);
+      (prisma.post.findUnique as jest.Mock).mockResolvedValue(post);
+      expect((await upload(await requestForPost())).status).toBe(403);
+    },
+  );
 });

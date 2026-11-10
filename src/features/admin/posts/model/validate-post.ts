@@ -1,3 +1,4 @@
+import { markdownToHtml } from '@/shared/lib/markdown';
 import type { PostTranslations } from '@/entities/post/model/localized-post';
 import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { isHttpUrl } from '@/shared/lib/url';
@@ -5,6 +6,7 @@ import { isPostStatus } from '@/shared/lib/post-status';
 import type { PostStatus } from '@prisma/client';
 
 export type PostFormValues = PostTranslations & {
+  contentFormat?: 'text' | 'html' | 'markdown';
   title: string;
   content: string;
   status: string;
@@ -39,7 +41,26 @@ export const POST_LIMITS = {
 
 /** Mirrors the server rules in `POST/PUT /api/admin/posts`. */
 export function validatePost(values: PostFormValues): PostValidationResult {
-  const translated = parsePostTranslations({ ...values });
+  const visibleContent = (value: string) =>
+    values.contentFormat === 'html' || values.contentFormat === 'markdown'
+      ? (
+          new DOMParser().parseFromString(
+            values.contentFormat === 'markdown' ? markdownToHtml(value) : value,
+            'text/html',
+          ).body.textContent ?? ''
+        )
+          .replace(/\u00a0/g, ' ')
+          .trim()
+      : value;
+  const cleaned = { ...values };
+  for (const language of ['Pt', 'En'] as const) {
+    if (
+      cleaned[`content${language}`] !== undefined &&
+      !visibleContent(cleaned[`content${language}`] ?? '')
+    )
+      cleaned[`content${language}`] = null;
+  }
+  const translated = parsePostTranslations(cleaned);
   const title = translated.data.title;
   const content = translated.data.content;
   const coverImageUrl = values.coverImageUrl.trim();
@@ -54,7 +75,12 @@ export function validatePost(values: PostFormValues): PostValidationResult {
     fieldErrors.title = `Título não pode passar de ${POST_LIMITS.titleMax} caracteres.`;
   }
 
-  if (content.length < POST_LIMITS.contentMin) {
+  for (const language of ['Pt', 'En'] as const) {
+    const value = cleaned[`content${language}`];
+    if (value && visibleContent(value).length < POST_LIMITS.contentMin)
+      fieldErrors[`content${language}`] = 'Conteúdo precisa ter pelo menos 10 caracteres visíveis.';
+  }
+  if (visibleContent(content).length < POST_LIMITS.contentMin) {
     fieldErrors.content = `Conteúdo precisa ter pelo menos ${POST_LIMITS.contentMin} caracteres.`;
   }
 
@@ -78,6 +104,7 @@ export function validatePost(values: PostFormValues): PostValidationResult {
     valid: true,
     data: {
       ...translated.data,
+      contentFormat: values.contentFormat,
       title,
       content,
       status: values.status as PostStatus,

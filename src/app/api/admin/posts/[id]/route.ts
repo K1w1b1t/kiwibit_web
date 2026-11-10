@@ -1,3 +1,4 @@
+import { normalizePostContent } from '@/entities/post/model/normalize-post-content';
 import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { NextResponse } from 'next/server';
 import { runAfterResponse } from '@/shared/lib/after-response';
@@ -48,7 +49,9 @@ export async function PUT(request: Request, { params }: Params) {
     return apiError('FORBIDDEN', 'Insufficient permissions.', 403);
   }
 
-  const translated = parsePostTranslations(body as Record<string, unknown>, existing);
+  const normalized = normalizePostContent(body as Record<string, unknown>, existing);
+  if (normalized.error) return apiError('BAD_REQUEST', normalized.error, 400);
+  const translated = parsePostTranslations(normalized.body, existing);
   if (translated.error) return apiError('BAD_REQUEST', translated.error, 400);
   const parsed = validateUpdatePostBody({
     ...(body as Record<string, unknown>),
@@ -65,6 +68,7 @@ export async function PUT(request: Request, { params }: Params) {
     data: {
       ...toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
       ...translated.data,
+      contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
     },
   });
 

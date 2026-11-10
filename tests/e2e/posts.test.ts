@@ -162,3 +162,68 @@ describe('Bilingual posts', () => {
     }
   });
 });
+
+describe('Rich post content — /api/admin/posts', () => {
+  const ref = useAdminClient();
+  it('persists sanitized bilingual HTML, preserves omitted translations and exposes safe public content', async () => {
+    const response = await ref.client.post('/api/admin/posts', {
+      titlePt: `Rich post ${TAG}`,
+      contentPt: '<h2 onclick="alert(1)">Portuguese article content</h2><script>alert(1)</script>',
+      titleEn: `Rich English ${TAG}`,
+      contentEn: '<p><strong>English article content</strong> 🚀</p>',
+      contentFormat: 'html',
+      status: 'published',
+    });
+    expect(response.status).toBe(201);
+    const { data } = await response.json();
+    try {
+      expect(data.contentFormat).toBe('html');
+      expect(data.contentPt).toBe('<h2>Portuguese article content</h2>');
+      const updated = await ref.client.put(`/api/admin/posts/${data.id}`, {
+        contentPt: 'Updated <literal> Portuguese article',
+      });
+      expect(updated.status).toBe(200);
+      const { data: next } = await updated.json();
+      expect(next.contentPt).toContain('&lt;literal&gt;');
+      expect(next.contentEn).toBe(data.contentEn);
+      const publicResponse = await anonClient().get(`/api/posts/${data.id}`);
+      expect(publicResponse.status).toBe(200);
+      const publicPost = await publicResponse.json();
+      expect(publicPost.contentFormat).toBe('html');
+      expect(publicPost.content).not.toMatch(/onclick|<script>/);
+    } finally {
+      await ref.client.delete(`/api/admin/posts/${data.id}`);
+    }
+  });
+});
+
+describe('Markdown preview and persistence', () => {
+  const ref = useAdminClient();
+  it('previews and stores Markdown safely with raw HTML and existing locale fallback', async () => {
+    const markdown =
+      '# Heading\n\nA **long article** with <u>underline</u> and <script>alert(1)</script>.';
+    const preview = await ref.client.post('/api/admin/posts/preview', { content: markdown });
+    expect(preview.status).toBe(200);
+    const previewBody = await preview.json();
+    expect(previewBody.html).toContain('<strong>long article</strong>');
+    expect(previewBody.html).toContain('<u>underline</u>');
+    expect(previewBody.html).not.toContain('<script>');
+    const created = await ref.client.post('/api/admin/posts', {
+      titlePt: 'Markdown example',
+      contentPt: markdown,
+      contentFormat: 'markdown',
+      status: 'published',
+    });
+    expect(created.status).toBe(201);
+    const { data } = await created.json();
+    try {
+      expect(data.contentPt).toBe(markdown);
+      const publicPage = await anonClient().get(`/en/blog/${data.id}`);
+      expect(publicPage.status).toBe(200);
+      const html = await publicPage.text();
+      expect(html).toContain(previewBody.html);
+    } finally {
+      await ref.client.delete(`/api/admin/posts/${data.id}`);
+    }
+  });
+});
