@@ -68,7 +68,7 @@ export async function PUT(request: Request, { params }: Params) {
     data: {
       ...toPostUpdateData(parsed.data, existing.publishedAt, new Date()),
       ...translated.data,
-      contentFormat: normalized.body.contentFormat as 'text' | 'html',
+      contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
     },
   });
 

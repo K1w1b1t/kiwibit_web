@@ -25,7 +25,7 @@ import { textToHtml } from '@/shared/lib/rich-text';
 import { TextField } from '@/shared/ui/text-field';
 
 export type PostInitial = PostTranslations & {
-  contentFormat?: 'text' | 'html';
+  contentFormat?: 'text' | 'html' | 'markdown';
   id: string;
   title: string;
   content: string;
@@ -42,9 +42,13 @@ type Props = {
 
 function toFormValues(initial?: PostInitial): PostFormValues {
   const content = (value: string) =>
-    !value ? '' : initial?.contentFormat === 'html' ? value : textToHtml(value);
+    !value
+      ? ''
+      : initial?.contentFormat === 'html' || initial?.contentFormat === 'markdown'
+        ? value
+        : textToHtml(value);
   return {
-    contentFormat: 'html',
+    contentFormat: 'markdown',
     titlePt: initial?.titlePt ?? (initial?.titleEn ? '' : (initial?.title ?? '')),
     titleEn: initial?.titleEn ?? '',
     contentPt: content(initial?.contentPt ?? (initial?.contentEn ? '' : (initial?.content ?? ''))),
@@ -136,7 +140,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
                 setUploads((current) => ({ ...current, [language]: busy }))
               }
               value={form[`content${language}`] ?? ''}
-              onChange={(html) => update(`content${language}`, html)}
+              onChange={(markdown) => update(`content${language}`, markdown)}
               disabled={isSubmitting}
               error={fieldErrors[`content${language}`]}
             />

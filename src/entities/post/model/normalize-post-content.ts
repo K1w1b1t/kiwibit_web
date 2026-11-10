@@ -1,12 +1,16 @@
 import { textToHtml } from '@/shared/lib/rich-text';
-import { richTextToText, sanitizeRichText } from '@/shared/lib/sanitize-rich-text';
+import {
+  richTextToText,
+  sanitizeRichText,
+  renderPostContent,
+} from '@/shared/lib/sanitize-rich-text';
 
 const fields = ['content', 'contentPt', 'contentEn'] as const;
 type Content = {
   content: string;
   contentPt?: string | null;
   contentEn?: string | null;
-  contentFormat?: 'text' | 'html';
+  contentFormat?: 'text' | 'html' | 'markdown';
 };
 
 /** Normalize the complete merged record, preserving omitted translations. */
@@ -17,12 +21,18 @@ export function normalizePostContent(
   if (
     raw.contentFormat !== undefined &&
     raw.contentFormat !== 'text' &&
-    raw.contentFormat !== 'html'
+    raw.contentFormat !== 'html' &&
+    raw.contentFormat !== 'markdown'
   )
     return { body: raw, error: 'Invalid contentFormat.' };
-  const html = raw.contentFormat === 'html' || existing?.contentFormat === 'html';
-  const body = { ...raw, contentFormat: html ? 'html' : 'text' };
-  if (!html) return { body };
+  const format =
+    raw.contentFormat === 'markdown' || existing?.contentFormat === 'markdown'
+      ? 'markdown'
+      : raw.contentFormat === 'html' || existing?.contentFormat === 'html'
+        ? 'html'
+        : 'text';
+  const body = { ...raw, contentFormat: format };
+  if (format === 'text') return { body };
   const source = { ...raw };
   if (raw.content !== undefined && raw.contentPt === undefined) source.contentPt = raw.content;
   for (const field of fields) {
@@ -30,11 +40,19 @@ export function normalizePostContent(
     const value = supplied ? source[field] : existing?.[field];
     if (value === undefined || value === null) continue;
     if (typeof value !== 'string') return { body, error: `${field} must be a string or null.` };
-    const isHtml = supplied ? raw.contentFormat === 'html' : existing?.contentFormat === 'html';
-    const normalized = sanitizeRichText(isHtml ? value : textToHtml(value));
-    if (value.trim() && richTextToText(normalized).length < 10)
+    const inputFormat = supplied
+      ? (raw.contentFormat ?? 'text')
+      : (existing?.contentFormat ?? 'text');
+    const normalized =
+      inputFormat === 'text'
+        ? textToHtml(value)
+        : inputFormat === 'html'
+          ? sanitizeRichText(value)
+          : value;
+    const rendered = renderPostContent(normalized, format);
+    if (value.trim() && richTextToText(rendered).length < 10)
       return { body, error: `${field} must contain at least 10 visible characters.` };
-    Object.assign(body, { [field]: richTextToText(normalized) ? normalized : null });
+    Object.assign(body, { [field]: richTextToText(rendered) ? normalized : null });
   }
   return { body };
 }

@@ -1,12 +1,7 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { EmojiStyle } from 'emoji-picker-react';
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import { RichTextToolbar } from './rich-text-toolbar';
 import { ImageUploadField, type ImageValue } from './image-upload-field';
 import { TextField } from './text-field';
 import { isHttpUrl } from '@/shared/lib/url';
@@ -16,95 +11,150 @@ type Props = {
   id: string;
   label: string;
   value: string;
-  onChange: (html: string) => void;
+  onChange: (value: string) => void;
   disabled?: boolean;
   error?: string;
   postId?: string;
   onUploadingChange?: (busy: boolean) => void;
 };
-
 export function RichTextField({
   id,
   label,
   value,
   onChange,
-  disabled = false,
+  disabled,
   error,
   postId,
   onUploadingChange,
 }: Readonly<Props>) {
-  const [panel, setPanel] = useState<'link' | 'image' | 'emoji' | null>(null);
-  const [url, setUrl] = useState('');
+  const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const [panel, setPanel] = useState<'image' | 'emoji' | null>(null);
   const [image, setImage] = useState<ImageValue>({ url: '', path: '' });
   const [alt, setAlt] = useState('');
-  const [problem, setProblem] = useState('');
-  const [uploading, setUploading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState('');
+  const [previewError, setPreviewError] = useState('');
+  const input = useRef<HTMLTextAreaElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-        code: false,
-        codeBlock: false,
-        strike: false,
-        horizontalRule: false,
-        link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] },
-      }),
-      Image.configure({ allowBase64: false }),
-    ],
-    content: value,
-    immediatelyRender: false,
-    editable: !disabled,
-    onUpdate: ({ editor: current }) => onChange(current.getHTML()),
-    editorProps: {
-      attributes: {
-        id,
-        role: 'textbox',
-        'aria-multiline': 'true',
-        'aria-labelledby': `${id}-label`,
-        class: 'post-rich-content min-h-64 p-4 outline-none',
-      },
-    },
-  });
-  useEffect(() => {
-    editor?.setEditable(!disabled);
-  }, [editor, disabled]);
-  useEffect(() => {
-    if (editor && editor.getHTML() !== value)
-      editor.commands.setContent(value, { emitUpdate: false });
-  }, [editor, value]);
+  const selection = useRef({ start: 0, end: 0 });
   useEffect(() => {
     if (panel) dialog.current?.showModal();
     else dialog.current?.close();
   }, [panel]);
-  function close() {
-    if (!uploading) {
-      setPanel(null);
-      editor?.commands.focus();
-    }
+  useEffect(() => {
+    if (tab !== 'preview') return;
+    const controller = new AbortController();
+    fetch('/api/admin/posts/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: value }),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error();
+        return res.json() as Promise<{ html: string }>;
+      })
+      .then((result) => {
+        if (!controller.signal.aborted) setPreview(result.html);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setPreviewError('Não foi possível carregar a prévia.');
+      });
+    return () => controller.abort();
+  }, [tab, value]);
+  function insert(text: string) {
+    const { start, end } = selection.current;
+    onChange(value.slice(0, start) + text + value.slice(end));
+    setPanel(null);
+    setTab('edit');
+    requestAnimationFrame(() => {
+      input.current?.focus();
+      input.current?.setSelectionRange(start + text.length, start + text.length);
+    });
   }
-  const buttonClass =
-    'rounded border border-white/20 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-40 aria-pressed:bg-white/20';
+  function open(next: 'image' | 'emoji') {
+    selection.current = {
+      start: input.current?.selectionStart ?? value.length,
+      end: input.current?.selectionEnd ?? value.length,
+    };
+    setPanel(next);
+  }
+  const button =
+    'rounded border border-white/20 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-40';
   return (
     <div className="space-y-2">
-      <span id={`${id}-label`} className="block text-sm font-semibold">
+      <label htmlFor={id} className="block text-sm font-semibold">
         {label}
-      </span>
+      </label>
       <div className="rounded-xl border border-white/20">
-        <RichTextToolbar
-          editor={editor}
+        <div
+          role="tablist"
+          aria-label={`${label}: edição e prévia`}
+          className="flex flex-wrap gap-2 border-b border-white/10 p-3"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'edit'}
+            className={button}
+            onClick={() => setTab('edit')}
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'preview'}
+            className={button}
+            onClick={() => {
+              if (tab !== 'preview') {
+                setPreview('');
+                setPreviewError('');
+                setTab('preview');
+              }
+            }}
+          >
+            Prévia
+          </button>
+          <button
+            type="button"
+            className={button}
+            disabled={disabled || tab !== 'edit'}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => open('image')}
+          >
+            Imagem
+          </button>
+          <button
+            type="button"
+            className={button}
+            disabled={disabled || tab !== 'edit'}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => open('emoji')}
+          >
+            Emoji
+          </button>
+        </div>
+        <textarea
+          ref={input}
+          id={id}
+          hidden={tab !== 'edit'}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
-          onPanel={(next) => {
-            setProblem('');
-            if (next === 'link') setUrl(String(editor?.getAttributes('link').href ?? ''));
-            if (next === 'image') {
-              setImage({ url: '', path: '' });
-              setAlt('');
-            }
-            setPanel(next);
-          }}
+          aria-invalid={Boolean(error)}
+          className="min-h-64 w-full resize-y bg-transparent p-4 font-mono text-sm outline-none"
+          placeholder="Escreva em Markdown ou HTML"
         />
-        <EditorContent editor={editor} />
+        {tab === 'preview' && (
+          <div role="tabpanel" className="post-rich-content min-h-64 p-4">
+            {previewError ? (
+              <p role="alert">{previewError}</p>
+            ) : (
+              <div dangerouslySetInnerHTML={{ __html: preview }} />
+            )}
+          </div>
+        )}
       </div>
       {error && (
         <p role="alert" className="text-sm text-amber-200">
@@ -113,49 +163,13 @@ export function RichTextField({
       )}
       <dialog
         ref={dialog}
-        aria-label={
-          panel === 'image' ? 'Inserir imagem' : panel === 'link' ? 'Editar link' : 'Escolher emoji'
-        }
+        aria-label={panel === 'image' ? 'Inserir imagem' : 'Escolher emoji'}
         onCancel={(event) => {
           event.preventDefault();
-          close();
+          if (!busy) setPanel(null);
         }}
         className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg space-y-4 overflow-auto rounded-xl border border-white/20 bg-zinc-950 p-5 text-white backdrop:bg-black/70"
       >
-        {panel === 'link' && (
-          <>
-            <TextField
-              id={`${id}-link`}
-              label="URL do link"
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-            />
-            <button
-              type="button"
-              className={buttonClass}
-              onClick={() => {
-                if (!isHttpUrl(url) && !/^mailto:[^\s<>]+$/.test(url)) {
-                  setProblem('Use uma URL http/https ou mailto válida.');
-                  return;
-                }
-                editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-                close();
-              }}
-            >
-              Aplicar link
-            </button>
-            <button
-              type="button"
-              className={buttonClass}
-              onClick={() => {
-                editor?.chain().focus().extendMarkRange('link').unsetLink().run();
-                close();
-              }}
-            >
-              Remover link
-            </button>
-          </>
-        )}
         {panel === 'image' && (
           <>
             <ImageUploadField
@@ -165,28 +179,27 @@ export function RichTextField({
               postId={postId}
               value={image}
               onChange={setImage}
-              onUploadingChange={(busy) => {
-                setUploading(busy);
-                onUploadingChange?.(busy);
+              onUploadingChange={(next) => {
+                setBusy(next);
+                onUploadingChange?.(next);
               }}
             />
             <TextField
-              id={`${id}-image-alt`}
+              id={`${id}-alt`}
               label="Texto alternativo"
               value={alt}
               onChange={(event) => setAlt(event.target.value)}
             />
             <button
               type="button"
-              className={buttonClass}
-              disabled={uploading}
+              className={button}
+              disabled={busy || !isHttpUrl(image.url)}
               onClick={() => {
-                if (!isHttpUrl(image.url)) {
-                  setProblem('Informe uma URL http/https válida.');
-                  return;
-                }
-                editor?.chain().focus().setImage({ src: image.url, alt }).run();
-                close();
+                insert(
+                  `![${alt.replace(/[\[\]\\]/g, '\\$&')}](${image.url.replace(/[()\s]/g, encodeURIComponent)})`,
+                );
+                setImage({ url: '', path: '' });
+                setAlt('');
               }}
             >
               Inserir imagem
@@ -197,18 +210,10 @@ export function RichTextField({
           <EmojiPicker
             width="100%"
             emojiStyle={'native' as EmojiStyle}
-            onEmojiClick={(emoji) => {
-              editor?.chain().focus().insertContent(emoji.emoji).run();
-              close();
-            }}
+            onEmojiClick={(emoji) => insert(emoji.emoji)}
           />
         )}
-        {problem && (
-          <p role="alert" className="text-amber-200">
-            {problem}
-          </p>
-        )}
-        <button type="button" className={buttonClass} disabled={uploading} onClick={close}>
+        <button type="button" className={button} disabled={busy} onClick={() => setPanel(null)}>
           Fechar
         </button>
       </dialog>

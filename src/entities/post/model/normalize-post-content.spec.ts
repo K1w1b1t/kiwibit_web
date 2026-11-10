@@ -1,5 +1,9 @@
 import { normalizePostContent } from './normalize-post-content';
-import { richTextToText, sanitizeRichText } from '@/shared/lib/sanitize-rich-text';
+import {
+  richTextToText,
+  sanitizeRichText,
+  renderPostContent,
+} from '@/shared/lib/sanitize-rich-text';
 
 describe('rich post content', () => {
   it('escapes literal legacy tags and preserves newlines when upgrading', () => {
@@ -51,5 +55,31 @@ describe('rich post content', () => {
     expect(clean).toContain('<h2>Heading</h2>');
     expect(clean).toContain('<u>Underline</u>');
     expect(richTextToText('<p>One &amp; two</p><p>Three 😀</p>')).toBe('One & two Three 😀');
+  });
+});
+
+describe('Markdown posts', () => {
+  it('persists Markdown and raw HTML while rendering only safe markup', () => {
+    const source =
+      '# Heading\n\nA **strong** paragraph with <u>underlined text</u> and <script>alert(1)</script>.';
+    const result = normalizePostContent({ contentFormat: 'markdown', content: source });
+    expect(result.error).toBeUndefined();
+    expect(result.body.content).toBe(source);
+    const rendered = renderPostContent(source, 'markdown');
+    expect(rendered).toContain('<strong>strong</strong>');
+    expect(rendered).toContain('<u>underlined text</u>');
+    expect(rendered).not.toContain('<script>');
+  });
+  it('converts omitted legacy translations to safe HTML within Markdown', () => {
+    const result = normalizePostContent(
+      { contentFormat: 'markdown', contentPt: 'A complete translated article' },
+      {
+        content: 'Old <literal> content here',
+        contentEn: 'Legacy <b>English</b> content',
+        contentFormat: 'text',
+      },
+    );
+    expect(result.body.contentEn).toContain('&lt;b&gt;');
+    expect(result.body.content).toContain('&lt;literal&gt;');
   });
 });

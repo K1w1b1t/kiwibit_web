@@ -1,3 +1,4 @@
+import { markdownToHtml } from '@/shared/lib/markdown';
 import type { PostTranslations } from '@/entities/post/model/localized-post';
 import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { isHttpUrl } from '@/shared/lib/url';
@@ -5,7 +6,7 @@ import { isPostStatus } from '@/shared/lib/post-status';
 import type { PostStatus } from '@prisma/client';
 
 export type PostFormValues = PostTranslations & {
-  contentFormat?: 'text' | 'html';
+  contentFormat?: 'text' | 'html' | 'markdown';
   title: string;
   content: string;
   status: string;
@@ -41,8 +42,13 @@ export const POST_LIMITS = {
 /** Mirrors the server rules in `POST/PUT /api/admin/posts`. */
 export function validatePost(values: PostFormValues): PostValidationResult {
   const visibleContent = (value: string) =>
-    values.contentFormat === 'html'
-      ? (new DOMParser().parseFromString(value, 'text/html').body.textContent ?? '')
+    values.contentFormat === 'html' || values.contentFormat === 'markdown'
+      ? (
+          new DOMParser().parseFromString(
+            values.contentFormat === 'markdown' ? markdownToHtml(value) : value,
+            'text/html',
+          ).body.textContent ?? ''
+        )
           .replace(/\u00a0/g, ' ')
           .trim()
       : value;

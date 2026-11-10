@@ -365,3 +365,24 @@ body {
 .post-rich-content {
   overflow-wrap: anywhere;
 }
+
+.post-rich-content pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: #18181b;
+  white-space: pre;
+}
+.post-rich-content code {
+  font-family: monospace;
+}
+.post-rich-content table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+.post-rich-content td,
+.post-rich-content th {
+  border: 1px solid #555;
+  padding: 0.5rem;
+}

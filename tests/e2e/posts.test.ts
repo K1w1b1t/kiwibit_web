@@ -196,3 +196,34 @@ describe('Rich post content — /api/admin/posts', () => {
     }
   });
 });
+
+describe('Markdown preview and persistence', () => {
+  const ref = useAdminClient();
+  it('previews and stores Markdown safely with raw HTML and existing locale fallback', async () => {
+    const markdown =
+      '# Heading\n\nA **long article** with <u>underline</u> and <script>alert(1)</script>.';
+    const preview = await ref.client.post('/api/admin/posts/preview', { content: markdown });
+    expect(preview.status).toBe(200);
+    const previewBody = await preview.json();
+    expect(previewBody.html).toContain('<strong>long article</strong>');
+    expect(previewBody.html).toContain('<u>underline</u>');
+    expect(previewBody.html).not.toContain('<script>');
+    const created = await ref.client.post('/api/admin/posts', {
+      titlePt: 'Markdown example',
+      contentPt: markdown,
+      contentFormat: 'markdown',
+      status: 'published',
+    });
+    expect(created.status).toBe(201);
+    const { data } = await created.json();
+    try {
+      expect(data.contentPt).toBe(markdown);
+      const publicPage = await anonClient().get(`/en/blog/${data.id}`);
+      expect(publicPage.status).toBe(200);
+      const html = await publicPage.text();
+      expect(html).toContain(previewBody.html);
+    } finally {
+      await ref.client.delete(`/api/admin/posts/${data.id}`);
+    }
+  });
+});

@@ -1,3 +1,4 @@
+import { markdownToHtml } from './markdown';
 import sanitizeHtml from 'sanitize-html';
 
 export function sanitizeRichText(value: string): string {
@@ -19,6 +20,17 @@ export function sanitizeRichText(value: string): string {
       'blockquote',
       'a',
       'img',
+      'pre',
+      'code',
+      'hr',
+      's',
+      'del',
+      'table',
+      'thead',
+      'tbody',
+      'tr',
+      'th',
+      'td',
     ],
     allowedAttributes: { a: ['href', 'title', 'target', 'rel'], img: ['src', 'alt', 'title'] },
     allowedSchemes: ['http', 'https', 'mailto'],
@@ -42,4 +54,8 @@ export function richTextToText(value: string): string {
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+export function renderPostContent(value: string, format: 'text' | 'html' | 'markdown'): string {
+  return sanitizeRichText(format === 'markdown' ? markdownToHtml(value) : value);
 }

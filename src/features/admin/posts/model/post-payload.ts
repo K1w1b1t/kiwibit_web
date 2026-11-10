@@ -5,7 +5,7 @@ import type { PostFormValues } from './validate-post';
 type ValidatedValues = PostFormValues & { status: PostStatus };
 
 export type CreatePostPayload = PostTranslations & {
-  contentFormat?: 'text' | 'html';
+  contentFormat?: 'text' | 'html' | 'markdown';
   title: string;
   content: string;
   status: PostStatus;
@@ -15,7 +15,7 @@ export type CreatePostPayload = PostTranslations & {
 };
 
 export type UpdatePostPayload = PostTranslations & {
-  contentFormat?: 'text' | 'html';
+  contentFormat?: 'text' | 'html' | 'markdown';
   title: string;
   content: string;
   status: PostStatus;

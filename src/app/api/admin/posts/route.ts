@@ -68,7 +68,7 @@ export async function POST(request: Request) {
   const post = await prisma.post.create({
     data: {
       ...translated.data,
-      contentFormat: normalized.body.contentFormat as 'text' | 'html',
+      contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
       authorId: session.user.id,
       status: resolvedStatus,
       publishedAt: resolvePublishedAt(resolvedStatus, null, new Date()),
