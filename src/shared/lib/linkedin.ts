@@ -169,6 +169,7 @@ export type LinkedInAutoPostInput = {
   title: string;
   url: string;
   summary?: string;
+  commentary?: string;
   imageUrl?: string | null;
 };
 
@@ -185,6 +186,10 @@ export type LinkedInAutoPostResult = {
 };
 
 export type LinkedInBlogPost = {
+  titlePt?: string | null;
+  contentPt?: string | null;
+  titleEn?: string | null;
+  contentEn?: string | null;
   contentFormat?: 'text' | 'html' | 'markdown';
   id: string;
   title: string;
@@ -215,6 +220,7 @@ function getLinkedInConfig(target: LinkedInTarget) {
 }
 
 function ensureLinkedInText(input: LinkedInAutoPostInput): string {
+  if (input.commentary !== undefined) return input.commentary;
   const baseText = [input.title, input.summary?.trim() || '', input.url]
     .filter(Boolean)
     .join('\n\n');
@@ -253,7 +259,7 @@ function buildCompanyPayload(input: LinkedInAutoPostInput, authorUrn: string) {
   return {
     author: authorUrn,
     commentary: ensureLinkedInText(input)
-      .slice(0, 1500)
+      .slice(0, input.commentary === undefined ? 1500 : undefined)
       .replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`),
     visibility: 'PUBLIC',
     distribution: {
@@ -428,6 +434,67 @@ export async function triggerPersonalAutoPost(
   return { ...result, target: 'personal' };
 }
 
+/** Builds one language-safe announcement within both destination budgets. */
+export function composeLinkedInBlogPost(
+  post: LinkedInBlogPost,
+  siteBase: string,
+): LinkedInAutoPostInput | null {
+  const explicit = Boolean(post.titlePt?.trim() || post.titleEn?.trim());
+  const translations = [
+    {
+      locale: 'pt',
+      title: explicit ? post.titlePt : post.title,
+      content: explicit ? post.contentPt : post.content,
+      invite: 'Leia o artigo completo:',
+    },
+    {
+      locale: 'en',
+      title: post.titleEn,
+      content: post.contentEn,
+      invite: 'Read the full article:',
+    },
+  ].filter((item) => item.title?.trim() && item.content?.trim());
+  if (!translations.length) return null;
+  const blocks = translations.map((item) => ({
+    title: item.title!.trim(),
+    summary: (post.contentFormat && post.contentFormat !== 'text'
+      ? richTextToText(renderPostContent(item.content!, post.contentFormat))
+      : item.content!
+    )
+      .replace(/\s+/g, ' ')
+      .trim(),
+    url: `${siteBase.replace(/\/$/, '')}/${item.locale}/blog/${post.id}`,
+    invite: item.invite,
+  }));
+  const render = (length: number) =>
+    (blocks.length === 2 ? 'English below ↓\n\n' : '') +
+    blocks
+      .map((block) => {
+        const chars = Array.from(block.summary);
+        const summary =
+          length === 0
+            ? ''
+            : chars.length > length
+              ? chars.slice(0, Math.max(0, length - 1)).join('') + '…'
+              : block.summary;
+        return [block.title, summary, `${block.invite} ${block.url}`].filter(Boolean).join('\n\n');
+      })
+      .join('\n\n——— English ———\n\n');
+  let length = 180;
+  let commentary = render(length);
+  while (commentary.replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`).length > 1500 && length > 0) {
+    commentary = render(--length);
+  }
+  if (commentary.replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`).length > 1500) return null;
+  return {
+    title: blocks[0].title,
+    summary: blocks[0].summary.slice(0, 180),
+    url: blocks[0].url,
+    imageUrl: post.coverImageUrl,
+    commentary,
+  };
+}
+
 /**
  * Fans a freshly published blog post out to every enabled LinkedIn destination:
  * the company page (global env config) and the author's own profile (their
@@ -441,18 +508,8 @@ export async function triggerLinkedInAutoPostForBlog(
   if (post.status !== 'published') return [];
 
   const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
-  const input: LinkedInAutoPostInput = {
-    title: post.title,
-    summary: (post.contentFormat && post.contentFormat !== 'text'
-      ? richTextToText(renderPostContent(post.content, post.contentFormat))
-      : post.content
-    )
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 180),
-    url: `${siteBase}/${'titleEn' in post && post.titleEn && !('titlePt' in post && post.titlePt) ? 'en' : 'pt'}/blog/${post.id}`,
-    imageUrl: post.coverImageUrl ?? null,
-  };
+  const input = composeLinkedInBlogPost(post, siteBase);
+  if (!input) return [{ ok: false, code: 'LINKEDIN_TEXT_TOO_LONG' }];
 
   const results: LinkedInAutoPostResult[] = [
     await triggerLinkedInAutoPost('company', input),
