@@ -74,13 +74,23 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const rawPost = await findPost(id);
   const post = rawPost ? localizePost(rawPost, locale) : null;
   if (!post) return {};
+  const description = (
+    post.contentFormat !== 'text'
+      ? richTextToText(renderPostContent(post.content, post.contentFormat))
+      : post.content
+  ).slice(0, 160);
 
   return {
     title: post.title,
-    description: (post.contentFormat !== 'text'
-      ? richTextToText(renderPostContent(post.content, post.contentFormat))
-      : post.content
-    ).slice(0, 160),
+    description,
+    openGraph: {
+      title: post.title,
+      description,
+      url: `/${locale}/blog/${id}`,
+      ...(post.coverImageUrl && {
+        images: [{ url: post.coverImageUrl, alt: post.coverImageAlt ?? post.title }],
+      }),
+    },
     alternates: localizedAlternates(locale, `/blog/${id}`),
   };
 }
