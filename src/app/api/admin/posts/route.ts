@@ -1,7 +1,6 @@
 import { normalizePostContent } from '@/entities/post/model/normalize-post-content';
 import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { NextResponse } from 'next/server';
-import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
 import {
   requireAdminSession,
@@ -14,7 +13,6 @@ import {
 } from '@/shared/lib/api-helpers';
 import { isPostStatus, resolvePublishedAt } from '@/shared/lib/post-status';
 import { isHttpUrl } from '@/shared/lib/url';
-import { publishBlogPostToLinkedIn } from '@/shared/lib/linkedin-blog-post';
 import { createPostWithMedia } from '@/entities/post/model/create-post-with-media';
 import { lockPostMedia } from '@/entities/post/model/post-media';
 import type { Post } from '@prisma/client';
@@ -55,7 +53,21 @@ export async function POST(request: Request) {
   const translated = parsePostTranslations(normalized.body);
   if (translated.error) return apiError('BAD_REQUEST', translated.error, 400);
   const { title, content } = translated.data;
-  const { status, coverImageUrl, coverImagePath } = body as Record<string, unknown>;
+  const { status, coverImageUrl, coverImagePath, linkedinIntroPt, linkedinIntroEn } =
+    body as Record<string, unknown>;
+
+  if (
+    [linkedinIntroPt, linkedinIntroEn].some(
+      (value) =>
+        value !== undefined && value !== null && (typeof value !== 'string' || value.length > 3000),
+    )
+  ) {
+    return apiError(
+      'BAD_REQUEST',
+      'LinkedIn introductions must be strings up to 3000 characters.',
+      400,
+    );
+  }
 
   if (typeof title !== 'string' || title.trim() === '')
     return apiError('BAD_REQUEST', 'title is required.', 400);
@@ -77,6 +89,8 @@ export async function POST(request: Request) {
         ...translated.data,
         contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
         authorId: session.user.id,
+        ...(typeof linkedinIntroPt === 'string' && { linkedinIntroPt }),
+        ...(typeof linkedinIntroEn === 'string' && { linkedinIntroEn }),
         status: resolvedStatus,
         publishedAt: resolvePublishedAt(resolvedStatus, null, new Date()),
         ...(typeof coverImageUrl === 'string' && { coverImageUrl }),
@@ -85,10 +99,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     return postWriteFailure(error);
-  }
-
-  if (post.status === 'published') {
-    runAfterResponse(() => publishBlogPostToLinkedIn(post));
   }
 
   return NextResponse.json({ success: true, data: post }, { status: 201 });

@@ -20,6 +20,8 @@ import { isHttpUrl } from '@/shared/lib/url';
 export type PostUpdateInput = {
   title?: string;
   content?: string;
+  linkedinIntroPt?: string | null;
+  linkedinIntroEn?: string | null;
   status?: PostStatus;
   /** Present-but-not-a-string means "clear the column"; absent means "leave it". */
   coverImageUrl?: string | null;
@@ -38,7 +40,21 @@ function checkPostFields({
   content,
   status,
   coverImageUrl,
+  linkedinIntroPt,
+  linkedinIntroEn,
 }: Record<string, unknown>): ApiFailure | null {
+  if (
+    [linkedinIntroPt, linkedinIntroEn].some(
+      (value) =>
+        value !== undefined && value !== null && (typeof value !== 'string' || value.length > 3000),
+    )
+  ) {
+    return failure(
+      'BAD_REQUEST',
+      'LinkedIn introductions must be strings up to 3000 characters.',
+      400,
+    );
+  }
   if (title !== undefined && !isNonEmptyString(title)) {
     return failure('BAD_REQUEST', 'title must be a non-empty string.', 400);
   }
@@ -61,10 +77,14 @@ function buildPostUpdate({
   coverImageUrl,
   coverImagePath,
   coverImageAlt,
+  linkedinIntroPt,
+  linkedinIntroEn,
 }: Record<string, unknown>): PostUpdateInput {
   return {
     ...(typeof title === 'string' && { title }),
     ...(typeof content === 'string' && { content }),
+    ...(linkedinIntroPt !== undefined && { linkedinIntroPt: nullableString(linkedinIntroPt) }),
+    ...(linkedinIntroEn !== undefined && { linkedinIntroEn: nullableString(linkedinIntroEn) }),
     ...(isPostStatus(status) && { status }),
     ...(coverImageUrl !== undefined && { coverImageUrl: nullableString(coverImageUrl) }),
     ...(coverImagePath !== undefined && { coverImagePath: nullableString(coverImagePath) }),

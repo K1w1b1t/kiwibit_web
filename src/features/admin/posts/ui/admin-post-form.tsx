@@ -23,6 +23,7 @@ import { SelectField } from '@/shared/ui/select-field';
 import { RichTextField } from '@/shared/ui/rich-text-field';
 import { textToHtml } from '@/shared/lib/rich-text';
 import { TextField } from '@/shared/ui/text-field';
+import { LinkedInReviewDialog } from './linkedin-review-dialog';
 
 export type PostInitial = PostTranslations & {
   contentFormat?: 'text' | 'html' | 'markdown';
@@ -33,6 +34,8 @@ export type PostInitial = PostTranslations & {
   coverImageUrl: string | null;
   coverImagePath: string | null;
   coverImageAlt: string | null;
+  linkedinIntroPt?: string | null;
+  linkedinIntroEn?: string | null;
 };
 
 type Props = {
@@ -49,6 +52,8 @@ function toFormValues(initial?: PostInitial): PostFormValues {
         : textToHtml(value);
   return {
     contentFormat: 'markdown',
+    linkedinIntroPt: initial?.linkedinIntroPt ?? '',
+    linkedinIntroEn: initial?.linkedinIntroEn ?? '',
     titlePt: initial?.titlePt ?? (initial?.titleEn ? '' : (initial?.title ?? '')),
     titleEn: initial?.titleEn ?? '',
     contentPt: content(initial?.contentPt ?? (initial?.contentEn ? '' : (initial?.content ?? ''))),
@@ -70,6 +75,9 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
   const isUploading = Object.values(uploads).some(Boolean);
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<PostFormValues>(() => toFormValues(initial));
+  const [savedPostId, setSavedPostId] = useState(initial?.id ?? '');
+  const [lastStatus, setLastStatus] = useState<PostStatus>(initial?.status ?? 'draft');
+  const [reviewOpen, setReviewOpen] = useState(false);
   const statusOptions = POST_STATUSES.map((status) => ({
     value: status,
     label: POST_STATUS_LABELS[status],
@@ -79,7 +87,8 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
   const { status, message, fieldErrors, isSubmitting, submit } = useResourceForm<
     PostFormValues,
     unknown,
-    PostFieldErrors
+    PostFieldErrors,
+    PostInitial
   >({
     validate: validatePost,
     toPayload: (values) =>
@@ -90,12 +99,16 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
     endpoint: isEdit ? `/api/admin/posts/${initial.id}` : '/api/admin/posts',
     successMessage: isEdit ? 'Alterações salvas.' : 'Post criado com sucesso.',
     emptyFieldErrors: EMPTY_POST_FIELD_ERRORS,
-    onSuccess: isEdit
-      ? undefined
-      : () => {
-          setForm(toFormValues());
-          captureAnalyticsEvent('post_created');
-        },
+    onSuccess: (post) => {
+      setSavedPostId(post.id);
+      if (form.status === 'published' && (!isEdit || lastStatus !== 'published'))
+        setReviewOpen(true);
+      setLastStatus(form.status as PostStatus);
+      if (!isEdit) {
+        setForm(toFormValues());
+        captureAnalyticsEvent('post_created');
+      }
+    },
   });
 
   function update<K extends keyof PostFormValues>(field: K, value: PostFormValues[K]) {
@@ -144,6 +157,21 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
               disabled={isSubmitting}
               error={fieldErrors[`content${language}`]}
             />
+            <label
+              className="block text-sm text-white/80"
+              htmlFor={`${idPrefix}-linkedin-${language}`}
+            >
+              Chamada para o LinkedIn ({language === 'Pt' ? 'português' : 'inglês'}) — opcional
+              <textarea
+                id={`${idPrefix}-linkedin-${language}`}
+                className="mt-1 w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white"
+                rows={5}
+                maxLength={3000}
+                value={form[`linkedinIntro${language}`] ?? ''}
+                onChange={(event) => update(`linkedinIntro${language}`, event.target.value)}
+                disabled={isSubmitting}
+              />
+            </label>
             <TextField
               id={`${idPrefix}-alt-${language}`}
               label="Texto alternativo da capa"
@@ -204,6 +232,16 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
           </Button>
         </div>
       </form>
+      {canPublish && savedPostId && lastStatus === 'published' && (
+        <div className="mt-4">
+          <Button variant="outline" onClick={() => setReviewOpen(true)}>
+            Publicar no LinkedIn
+          </Button>
+        </div>
+      )}
+      {reviewOpen && savedPostId && (
+        <LinkedInReviewDialog postId={savedPostId} open onClose={() => setReviewOpen(false)} />
+      )}
     </div>
   );
 }

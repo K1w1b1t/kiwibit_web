@@ -1,7 +1,6 @@
 import { normalizePostContent } from '@/entities/post/model/normalize-post-content';
 import { parsePostTranslations } from '@/entities/post/model/post-translations';
 import { NextResponse } from 'next/server';
-import { runAfterResponse } from '@/shared/lib/after-response';
 import { prisma } from '@/shared/lib/prisma';
 import {
   requireAdminSession,
@@ -18,7 +17,6 @@ import { deleteUnreferencedPostImage } from '@/entities/post/model/delete-unrefe
 import { lockPostMedia, syncPostMedia, trackPostImages } from '@/entities/post/model/post-media';
 import type { Post } from '@prisma/client';
 import { postWriteFailure } from '@/features/admin/posts/model/post-write-failure';
-import { publishBlogPostToLinkedIn } from '@/shared/lib/linkedin-blog-post';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -84,10 +82,6 @@ export async function PUT(request: Request, { params }: Params) {
     });
   } catch (error) {
     return postWriteFailure(error);
-  }
-
-  if (updated.status === 'published' && existing.status !== 'published') {
-    runAfterResponse(() => publishBlogPostToLinkedIn(updated));
   }
 
   // The cover was replaced or cleared: drop the object that is no longer

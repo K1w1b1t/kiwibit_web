@@ -19,6 +19,7 @@ describe('bilingual LinkedIn announcement', () => {
     const text = compose(post).commentary!;
     expect(text).toMatch(/^English below ↓/);
     expect(text).toContain('Proteja seu site.');
+    expect(text).toContain('Leia o post no meu blog: https://www.kiwibit.com.br/pt/blog/xss');
     expect(text).toContain('Protect your website.');
     expect(text).toContain('/pt/blog/xss');
     expect(text).toContain('/en/blog/xss');
@@ -43,6 +44,40 @@ describe('bilingual LinkedIn announcement', () => {
         contentEn: undefined,
       }).commentary,
     ).toContain('Legacy body');
+  });
+  it('preserves complete ideas beyond the previous 180-character limit', () => {
+    const first = `Uma primeira ideia ${'bem desenvolvida '.repeat(13)}termina aqui.`;
+    const second = 'Uma segunda frase completa também pode ser apresentada.';
+    const text = compose({
+      ...post,
+      titleEn: null,
+      contentEn: null,
+      contentPt: `${first} ${second}`,
+    }).commentary!;
+    expect(text).toContain(first);
+    expect(text).toContain(second);
+  });
+  it('prefers a complete sentence over a fragment of the next one', () => {
+    const first = 'Uma ideia completa termina aqui.';
+    const text = compose({
+      ...post,
+      titleEn: null,
+      contentEn: null,
+      contentPt: `${first} ${'Continuação muito longa '.repeat(200)}`,
+    }).commentary!;
+    expect(text).toContain(first);
+    expect(text).not.toContain('Continuação muito longa');
+  });
+  it('uses the separately written introductions for each language without truncating them', () => {
+    const text = compose({
+      ...post,
+      linkedinIntroPt: 'Chamada portuguesa completa.',
+      linkedinIntroEn: 'Complete English introduction.',
+    }).commentary!;
+    expect(text).toContain('Chamada portuguesa completa.');
+    expect(text).toContain('Complete English introduction.');
+    expect(text).not.toContain('Proteja seu site.');
+    expect(text).not.toContain('Protect your website.');
   });
   it.each(['html', 'markdown'] as const)('extracts readable %s', (contentFormat) => {
     const contentPt =
