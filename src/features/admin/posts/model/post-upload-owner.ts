@@ -26,7 +26,7 @@ export async function resolvePostUploadOwner(
     return { ownerId: null, error: apiError('BAD_REQUEST', 'Invalid postId.', 400) };
   }
   const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } });
-  if (member && (!post || post.authorId !== user.id)) return forbidden();
+  if (member && post?.authorId !== user.id) return forbidden();
   if (!post) return { ownerId: null, error: apiError('NOT_FOUND', 'Post not found.', 404) };
   return { ownerId: post.authorId, error: null };
 }

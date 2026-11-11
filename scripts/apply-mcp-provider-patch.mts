@@ -5,6 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 // Exact upstream and patched bytes prevent fuzzy, partial or incompatible installs.
+// Resolve only the system installation, never a binary from the caller's PATH.
+const gitExecutable =
+  process.platform === 'win32' ? String.raw`C:\Program Files\Git\cmd\git.exe` : '/usr/bin/git';
+
 const files = [
   [
     'authorize-CLcUWfZo.mjs',
@@ -46,8 +50,8 @@ try {
   } else {
     if (!files.every(([file, before]) => digest(file) === before))
       throw new Error('Provider integrity mismatch');
-    execFileSync('git', ['apply', '--check', patch], { cwd: root, stdio: 'pipe' });
-    execFileSync('git', ['apply', patch], { cwd: root, stdio: 'pipe' });
+    execFileSync(gitExecutable, ['apply', '--check', patch], { cwd: root, stdio: 'pipe' });
+    execFileSync(gitExecutable, ['apply', patch], { cwd: root, stdio: 'pipe' });
     if (!files.every(([file, , after]) => digest(file) === after))
       throw new Error('Patched provider integrity mismatch');
     console.info('MCP provider patch applied and verified.');

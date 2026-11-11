@@ -69,7 +69,7 @@ users must review its redirect and scopes. Public image URLs, compromised client
 credential stores and malicious authorized content remain residual risks.
 
 The pinned provider requires `patches/@better-auth+oauth-provider+1.7.19.patch`.
-Installation requires Git and fails if the pinned version, upstream hashes, patch application or final hashes do not match. Review upstream upgrades against the audit
+Installation requires system Git (`/usr/bin/git`, or `C:\Program Files\Git\cmd\git.exe` on Windows), never resolves binaries through PATH, and fails if the pinned version, upstream hashes, patch application or final hashes do not match. Review upstream upgrades against the audit
 and run both provider suites before removing the patch. It changes transaction,
 family and session persistence; cryptography remains in the provider.
 

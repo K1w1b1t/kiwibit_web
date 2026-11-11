@@ -6,6 +6,10 @@ import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 
+// Resolve only the system installation, never a binary from the caller's PATH.
+const gitExecutable =
+  process.platform === 'win32' ? String.raw`C:\Program Files\Git\cmd\git.exe` : '/usr/bin/git';
+
 const script = fileURLToPath(
   new URL('../../scripts/apply-mcp-provider-patch.mts', import.meta.url),
 );
@@ -26,14 +30,15 @@ function fixture() {
   return {
     root,
     packageFile,
-    run: () => spawnSync(process.execPath, [script], { cwd: root, encoding: 'utf8' }),
+    run: (env = process.env) =>
+      spawnSync(process.execPath, [script], { cwd: root, encoding: 'utf8', env }),
   };
 }
 
 test('native installer applies the exact patch and verifies repeated installs', () => {
   const f = fixture();
   try {
-    execFileSync('git', ['apply', '--reverse', patch], { cwd: f.root });
+    execFileSync(gitExecutable, ['apply', '--reverse', patch], { cwd: f.root });
     assert.equal(f.run().status, 0);
     for (const file of files)
       assert.deepEqual(readFileSync(join(f.root, file)), readFileSync(resolve(file)));
@@ -50,11 +55,25 @@ test('native installer rejects upstream changes, partial patches and unsupported
     writeFileSync(file, readFileSync(file, 'utf8') + '\n// Unexpected change\n');
     assert.notEqual(f.run().status, 0);
     copyFileSync(resolve(files[0]), file);
-    execFileSync('git', ['apply', '--reverse', '--include=' + files[0], patch], { cwd: f.root });
+    execFileSync(gitExecutable, ['apply', '--reverse', '--include=' + files[0], patch], {
+      cwd: f.root,
+    });
     assert.notEqual(f.run().status, 0);
     copyFileSync(resolve(files[0]), file);
     writeFileSync(f.packageFile, JSON.stringify({ version: '1.7.20' }));
     assert.notEqual(f.run().status, 0);
+  } finally {
+    rmSync(f.root, { recursive: true });
+  }
+});
+
+test('native installer ignores an untrusted PATH', () => {
+  const f = fixture();
+  try {
+    execFileSync(gitExecutable, ['apply', '--reverse', patch], { cwd: f.root });
+    assert.equal(f.run({ ...process.env, PATH: f.root }).status, 0);
+    for (const file of files)
+      assert.deepEqual(readFileSync(join(f.root, file)), readFileSync(resolve(file)));
   } finally {
     rmSync(f.root, { recursive: true });
   }
