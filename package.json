@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/apply-mcp-provider-patch.mts",
     "prepare": "husky",
     "dev": "next dev",
     "build": "prisma generate --schema=prisma/schema.prisma && next build --webpack",
@@ -19,19 +20,28 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage --passWithNoTests",
     "test:e2e": "bash scripts/test-e2e.sh",
+    "test:mcp-provider": "node tests/security/mcp-oauth-provider.test.mts",
+    "test:mcp-provider:postgres": "bash scripts/test-mcp-provider.sh",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-pattern \"docs/design_examples_disabled/**\" --ignore-pattern \"coverage/**\"",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:mcp-patch": "node --test tests/security/mcp-provider-patch.test.mts"
   },
   "dependencies": {
+    "@better-auth/cimd": "1.7.19",
+    "@better-auth/mcp": "1.7.19",
+    "@better-auth/oauth-provider": "1.7.19",
+    "@modelcontextprotocol/server": "2.4.0",
     "@posthog/nextjs-config": "^1.11.1",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "aws4fetch": "^1.0.20",
     "bcryptjs": "^3.0.3",
+    "better-auth": "1.7.19",
     "dotenv": "^17.4.2",
     "emoji-picker-react": "^5.1.4",
+    "kysely": "0.28.17",
     "lucide-react": "^1.33.0",
     "markdown-it": "^15.0.3",
     "next": "^16.4.3",
@@ -42,7 +52,8 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-icons": "^5.7.0",
-    "sanitize-html": "^2.18.1"
+    "sanitize-html": "^2.18.1",
+    "zod": "4.6.7"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"

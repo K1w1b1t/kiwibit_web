@@ -15,6 +15,10 @@ import {
 import { isPostStatus, resolvePublishedAt } from '@/shared/lib/post-status';
 import { isHttpUrl } from '@/shared/lib/url';
 import { publishBlogPostToLinkedIn } from '@/shared/lib/linkedin-blog-post';
+import { createPostWithMedia } from '@/entities/post/model/create-post-with-media';
+import { lockPostMedia } from '@/entities/post/model/post-media';
+import type { Post } from '@prisma/client';
+import { postWriteFailure } from '@/features/admin/posts/model/post-write-failure';
 
 // GET /api/admin/posts
 export async function GET(request: Request) {
@@ -65,17 +69,23 @@ export async function POST(request: Request) {
   // Defaults to draft: a post should not go live the instant it is saved.
   const resolvedStatus = isPostStatus(status) ? status : 'draft';
 
-  const post = await prisma.post.create({
-    data: {
-      ...translated.data,
-      contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
-      authorId: session.user.id,
-      status: resolvedStatus,
-      publishedAt: resolvePublishedAt(resolvedStatus, null, new Date()),
-      ...(typeof coverImageUrl === 'string' && { coverImageUrl }),
-      ...(typeof coverImagePath === 'string' && { coverImagePath }),
-    },
-  });
+  let post: Post;
+  try {
+    post = await prisma.$transaction(async (tx) => {
+      await lockPostMedia(tx);
+      return createPostWithMedia(tx, {
+        ...translated.data,
+        contentFormat: normalized.body.contentFormat as 'text' | 'html' | 'markdown',
+        authorId: session.user.id,
+        status: resolvedStatus,
+        publishedAt: resolvePublishedAt(resolvedStatus, null, new Date()),
+        ...(typeof coverImageUrl === 'string' && { coverImageUrl }),
+        ...(typeof coverImagePath === 'string' && { coverImagePath }),
+      });
+    });
+  } catch (error) {
+    return postWriteFailure(error);
+  }
 
   if (post.status === 'published') {
     runAfterResponse(() => publishBlogPostToLinkedIn(post));

@@ -42,7 +42,12 @@ describe('ADMIN_NAV_ITEMS', () => {
 
   it('restringe itens administrativos ao member', () => {
     const visible = ADMIN_NAV_ITEMS.filter((item) => isVisibleNavItem('member', item));
-    expect(visible.map((item) => item.href)).toEqual(['/admin', '/admin/posts', '/admin/members']);
+    expect(visible.map((item) => item.href)).toEqual([
+      '/admin',
+      '/admin/posts',
+      '/admin/members',
+      '/admin/connections',
+    ]);
   });
 
   it('mostra itens restritos para roles administrativas', () => {

@@ -562,3 +562,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - The panel manages linked accounts from members; `/admin/account` provides access to the signed-in account, including an unlinked administrator.
 - Deleting a member deletes its linked account atomically, while posts retain a nullable author. Preserve self-deletion and last-admin guards.
 - Inventory unlinked accounts in each target environment before release; do not create public member profiles automatically.
+
+## 15. MCP OAuth boundaries
+
+- NextAuth remains the only panel login. Better Auth is isolated under `/api/mcp-auth`, with separate cookies, secret and `mcp_oauth` tables; browser identity comes only from a fresh NextAuth/database check.
+- Members may create their own drafts through explicitly scoped MCP grants only. Preserve the administrative guard on `POST /api/admin/posts` and publication/deletion operations.
+- Expose only `prepare_post_image` and `create_post_draft`. Never accept authorship or publication state from clients. No MCP publication or LinkedIn side effects.
+- Use provider family row locks for rotation and revocation, and the provider user lock for global revocation/new grants. Retain consumed refresh evidence until absolute family expiry.
+- All post image writes and cleanup use the shared media advisory lock. Retain referenced images across cover/body/translations; persist deletion claims before storage deletion and retry failures.
+- Never log OAuth URLs, tokens, cookies, content or image bytes. Keep production MCP disabled until the release acceptance in `docs/mcp-oauth-plan.md` passes.

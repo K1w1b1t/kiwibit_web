@@ -9,6 +9,7 @@ type Props = {
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  loadingLabel?: string;
   isBusy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -24,6 +25,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
+  loadingLabel = 'Excluindo...',
   isBusy = false,
   onConfirm,
   onCancel,
@@ -59,7 +61,7 @@ export function ConfirmDialog({
           size="sm"
           onClick={onConfirm}
           isLoading={isBusy}
-          loadingLabel="Excluindo..."
+          loadingLabel={loadingLabel}
         >
           {confirmLabel}
         </Button>
