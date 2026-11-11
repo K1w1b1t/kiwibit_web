@@ -362,6 +362,46 @@ describe('triggerLinkedInAutoPostForBlog', () => {
     expect(company).toMatchObject({ skipped: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('sends the bilingual announcement to both destinations', async () => {
+    process.env.LINKEDIN_COMPANY_AUTO_POST_ENABLED = 'true';
+    process.env.LINKEDIN_COMPANY_ACCESS_TOKEN = 'company-token';
+    process.env.LINKEDIN_COMPANY_AUTHOR_URN = 'urn:li:organization:123';
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com';
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await triggerLinkedInAutoPostForBlog(
+      {
+        ...post,
+        titlePt: 'Título português',
+        contentPt: 'Conteúdo português',
+        titleEn: 'English title',
+        contentEn: 'English content',
+      },
+      {
+        linkedinSub: 'sub-9',
+        linkedinPersonId: 'person-9',
+        scope: 'openid profile w_member_social',
+        autoPostEnabled: true,
+        accessTokenEnc: encryptToken('tok'),
+        accessTokenExpiry: new Date(Date.now() + 60_000),
+      },
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const company = JSON.parse(fetchMock.mock.calls[0][1].body);
+    const personal = JSON.parse(fetchMock.mock.calls[1][1].body);
+    const companyText = company.commentary as string;
+    const personalText = personal.specificContent['com.linkedin.ugc.ShareContent'].shareCommentary
+      .text as string;
+    for (const text of [companyText, personalText]) {
+      expect(text).toContain('Título português');
+      expect(text).toContain('English content');
+      expect(text).toContain('https://example.com/pt/blog/post-1');
+      expect(text).toContain('https://example.com/en/blog/post-1');
+    }
+    expect(company.content.article.source).toBe('https://example.com/pt/blog/post-1');
+  });
 });
 
 describe('Company Posts API', () => {
