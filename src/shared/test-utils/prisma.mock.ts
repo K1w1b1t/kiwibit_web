@@ -1,5 +1,5 @@
 const mockModel = () => ({
-  findMany: jest.fn(),
+  findMany: jest.fn().mockResolvedValue([]),
   findFirst: jest.fn(),
   findUnique: jest.fn(),
   create: jest.fn(),
@@ -20,6 +20,13 @@ type MockPrisma = {
   projectImage: MockModel;
   user: MockModel;
   linkedinConnection: MockModel;
+  postMedia: MockModel;
+  mcpImagePreparation: MockModel;
+  mcpDraftRequest: MockModel;
+  mcpBrowserTransaction: MockModel;
+  mcpRateLimit: MockModel;
+  $executeRaw: jest.Mock;
+  $queryRaw: jest.Mock;
   $transaction: jest.Mock;
 };
 
@@ -41,5 +48,12 @@ export const prisma: MockPrisma = {
   projectImage: mockModel(),
   user: mockModel(),
   linkedinConnection: mockModel(),
+  postMedia: mockModel(),
+  mcpImagePreparation: mockModel(),
+  mcpDraftRequest: mockModel(),
+  mcpBrowserTransaction: mockModel(),
+  mcpRateLimit: mockModel(),
+  $executeRaw: jest.fn().mockResolvedValue(0),
+  $queryRaw: jest.fn().mockResolvedValue([]),
   $transaction: mockTransaction,
 };

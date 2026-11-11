@@ -40,6 +40,9 @@ function storageImagePatterns(): NonNullable<NonNullable<NextConfig['images']>['
 }
 
 const nextConfig: NextConfig = {
+  logging: {
+    incomingRequests: { ignore: [/^\/api\/mcp(?:-auth)?(?:\/|\?|$)/, /^\/login(?:\?|$)/] },
+  },
   reactCompiler: true,
   images: {
     remotePatterns: [

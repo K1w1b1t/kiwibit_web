@@ -1,3 +1,4 @@
+/** @jest-environment jsdom */
 import { POST_LIMITS, validatePost } from './validate-post';
 
 const base = {
@@ -65,4 +66,25 @@ describe('validatePost', () => {
     expect(result.valid).toBe(true);
     if (result.valid) expect(result.data.title).toBe('Título bom');
   });
+});
+
+it('accepts an empty optional editor translation', () => {
+  const result = validatePost({
+    title: '',
+    content: '',
+    titlePt: 'Portuguese article',
+    contentPt: '<p>A complete Portuguese article body.</p>',
+    titleEn: '',
+    contentEn: '<p></p>',
+    contentFormat: 'html',
+    status: 'draft',
+    coverImageUrl: '',
+    coverImagePath: '',
+    coverImageAlt: '',
+  });
+  expect(result.valid).toBe(true);
+  if (result.valid) {
+    expect(result.data.contentEn).toBeNull();
+    expect(result.data.contentFormat).toBe('html');
+  }
 });

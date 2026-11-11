@@ -4,6 +4,7 @@ import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminPageShell } from '@/shared/ui/admin-page-shell';
 import { AdminUserForm } from '@/features/admin/users/ui/admin-user-form';
 import { UserPasswordPanel } from '@/features/admin/users/ui/user-password-panel';
+import { MemberMcpPanel } from '@/features/mcp-connections/ui/member-mcp-panel';
 
 export default async function AccountPage() {
   const session = await requirePanelPageSession();
@@ -17,6 +18,7 @@ export default async function AccountPage() {
     <AdminPageShell title="Minha conta" width="form">
       <AdminUserForm initial={user} canAssignPrivileged={false} canChangeRole={false} />
       <UserPasswordPanel userId={user.id} userEmail={user.email} />
+      <MemberMcpPanel />
     </AdminPageShell>
   );
 }

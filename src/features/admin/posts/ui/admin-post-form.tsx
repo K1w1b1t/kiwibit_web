@@ -20,10 +20,12 @@ import { Button } from '@/shared/ui/button';
 import { FormStatus } from '@/shared/ui/form-status';
 import { ImageUploadField } from '@/shared/ui/image-upload-field';
 import { SelectField } from '@/shared/ui/select-field';
-import { TextAreaField } from '@/shared/ui/text-area-field';
+import { RichTextField } from '@/shared/ui/rich-text-field';
+import { textToHtml } from '@/shared/lib/rich-text';
 import { TextField } from '@/shared/ui/text-field';
 
 export type PostInitial = PostTranslations & {
+  contentFormat?: 'text' | 'html' | 'markdown';
   id: string;
   title: string;
   content: string;
@@ -39,15 +41,22 @@ type Props = {
 };
 
 function toFormValues(initial?: PostInitial): PostFormValues {
+  const content = (value: string) =>
+    !value
+      ? ''
+      : initial?.contentFormat === 'html' || initial?.contentFormat === 'markdown'
+        ? value
+        : textToHtml(value);
   return {
+    contentFormat: 'markdown',
     titlePt: initial?.titlePt ?? (initial?.titleEn ? '' : (initial?.title ?? '')),
     titleEn: initial?.titleEn ?? '',
-    contentPt: initial?.contentPt ?? (initial?.contentEn ? '' : (initial?.content ?? '')),
-    contentEn: initial?.contentEn ?? '',
+    contentPt: content(initial?.contentPt ?? (initial?.contentEn ? '' : (initial?.content ?? ''))),
+    contentEn: content(initial?.contentEn ?? ''),
     coverImageAltPt: initial?.coverImageAltPt ?? initial?.coverImageAlt ?? '',
     coverImageAltEn: initial?.coverImageAltEn ?? '',
     title: initial?.title ?? '',
-    content: initial?.content ?? '',
+    content: content(initial?.content ?? ''),
     // New posts start as drafts so nothing goes live by accident.
     status: initial?.status ?? 'draft',
     coverImageUrl: initial?.coverImageUrl ?? '',
@@ -57,6 +66,8 @@ function toFormValues(initial?: PostInitial): PostFormValues {
 }
 
 export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
+  const [uploads, setUploads] = useState<Record<string, boolean>>({});
+  const isUploading = Object.values(uploads).some(Boolean);
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<PostFormValues>(() => toFormValues(initial));
   const statusOptions = POST_STATUSES.map((status) => ({
@@ -101,7 +112,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          void submit(form);
+          if (!isUploading) void submit(form);
         }}
         className="space-y-4"
       >
@@ -121,12 +132,15 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
               disabled={isSubmitting}
               error={fieldErrors[`title${language}`]}
             />
-            <TextAreaField
+            <RichTextField
               id={`${idPrefix}-content-${language}`}
               label="Conteúdo"
-              rows={10}
+              postId={initial?.id}
+              onUploadingChange={(busy) =>
+                setUploads((current) => ({ ...current, [language]: busy }))
+              }
               value={form[`content${language}`] ?? ''}
-              onChange={(event) => update(`content${language}`, event.target.value)}
+              onChange={(markdown) => update(`content${language}`, markdown)}
               disabled={isSubmitting}
               error={fieldErrors[`content${language}`]}
             />
@@ -164,6 +178,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
             id={`${idPrefix}-cover`}
             label="Imagem de capa"
             scope="posts"
+            postId={initial?.id}
             shape="wide"
             disabled={isSubmitting}
             error={fieldErrors.coverImageUrl}
@@ -180,6 +195,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
 
         <div className="animate-fade-up delay-500 pt-2">
           <Button
+            disabled={isUploading}
             type="submit"
             isLoading={isSubmitting}
             loadingLabel={isEdit ? 'Salvando...' : 'Criando...'}

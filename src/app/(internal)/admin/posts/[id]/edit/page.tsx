@@ -26,6 +26,7 @@ export default async function EditPostPage({ params }: Readonly<Params>) {
       coverImageAltEn: true,
 
       content: true,
+      contentFormat: true,
       status: true,
       coverImageUrl: true,
       coverImagePath: true,

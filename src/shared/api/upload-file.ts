@@ -12,10 +12,15 @@ export type UploadResult = { ok: true; data: UploadedImage } | { ok: false; mess
  * Uses `fetch` with FormData rather than the JSON `apiClient`, and deliberately
  * does not set Content-Type — the browser must add the multipart boundary.
  */
-export async function uploadImage(file: File, scope: UploadScope): Promise<UploadResult> {
+export async function uploadImage(
+  file: File,
+  scope: UploadScope,
+  postId?: string,
+): Promise<UploadResult> {
   const body = new FormData();
   body.append('file', file);
   body.append('scope', scope);
+  if (postId) body.append('postId', postId);
 
   let response: Response;
   try {

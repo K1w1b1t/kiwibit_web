@@ -309,3 +309,33 @@ describe('DELETE /api/admin/posts/[id]', () => {
     expect(prisma.post.delete).not.toHaveBeenCalled();
   });
 });
+
+describe('rich content persistence', () => {
+  it('sanitizes HTML before writing all content fields', async () => {
+    mockAuth();
+    (prisma.post.create as jest.Mock).mockResolvedValue({ ...POST_RECORD, status: 'draft' });
+    const res = await createPost(
+      makeReq('http://localhost/api/admin/posts', {
+        titlePt: 'Rich article',
+        contentPt: '<h2 onclick="alert(1)">A useful article</h2><script>alert(1)</script>',
+        contentFormat: 'html',
+      }),
+    );
+    expect(res.status).toBe(201);
+    const data = (prisma.post.create as jest.Mock).mock.calls.at(-1)[0].data;
+    expect(data.contentFormat).toBe('html');
+    expect(data.contentPt).toBe('<h2>A useful article</h2>');
+    expect(data.content).toBe(data.contentPt);
+  });
+  it('rejects rich markup without sufficient visible text', async () => {
+    mockAuth();
+    const res = await createPost(
+      makeReq('http://localhost/api/admin/posts', {
+        titlePt: 'Rich article',
+        contentPt: '<p><strong></strong></p>',
+        contentFormat: 'html',
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+});

@@ -2,6 +2,7 @@ import EditMemberPage from './page';
 import { prisma } from '@/shared/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import { requirePanelPageSession } from '@/shared/lib/page-auth';
+import { MemberMcpPanel } from '@/features/mcp-connections/ui/member-mcp-panel';
 
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
@@ -95,5 +96,26 @@ describe('EditMemberPage', () => {
       'NEXT_REDIRECT:/admin/members',
     );
     expect(redirect).toHaveBeenCalledWith('/admin/members');
+  });
+
+  it('offers MCP controls only on the signed-in member account', async () => {
+    (requirePanelPageSession as jest.Mock).mockResolvedValue({
+      user: { id: 'owner', role: 'member' },
+    });
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      ...MEMBER,
+      user: { id: 'owner', role: 'member' },
+    });
+    const page = await EditMemberPage({ params: Promise.resolve({ id: 'mid-1' }) });
+    expect(page.props.children.at(-1).type).toBe(MemberMcpPanel);
+  });
+
+  it('does not expose the administrator MCP controls while editing another member', async () => {
+    (prisma.member.findUnique as jest.Mock).mockResolvedValue({
+      ...MEMBER,
+      user: { id: 'other', role: 'member' },
+    });
+    const page = await EditMemberPage({ params: Promise.resolve({ id: 'mid-1' }) });
+    expect(page.props.children.at(-1)).toBe(false);
   });
 });

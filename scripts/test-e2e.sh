@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-E2E_PORT=3001
+E2E_PORT="${E2E_PORT:-3001}"
 E2E_DB_PORT=5434
 E2E_BASE_URL="http://localhost:${E2E_PORT}"
 NEXT_PID=""
@@ -12,6 +12,7 @@ cleanup() {
   echo ""
   echo "🧹 Cleaning up..."
   if [[ -n "$NEXT_PID" ]] && kill -0 "$NEXT_PID" 2>/dev/null; then
+    pkill -TERM -P "$NEXT_PID" 2>/dev/null || true
     kill "$NEXT_PID" 2>/dev/null || true
   fi
   "${E2E_COMPOSE[@]}" down --volumes --remove-orphans --timeout 10 2>/dev/null || true
@@ -35,10 +36,20 @@ source "$ENV_FILE"
 set +a
 export NEXTAUTH_URL="$E2E_BASE_URL"
 export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${E2E_DB_PORT}/${POSTGRES_DB}?schema=public"
+export MCP_ENABLED=true
+export MCP_CANONICAL_ORIGIN="$E2E_BASE_URL"
+export MCP_AUTH_SECRET="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')"
+export CRON_SECRET="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')"
+export LOCAL_S3_ENDPOINT=http://localhost:4567
+export LOCAL_S3_PUBLIC_URL=http://localhost:4567
+export LOCAL_S3_BUCKET=kiwibit-e2e
+export LOCAL_S3_REGION=us-east-1
+export LOCAL_S3_ACCESS_KEY_ID=test
+export LOCAL_S3_SECRET_ACCESS_KEY=test
 
 # ── start database ────────────────────────────────────────────────────────────
 echo "🐳 Starting ephemeral E2E database (port ${E2E_DB_PORT}, no volume)..."
-"${E2E_COMPOSE[@]}" up -d
+"${E2E_COMPOSE[@]}" up -d --wait --wait-timeout 120
 
 echo "⏳ Waiting for database to be healthy..."
 MAX_DB_WAIT=90
@@ -65,7 +76,7 @@ echo "✅ Prisma Client generated"
 
 # ── start Next.js dev server ──────────────────────────────────────────────────
 echo "🚀 Starting Next.js on port ${E2E_PORT}..."
-PORT=$E2E_PORT npx next dev -p "$E2E_PORT" > /tmp/next-e2e.log 2>&1 &
+PORT=$E2E_PORT node node_modules/next/dist/bin/next dev -p "$E2E_PORT" > /tmp/next-e2e.log 2>&1 &
 NEXT_PID=$!
 
 echo "⏳ Waiting for Next.js to be ready..."
@@ -86,6 +97,12 @@ until curl -sf "${E2E_BASE_URL}/api/auth/csrf" > /dev/null 2>&1; do
   WAITED=$(( WAITED + 3 ))
 done
 echo "✅ Next.js is ready"
+
+if [[ "${E2E_SERVE_ONLY:-0}" == "1" ]]; then
+  echo "Ephemeral E2E server is ready; stop it to destroy the test database."
+  wait "$NEXT_PID"
+  exit 0
+fi
 
 # ── run E2E tests ─────────────────────────────────────────────────────────────
 echo ""

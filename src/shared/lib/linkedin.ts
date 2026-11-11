@@ -1,3 +1,4 @@
+import { richTextToText, renderPostContent } from '@/shared/lib/sanitize-rich-text';
 import { absoluteUrl } from '@/shared/lib/seo';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { reportServerError } from '@/shared/lib/discord';
@@ -184,6 +185,7 @@ export type LinkedInAutoPostResult = {
 };
 
 export type LinkedInBlogPost = {
+  contentFormat?: 'text' | 'html' | 'markdown';
   id: string;
   title: string;
   content: string;
@@ -441,7 +443,13 @@ export async function triggerLinkedInAutoPostForBlog(
   const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
   const input: LinkedInAutoPostInput = {
     title: post.title,
-    summary: post.content.replace(/\s+/g, ' ').trim().slice(0, 180),
+    summary: (post.contentFormat && post.contentFormat !== 'text'
+      ? richTextToText(renderPostContent(post.content, post.contentFormat))
+      : post.content
+    )
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 180),
     url: `${siteBase}/${'titleEn' in post && post.titleEn && !('titlePt' in post && post.titlePt) ? 'en' : 'pt'}/blog/${post.id}`,
     imageUrl: post.coverImageUrl ?? null,
   };

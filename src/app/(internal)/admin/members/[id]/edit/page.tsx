@@ -4,6 +4,7 @@ import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminMemberForm } from '@/features/admin/members/ui/admin-member-form';
 import { MemberAccountPanel } from '@/features/admin/members/ui/member-account-panel';
 import { MemberLinkedinPanel } from '@/features/admin/members/ui/member-linkedin-panel';
+import { MemberMcpPanel } from '@/features/mcp-connections/ui/member-mcp-panel';
 import { isLinkedInAccessTokenExpired, scopeAllowsAutoPost } from '@/shared/lib/linkedin';
 import { DeleteButton } from '@/shared/ui/delete-button';
 import { AdminPageShell } from '@/shared/ui/admin-page-shell';
@@ -98,6 +99,7 @@ export default async function EditMemberPage({ params }: Params) {
           />
         </>
       )}
+      {isLinkedinOwner && <MemberMcpPanel />}
     </AdminPageShell>
   );
 }

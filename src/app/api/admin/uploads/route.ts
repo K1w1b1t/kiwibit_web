@@ -1,3 +1,5 @@
+import { resolvePostUploadOwner } from '@/features/admin/posts/model/post-upload-owner';
+import { prisma } from '@/shared/lib/prisma';
 import { NextResponse } from 'next/server';
 import { requireAdminSession, requirePanelSession, apiError } from '@/shared/lib/api-helpers';
 import { deleteObjects, isStorageConfigured, putObject } from '@/shared/lib/storage';
@@ -7,6 +9,7 @@ import {
   isUploadScope,
   sniffImageType,
 } from '@/shared/lib/validate-image-file';
+import { deleteUnreferencedPostImage } from '@/entities/post/model/delete-unreferenced-image';
 
 /**
  * POST /api/admin/uploads — multipart image upload proxied to object storage.
@@ -35,9 +38,8 @@ export async function POST(request: Request) {
   if (!isUploadScope(scope)) {
     return apiError('BAD_REQUEST', 'scope must be projects, posts or members.', 400);
   }
-  if (session.user.role === 'member' && scope !== 'members') {
-    return apiError('FORBIDDEN', 'Members can upload images only for their profile.', 403);
-  }
+  const ownership = await resolvePostUploadOwner(session.user, scope, form.get('postId'));
+  if (ownership.error) return ownership.error;
 
   if (!isStorageConfigured()) {
     return apiError('STORAGE_UNAVAILABLE', 'Storage is not configured on this environment.', 503);
@@ -62,10 +64,31 @@ export async function POST(request: Request) {
   // Key embeds a UUID, so collisions are impossible and objects are immutable.
   const key = `${scope}/${crypto.randomUUID()}.${extensionForType(sniffed)}`;
 
+  let preparationId: string | undefined;
+  if (scope === 'posts') {
+    const preparation = await prisma.mcpImagePreparation.create({
+      data: {
+        userId: ownership.ownerId,
+        connectionId: 'panel-upload',
+        storagePath: key,
+        url: '',
+        mimeType: sniffed,
+        state: 'uploading',
+        expiresAt: new Date(Date.now() + 24 * 3600 * 1000),
+      },
+    });
+    preparationId = preparation.id;
+  }
+
   const result = await putObject(key, buffer, sniffed);
   if (!result.ok) {
     return apiError('STORAGE_ERROR', result.message, 502);
   }
+  if (preparationId)
+    await prisma.mcpImagePreparation.update({
+      where: { id: preparationId },
+      data: { state: 'prepared', url: result.url },
+    });
 
   return NextResponse.json(
     { success: true, data: { url: result.url, path: result.key } },
@@ -92,7 +115,8 @@ export async function DELETE(request: Request) {
     return apiError('BAD_REQUEST', 'path is outside the managed prefixes.', 400);
   }
 
-  const ok = await deleteObjects([path]);
+  const ok =
+    scope === 'posts' ? await deleteUnreferencedPostImage(path) : await deleteObjects([path]);
   // Reported to Discord by `deleteObjects`; the caller does not need to retry.
   return NextResponse.json({ success: ok });
 }
