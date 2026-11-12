@@ -20,6 +20,8 @@ type MockPrisma = {
   projectImage: MockModel;
   user: MockModel;
   linkedinConnection: MockModel;
+  linkedinBlogReview: MockModel;
+  linkedinBlogDelivery: MockModel;
   postMedia: MockModel;
   mcpImagePreparation: MockModel;
   mcpDraftRequest: MockModel;
@@ -48,6 +50,8 @@ export const prisma: MockPrisma = {
   projectImage: mockModel(),
   user: mockModel(),
   linkedinConnection: mockModel(),
+  linkedinBlogReview: mockModel(),
+  linkedinBlogDelivery: mockModel(),
   postMedia: mockModel(),
   mcpImagePreparation: mockModel(),
   mcpDraftRequest: mockModel(),

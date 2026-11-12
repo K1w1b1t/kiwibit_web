@@ -397,6 +397,31 @@ Neither organization nor personal failures may block blog publication. Diagnosti
 must contain only allowlisted error classifications and HTTP statuses, never provider
 response bodies, OAuth parameters, tokens, or personal data.
 
+## Blog review and covers (issue #144)
+
+Publishing a blog post opens a review dialog after the blog is saved. The
+administrator may edit the announcement and hashtags, confirm the available
+destinations, or cancel while leaving the article published. A published article
+can be reviewed later from its editor. Optional Portuguese and English LinkedIn
+introductions can be entered in the editor or supplied as `linkedinIntroPt` and
+`linkedinIntroEn` to MCP `create_post_draft`; MCP still creates drafts only.
+When these fields are empty, the default announcement selects complete sentences
+from each available translation and links to the article.
+
+An existing cover is uploaded independently for each destination using the
+destination's token and owner; failures are displayed rather than falling back
+to a text-only post. Without a cover, the dialog explicitly indicates that no
+image will be sent. Deliveries are recorded per destination. A confirmed success
+is not resent; an uncertain outcome is blocked and must be checked manually on
+LinkedIn. Do not manually reset its database state without first verifying the
+destination and the publication result.
+
+Apply the Prisma migrations before deploying the application. Live acceptance
+requires a controlled publication to each configured destination with valid
+LinkedIn permissions, then checking the visible text, hashtags, cover and link.
+Record only sanitized evidence. Historical Vercel logs should be checked against
+the reported publication time; the earlier connector lookup returned no teams.
+
 ## Project announcements on the company page (issue #127)
 
 A successful `POST /api/admin/projects` schedules one company-page announcement

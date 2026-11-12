@@ -168,7 +168,9 @@ describe('triggerLinkedInAutoPost', () => {
     process.env.LINKEDIN_PERSONAL_AUTO_POST_ENABLED = 'true';
     process.env.LINKEDIN_PERSONAL_AUTHOR_URN = 'urn:li:person:abc123';
 
-    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 201, headers: new Headers() });
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await triggerLinkedInAutoPost('personal', {
@@ -298,7 +300,9 @@ describe('triggerPersonalAutoPost', () => {
   });
 
   it('posts to the stored person URN with the decrypted token', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 201, headers: new Headers() });
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await triggerPersonalAutoPost(connection(), input);
@@ -344,7 +348,9 @@ describe('triggerLinkedInAutoPostForBlog', () => {
   });
 
   it('posts to the author profile independently of the company config', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 201, headers: new Headers() });
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const results = await triggerLinkedInAutoPostForBlog(post, {
@@ -368,7 +374,9 @@ describe('triggerLinkedInAutoPostForBlog', () => {
     process.env.LINKEDIN_COMPANY_ACCESS_TOKEN = 'company-token';
     process.env.LINKEDIN_COMPANY_AUTHOR_URN = 'urn:li:organization:123';
     process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com';
-    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 201, headers: new Headers() });
     global.fetch = fetchMock as unknown as typeof fetch;
 
     await triggerLinkedInAutoPostForBlog(
@@ -425,7 +433,9 @@ describe('Company Posts API', () => {
     url: 'https://www.kiwibit.com.br/pt/projects/one',
   };
   it('sends a versioned organization post with explicit article metadata', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 201, headers: new Headers() });
     global.fetch = fetchMock;
     await expect(triggerLinkedInAutoPost('company', input)).resolves.toMatchObject({
       ok: true,

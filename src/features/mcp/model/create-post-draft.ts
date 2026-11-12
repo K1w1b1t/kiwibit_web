@@ -45,6 +45,8 @@ function resolveDraftImages(
   const cover = images.find((image) => image.id === input.coverImageRef);
   const postData = {
     ...translated.data,
+    linkedinIntroPt: input.linkedinIntroPt?.trim() || null,
+    linkedinIntroEn: input.linkedinIntroEn?.trim() || null,
     contentFormat: input.contentFormat,
     coverImageUrl: cover?.url ?? null,
     coverImagePath: cover?.storagePath ?? null,

@@ -90,6 +90,63 @@ describe('Posts CRUD — /api/admin/posts', () => {
     expect(body.items).toHaveLength(1);
   });
 
+  it('persists a LinkedIn review without publishing it', async () => {
+    const path = `/api/admin/posts/${createdId}/linkedin`;
+    expect((await anonClient().get(path)).status).toBe(401);
+    const first = await ref.client.get(path);
+    expect(first.status).toBe(200);
+    const suggestion = await first.json();
+    expect(suggestion.version).toBe(0);
+    expect(suggestion.text).toContain('Leia o post no meu blog:');
+    const saved = await ref.client.put(path, {
+      version: 0,
+      text: 'Uma chamada revisada e coerente.',
+      hashtags: '#Kiwibit',
+      postUpdatedAt: suggestion.postUpdatedAt,
+    });
+    expect(saved.status).toBe(200);
+    const savedBody = await saved.json();
+    expect(savedBody.version).toBe(1);
+    const reopened = await (await ref.client.get(path)).json();
+    expect(reopened.text).toBe('Uma chamada revisada e coerente.');
+    expect(reopened.deliveries).toEqual([]);
+    expect((await ref.client.post(path, { version: 1, acknowledged: false })).status).toBe(400);
+    const simultaneous = await Promise.all([
+      ref.client.put(path, {
+        version: 1,
+        text: 'Primeira revisão',
+        hashtags: '#Kiwibit',
+        postUpdatedAt: reopened.postUpdatedAt,
+      }),
+      ref.client.put(path, {
+        version: 1,
+        text: 'Segunda revisão',
+        hashtags: '#Kiwibit',
+        postUpdatedAt: reopened.postUpdatedAt,
+      }),
+    ]);
+    expect(simultaneous.map((response) => response.status).sort()).toEqual([200, 409]);
+    expect(
+      (
+        await ref.client.put(`/api/admin/posts/${createdId}`, {
+          linkedinIntroPt: 'Uma nova chamada do autor.',
+        })
+      ).status,
+    ).toBe(200);
+    const currentReview = await (await ref.client.get(path)).json();
+    expect(currentReview.stale).toBe(true);
+    expect(
+      (
+        await ref.client.put(path, {
+          version: currentReview.version,
+          text: 'Revisão antiga',
+          hashtags: '#Kiwibit',
+          postUpdatedAt: reopened.postUpdatedAt,
+        })
+      ).status,
+    ).toBe(409);
+  });
+
   // ── UPDATE ────────────────────────────────────────────────────────────────
   it('PUT /api/admin/posts/[id] updates the post', async () => {
     const res = await ref.client.put(`/api/admin/posts/${createdId}`, {

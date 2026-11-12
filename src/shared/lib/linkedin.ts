@@ -3,6 +3,8 @@ import { absoluteUrl } from '@/shared/lib/seo';
 import { runAfterResponse } from '@/shared/lib/after-response';
 import { reportServerError } from '@/shared/lib/discord';
 import { decryptToken } from '@/shared/lib/token-crypto';
+import { prepareLinkedInCover, uploadLinkedInCover } from '@/shared/lib/linkedin-image';
+import { escapeLinkedInCommentary } from '@/shared/lib/linkedin-commentary';
 
 /**
  * "Sign In with LinkedIn using OpenID Connect" OAuth, used to sync a member's
@@ -183,6 +185,9 @@ export type LinkedInAutoPostResult = {
   status?: number;
   code?: string;
   detail?: string;
+  uncertain?: boolean;
+  postUrn?: string;
+  imageUrn?: string;
 };
 
 export type LinkedInBlogPost = {
@@ -190,6 +195,8 @@ export type LinkedInBlogPost = {
   contentPt?: string | null;
   titleEn?: string | null;
   contentEn?: string | null;
+  linkedinIntroPt?: string | null;
+  linkedinIntroEn?: string | null;
   contentFormat?: 'text' | 'html' | 'markdown';
   id: string;
   title: string;
@@ -227,8 +234,8 @@ function ensureLinkedInText(input: LinkedInAutoPostInput): string {
   return baseText.trim().slice(0, 3000);
 }
 
-function buildPayload(input: LinkedInAutoPostInput, authorUrn: string) {
-  const summaryText = input.summary?.trim() || 'Leia o artigo completo no blog da Kiwibit.';
+function buildPayload(input: LinkedInAutoPostInput, authorUrn: string, imageUrn?: string) {
+  const summaryText = input.summary?.trim() || 'Leia o post no meu blog.';
   const shareText = ensureLinkedInText(input);
 
   return {
@@ -237,15 +244,17 @@ function buildPayload(input: LinkedInAutoPostInput, authorUrn: string) {
     specificContent: {
       'com.linkedin.ugc.ShareContent': {
         shareCommentary: { text: shareText },
-        shareMediaCategory: 'ARTICLE',
-        media: [
-          {
-            status: 'READY',
-            description: { text: summaryText.slice(0, 200) },
-            originalUrl: input.url,
-            title: { text: input.title.slice(0, 200) },
-          },
-        ],
+        shareMediaCategory: imageUrn ? 'IMAGE' : 'ARTICLE',
+        media: imageUrn
+          ? [{ status: 'READY', media: imageUrn }]
+          : [
+              {
+                status: 'READY',
+                description: { text: summaryText.slice(0, 200) },
+                originalUrl: input.url,
+                title: { text: input.title.slice(0, 200) },
+              },
+            ],
       },
     },
     visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
@@ -255,25 +264,27 @@ function buildPayload(input: LinkedInAutoPostInput, authorUrn: string) {
 /** Current supported Marketing API version, verified against LinkedIn's versioning docs. */
 const LINKEDIN_POSTS_VERSION = '202610';
 
-function buildCompanyPayload(input: LinkedInAutoPostInput, authorUrn: string) {
+function buildCompanyPayload(input: LinkedInAutoPostInput, authorUrn: string, imageUrn?: string) {
   return {
     author: authorUrn,
-    commentary: ensureLinkedInText(input)
-      .slice(0, input.commentary === undefined ? 1500 : undefined)
-      .replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`),
+    commentary: escapeLinkedInCommentary(
+      ensureLinkedInText(input).slice(0, input.commentary === undefined ? 1500 : undefined),
+    ),
     visibility: 'PUBLIC',
     distribution: {
       feedDistribution: 'MAIN_FEED',
       targetEntities: [],
       thirdPartyDistributionChannels: [],
     },
-    content: {
-      article: {
-        source: input.url,
-        title: input.title.slice(0, 200),
-        ...(input.summary && { description: input.summary.slice(0, 200) }),
-      },
-    },
+    content: imageUrn
+      ? { media: { id: imageUrn } }
+      : {
+          article: {
+            source: input.url,
+            title: input.title.slice(0, 200),
+            ...(input.summary && { description: input.summary.slice(0, 200) }),
+          },
+        },
     lifecycleState: 'PUBLISHED',
     isReshareDisabledByAuthor: false,
   };
@@ -298,7 +309,30 @@ async function postLinkedIn(
       code: 'LINKEDIN_COMPANY_AUTHOR_INVALID',
       detail: 'Expected an organization author URN.',
     };
-  const payload = company ? buildCompanyPayload(input, authorUrn) : buildPayload(input, authorUrn);
+  let imageUrn: string | undefined;
+  if (input.imageUrl) {
+    try {
+      const bytes = await prepareLinkedInCover(input.imageUrl);
+      imageUrn = await uploadLinkedInCover(token, authorUrn, company, bytes);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'LINKEDIN_TOKEN_EXPIRED') {
+        return {
+          ok: false,
+          expired: true,
+          reconnectRequired: true,
+          code: 'LINKEDIN_TOKEN_EXPIRED',
+        };
+      }
+      return {
+        ok: false,
+        code: 'LINKEDIN_IMAGE_FAILED',
+        detail: 'Unable to upload the cover image.',
+      };
+    }
+  }
+  const payload = company
+    ? buildCompanyPayload(input, authorUrn, imageUrn)
+    : buildPayload(input, authorUrn, imageUrn);
 
   try {
     const response = await fetch(company ? 'https://api.linkedin.com/rest/posts' : UGC_POSTS_URL, {
@@ -314,7 +348,13 @@ async function postLinkedIn(
     });
 
     if (response.ok) {
-      return { ok: true, sent: true, status: response.status };
+      return {
+        ok: true,
+        sent: true,
+        status: response.status,
+        postUrn: response.headers.get('x-restli-id') ?? undefined,
+        imageUrn,
+      };
     }
 
     const rawBody = await response.text().catch(() => '');
@@ -336,12 +376,14 @@ async function postLinkedIn(
       status: response.status,
       code: 'LINKEDIN_POST_FAILED',
       detail: 'LinkedIn rejected the publication request.',
+      uncertain: response.status >= 500 || response.status === 408,
     };
   } catch {
     return {
       ok: false,
       code: 'LINKEDIN_POST_ERROR',
       detail: 'LinkedIn publication request failed.',
+      uncertain: true,
     };
   }
 }
@@ -445,50 +487,73 @@ export function composeLinkedInBlogPost(
       locale: 'pt',
       title: explicit ? post.titlePt : post.title,
       content: explicit ? post.contentPt : post.content,
-      invite: 'Leia o artigo completo:',
+      introduction: post.linkedinIntroPt,
+      invite: 'Leia o post no meu blog:',
     },
     {
       locale: 'en',
       title: post.titleEn,
       content: post.contentEn,
+      introduction: post.linkedinIntroEn,
       invite: 'Read the full article:',
     },
   ].filter((item) => item.title?.trim() && item.content?.trim());
   if (!translations.length) return null;
   const blocks = translations.map((item) => ({
     title: item.title!.trim(),
-    summary: (post.contentFormat && post.contentFormat !== 'text'
-      ? richTextToText(renderPostContent(item.content!, post.contentFormat))
-      : item.content!
-    )
-      .replace(/\s+/g, ' ')
-      .trim(),
+    manual: Boolean(item.introduction?.trim()),
+    summary:
+      item.introduction?.trim() ||
+      (post.contentFormat && post.contentFormat !== 'text'
+        ? richTextToText(renderPostContent(item.content!, post.contentFormat))
+        : item.content!
+      )
+        .replace(/\s+/g, ' ')
+        .trim(),
     url: `${siteBase.replace(/\/$/, '')}/${item.locale}/blog/${post.id}`,
     invite: item.invite,
   }));
+  const summarize = (summary: string, length: number) => {
+    if (!length) return '';
+    const chars = Array.from(summary);
+    if (chars.length <= length) return summary;
+    const sentences = Array.from(
+      new Intl.Segmenter(undefined, { granularity: 'sentence' }).segment(summary),
+      (part) => part.segment.trim(),
+    ).filter(Boolean);
+    let complete = '';
+    for (const sentence of sentences) {
+      const candidate = [complete, sentence].filter(Boolean).join(' ');
+      if (Array.from(candidate).length > length) break;
+      complete = candidate;
+    }
+    if (complete) return complete;
+    const fragment = chars.slice(0, Math.max(0, length - 1)).join('');
+    const boundary = fragment.lastIndexOf(' ');
+    return `${(boundary > 0 ? fragment.slice(0, boundary) : fragment).trimEnd()}…`;
+  };
   const render = (length: number) =>
     (blocks.length === 2 ? 'English below ↓\n\n' : '') +
     blocks
       .map((block) => {
-        const chars = Array.from(block.summary);
-        const summary =
-          length === 0
-            ? ''
-            : chars.length > length
-              ? chars.slice(0, Math.max(0, length - 1)).join('') + '…'
-              : block.summary;
+        const summary = block.manual ? block.summary : summarize(block.summary, length);
         return [block.title, summary, `${block.invite} ${block.url}`].filter(Boolean).join('\n\n');
       })
       .join('\n\n——— English ———\n\n');
-  let length = 180;
-  let commentary = render(length);
-  while (commentary.replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`).length > 1500 && length > 0) {
-    commentary = render(--length);
+  // Reserve room for editable hashtags, and prefer complete sentences.
+  let low = 0;
+  let high = 1200;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (escapeLinkedInCommentary(render(middle)).length <= 1400) low = middle;
+    else high = middle - 1;
   }
-  if (commentary.replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`).length > 1500) return null;
+  const commentary = render(low);
+  if (!blocks.some((block) => block.manual) && escapeLinkedInCommentary(commentary).length > 1500)
+    return null;
   return {
     title: blocks[0].title,
-    summary: blocks[0].summary.slice(0, 180),
+    summary: summarize(blocks[0].summary, 180),
     url: blocks[0].url,
     imageUrl: post.coverImageUrl,
     commentary,

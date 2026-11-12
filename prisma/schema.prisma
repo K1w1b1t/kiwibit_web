@@ -157,6 +157,8 @@ model Post {
   titleEn String? @map("title_en")
   contentPt String? @map("content_pt")
   contentEn String? @map("content_en")
+  linkedinIntroPt String? @map("linkedin_intro_pt")
+  linkedinIntroEn String? @map("linkedin_intro_en")
   coverImageAltPt String? @map("cover_image_alt_pt")
   coverImageAltEn String? @map("cover_image_alt_en")
   authorId       String?    @map("author_id") @db.Uuid
@@ -175,9 +177,52 @@ model Post {
   author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
   media PostMedia[]
   mcpRequests McpDraftRequest[]
+  linkedinReview LinkedinBlogReview?
 
   @@index([authorId])
   @@map("posts")
+}
+
+enum LinkedinDeliveryStatus {
+  pending
+  sending
+  succeeded
+  failed
+  unknown
+}
+
+model LinkedinBlogReview {
+  postId String @id @map("post_id") @db.Uuid
+  text String
+  hashtags String
+  version Int @default(1)
+  postUpdatedAt DateTime @map("post_updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  deliveries LinkedinBlogDelivery[]
+
+  @@map("linkedin_blog_reviews")
+}
+
+model LinkedinBlogDelivery {
+  id String @id @default(uuid()) @db.Uuid
+  postId String @map("post_id") @db.Uuid
+  target String
+  status LinkedinDeliveryStatus @default(pending)
+  version Int
+  ownerUrn String? @map("owner_urn")
+  postUrn String? @map("post_urn")
+  imageUrn String? @map("image_urn")
+  snapshotText String? @map("snapshot_text")
+  snapshotImageUrl String? @map("snapshot_image_url")
+  phase String @default("pending")
+  errorCode String? @map("error_code")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  review LinkedinBlogReview @relation(fields: [postId], references: [postId], onDelete: Cascade)
+
+  @@unique([postId, target])
+  @@map("linkedin_blog_deliveries")
 }
 
 enum McpPreparationState {
