@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { PostTranslations } from '@/entities/post/model/localized-post';
 import type { PostStatus } from '@prisma/client';
 import {
@@ -78,6 +78,9 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
   const [savedPostId, setSavedPostId] = useState(initial?.id ?? '');
   const [lastStatus, setLastStatus] = useState<PostStatus>(initial?.status ?? 'draft');
   const [reviewOpen, setReviewOpen] = useState(false);
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const reviewButtonRef = useRef<HTMLButtonElement>(null);
+  const reviewTriggerRef = useRef<'save' | 'review'>('save');
   const statusOptions = POST_STATUSES.map((status) => ({
     value: status,
     label: POST_STATUS_LABELS[status],
@@ -101,8 +104,10 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
     emptyFieldErrors: EMPTY_POST_FIELD_ERRORS,
     onSuccess: (post) => {
       setSavedPostId(post.id);
-      if (form.status === 'published' && (!isEdit || lastStatus !== 'published'))
+      if (form.status === 'published' && (!isEdit || lastStatus !== 'published')) {
+        reviewTriggerRef.current = 'save';
         setReviewOpen(true);
+      }
       setLastStatus(form.status as PostStatus);
       if (!isEdit) {
         setForm(toFormValues());
@@ -223,6 +228,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
 
         <div className="animate-fade-up delay-500 pt-2">
           <Button
+            ref={saveButtonRef}
             disabled={isUploading}
             type="submit"
             isLoading={isSubmitting}
@@ -234,13 +240,33 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
       </form>
       {canPublish && savedPostId && lastStatus === 'published' && (
         <div className="mt-4">
-          <Button variant="outline" onClick={() => setReviewOpen(true)}>
+          <Button
+            ref={reviewButtonRef}
+            variant="outline"
+            onClick={() => {
+              reviewTriggerRef.current = 'review';
+              setReviewOpen(true);
+            }}
+          >
             Publicar no LinkedIn
           </Button>
         </div>
       )}
       {reviewOpen && savedPostId && (
-        <LinkedInReviewDialog postId={savedPostId} open onClose={() => setReviewOpen(false)} />
+        <LinkedInReviewDialog
+          postId={savedPostId}
+          open
+          onClose={() => {
+            setReviewOpen(false);
+            requestAnimationFrame(() => {
+              const button =
+                reviewTriggerRef.current === 'review'
+                  ? reviewButtonRef.current
+                  : saveButtonRef.current;
+              button?.focus();
+            });
+          }}
+        />
       )}
     </div>
   );

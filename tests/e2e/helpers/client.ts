@@ -36,6 +36,11 @@ export class ApiClient {
     return [...this.cookieStore.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
   }
 
+  /** Exposes the authenticated test session to the local browser driver. */
+  getCookie(name: string): string | undefined {
+    return this.cookieStore.get(name);
+  }
+
   async get(path: string, headers: Record<string, string> = {}): Promise<Response> {
     const res = await fetch(`${this.baseUrl}${path}`, {
       headers: { Cookie: this.cookieHeader, ...headers },
