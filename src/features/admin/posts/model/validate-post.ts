@@ -7,6 +7,8 @@ import type { PostStatus } from '@prisma/client';
 
 export type PostFormValues = PostTranslations & {
   contentFormat?: 'text' | 'html' | 'markdown';
+  linkedinIntroPt?: string | null;
+  linkedinIntroEn?: string | null;
   title: string;
   content: string;
   status: string;
@@ -22,6 +24,8 @@ export type PostField =
   | 'content'
   | 'status'
   | 'coverImageUrl'
+  | 'linkedinIntroPt'
+  | 'linkedinIntroEn'
   | 'coverImageAlt';
 
 export type PostFieldErrors = Partial<Record<PostField, string>>;
@@ -67,6 +71,10 @@ export function validatePost(values: PostFormValues): PostValidationResult {
   const coverImageAlt = translated.data.coverImageAlt ?? '';
 
   const fieldErrors: PostFieldErrors = {};
+  for (const field of ['linkedinIntroPt', 'linkedinIntroEn'] as const) {
+    if ((values[field]?.length ?? 0) > 3000)
+      fieldErrors[field] = 'A chamada não pode passar de 3.000 caracteres.';
+  }
   if (translated.error) fieldErrors.title = translated.error;
 
   if (title.length < POST_LIMITS.titleMin) {
@@ -105,6 +113,8 @@ export function validatePost(values: PostFormValues): PostValidationResult {
     data: {
       ...translated.data,
       contentFormat: values.contentFormat,
+      linkedinIntroPt: values.linkedinIntroPt,
+      linkedinIntroEn: values.linkedinIntroEn,
       title,
       content,
       status: values.status as PostStatus,

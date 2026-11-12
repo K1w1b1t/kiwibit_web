@@ -6,6 +6,8 @@ type ValidatedValues = PostFormValues & { status: PostStatus };
 
 export type CreatePostPayload = PostTranslations & {
   contentFormat?: 'text' | 'html' | 'markdown';
+  linkedinIntroPt?: string | null;
+  linkedinIntroEn?: string | null;
   title: string;
   content: string;
   status: PostStatus;
@@ -16,6 +18,8 @@ export type CreatePostPayload = PostTranslations & {
 
 export type UpdatePostPayload = PostTranslations & {
   contentFormat?: 'text' | 'html' | 'markdown';
+  linkedinIntroPt?: string | null;
+  linkedinIntroEn?: string | null;
   title: string;
   content: string;
   status: PostStatus;
@@ -44,6 +48,12 @@ export function toCreatePostPayload(values: ValidatedValues): CreatePostPayload 
   return {
     ...toTranslationPayload(values),
     contentFormat: values.contentFormat,
+    ...(values.linkedinIntroPt !== undefined && {
+      linkedinIntroPt: values.linkedinIntroPt || null,
+    }),
+    ...(values.linkedinIntroEn !== undefined && {
+      linkedinIntroEn: values.linkedinIntroEn || null,
+    }),
     title: values.title,
     content: values.content,
     status: values.status,
@@ -61,6 +71,12 @@ export function toUpdatePostPayload(values: ValidatedValues): UpdatePostPayload 
   return {
     ...toTranslationPayload(values),
     contentFormat: values.contentFormat,
+    ...(values.linkedinIntroPt !== undefined && {
+      linkedinIntroPt: values.linkedinIntroPt || null,
+    }),
+    ...(values.linkedinIntroEn !== undefined && {
+      linkedinIntroEn: values.linkedinIntroEn || null,
+    }),
     title: values.title,
     content: values.content,
     status: values.status,

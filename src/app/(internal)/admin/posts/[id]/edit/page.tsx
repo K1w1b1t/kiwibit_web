@@ -22,6 +22,8 @@ export default async function EditPostPage({ params }: Readonly<Params>) {
       titleEn: true,
       contentPt: true,
       contentEn: true,
+      linkedinIntroPt: true,
+      linkedinIntroEn: true,
       coverImageAltPt: true,
       coverImageAltEn: true,
 

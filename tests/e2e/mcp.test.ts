@@ -234,6 +234,8 @@ describe('MCP OAuth isolation and draft creation', () => {
       titleEn: 'Integration draft',
       contentPt: '<p>Conteúdo completo em português.</p><script>private_marker</script>',
       contentEn: '<p>Complete English draft content.</p>',
+      linkedinIntroPt: 'Uma chamada coerente em português.',
+      linkedinIntroEn: 'A complete introduction in English.',
       contentFormat: 'html',
       idempotencyKey: randomUUID(),
     };
@@ -261,12 +263,14 @@ describe('MCP OAuth isolation and draft creation', () => {
     const retry = await readRpc(await call());
     expect(JSON.parse(retry.result.content[0].text).id).toBe(draft.id);
     const saved = await pool.query(
-      'SELECT author_id,status,published_at,content_pt FROM public.posts WHERE id=$1',
+      'SELECT author_id,status,published_at,content_pt,linkedin_intro_pt,linkedin_intro_en FROM public.posts WHERE id=$1',
       [draft.id],
     );
     expect(saved.rows[0].author_id).toBe(memberId);
     expect(saved.rows[0].published_at).toBeNull();
     expect(saved.rows[0].content_pt).not.toContain('script');
+    expect(saved.rows[0].linkedin_intro_pt).toBe(input.linkedinIntroPt);
+    expect(saved.rows[0].linkedin_intro_en).toBe(input.linkedinIntroEn);
     const conflict = await readRpc(
       await rpc(tokens.access_token, 'tools/call', {
         name: 'create_post_draft',

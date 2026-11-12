@@ -82,7 +82,7 @@ export async function handleMcp(request: Request) {
           'create_post_draft',
           {
             description:
-              'Create one complete bilingual draft, using your prepared image references and a stable idempotency key. It never publishes. Edit the result in the panel.',
+              'Create one complete bilingual draft, with optional linkedinIntroPt and linkedinIntroEn announcement text, using your prepared image references and a stable idempotency key. It never publishes. Edit the result in the panel.',
             inputSchema: createPostDraftSchema,
             scopeChallenge: requireScopes('posts:drafts:create'),
           },

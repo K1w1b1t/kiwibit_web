@@ -16,6 +16,16 @@ export const createPostDraftSchema = z
     titleEn: z.string().min(3).max(200).optional(),
     contentPt: z.string().min(10).max(100000).optional(),
     contentEn: z.string().min(10).max(100000).optional(),
+    linkedinIntroPt: z
+      .string()
+      .max(3000)
+      .optional()
+      .describe('Chamada opcional em português para revisão no LinkedIn.'),
+    linkedinIntroEn: z
+      .string()
+      .max(3000)
+      .optional()
+      .describe('Optional English introduction for LinkedIn review.'),
     contentFormat: z.enum(['text', 'html', 'markdown']),
     coverImageRef: z.uuid().optional(),
     imageRefs: z.array(z.uuid()).max(30).default([]),
