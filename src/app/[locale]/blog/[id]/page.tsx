@@ -17,6 +17,13 @@ type Params = { params: Promise<{ locale: string; id: string }> };
  * or show drafts.
  */
 async function findPost(id: string) {
+  if (
+    id.length !== 36 ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  ) {
+    return null;
+  }
+
   const post = await prisma.post.findUnique({
     where: { id },
     select: {

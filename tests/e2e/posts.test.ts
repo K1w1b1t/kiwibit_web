@@ -284,3 +284,43 @@ describe('Markdown preview and persistence', () => {
     }
   });
 });
+
+describe.each(['pt', 'en'])('Public blog HTTP status (%s)', (locale) => {
+  const ref = useAdminClient();
+
+  it.each([
+    '70f06119-6343-440b-a337-4e697685018',
+    'not-a-uuid',
+    '70f06119-6343-440b-a337-4e697685018g',
+    '70f06119-6343-440b-a3377-4e6976850180',
+    '70f061196343440ba3374e6976850180',
+    UNKNOWN_ID,
+  ])('returns HTTP 404 for %s', async (id) => {
+    const response = await anonClient().get(`/${locale}/blog/${id}`);
+    expect(response.status).toBe(404);
+    await response.text();
+  });
+
+  it('hides drafts and renders published posts', async () => {
+    const title = `Public blog regression ${locale} ${TAG}`;
+    const response = await ref.client.post('/api/admin/posts', {
+      title,
+      content: 'Public blog regression body',
+    });
+    expect(response.status).toBe(201);
+    const { data } = await response.json();
+    try {
+      const draft = await anonClient().get(`/${locale}/blog/${data.id}`);
+      expect(draft.status).toBe(404);
+      await draft.text();
+      expect(
+        (await ref.client.put(`/api/admin/posts/${data.id}`, { status: 'published' })).status,
+      ).toBe(200);
+      const published = await anonClient().get(`/${locale}/blog/${data.id}`);
+      expect(published.status).toBe(200);
+      expect(await published.text()).toContain(title);
+    } finally {
+      await ref.client.delete(`/api/admin/posts/${data.id}`);
+    }
+  });
+});
