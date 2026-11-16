@@ -13,10 +13,13 @@ interface AnalyticsConsentControlProps {
 }
 
 export function AnalyticsConsentControl({ dict, cookiePolicyHref }: AnalyticsConsentControlProps) {
-  const [decision, setDecision] = useState<AnalyticsConsent>();
+  const [decision, setDecision] = useState<AnalyticsConsent | 'pending' | 'missing'>('pending');
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    const timer = window.setTimeout(() => setDecision(initializeAnalyticsFromConsent()), 0);
+    const timer = window.setTimeout(
+      () => setDecision(initializeAnalyticsFromConsent() ?? 'missing'),
+      0,
+    );
     return () => window.clearTimeout(timer);
   }, []);
   const choose = (value: AnalyticsConsent) => {
@@ -26,7 +29,7 @@ export function AnalyticsConsentControl({ dict, cookiePolicyHref }: AnalyticsCon
   };
   return (
     <aside className="fixed bottom-4 left-4 right-4 z-50" aria-label={dict.preferencesLabel}>
-      {decision === undefined || open ? (
+      {decision === 'missing' || open ? (
         <div
           role="dialog"
           aria-labelledby="analytics-title"
