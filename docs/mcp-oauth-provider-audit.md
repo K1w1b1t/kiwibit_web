@@ -94,7 +94,7 @@ It never accesses the development database on port 5433.
 
 The member panel appears on the signed-in member's own edit page, after the
 LinkedIn area when that area is present, and on the unlinked account page. It is
-also reachable at `/admin/connections`. Separate Codex, Claude Code, and
+also reachable from the former `/admin/connections` URL via a redirect to the account. Separate Codex, Claude Code, and
 Antigravity guides use the browser's current origin and different server names
 per environment. The guides are based on the official documentation; real CLI
 validation is recorded separately in `mcp-operations.md`; unit tests alone do not
