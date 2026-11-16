@@ -44,7 +44,7 @@ Implement a remote MCP server inside the existing Next.js deployment. Preserve N
 - Create a separate connection for each explicit authorization, including repeated authorizations of the same user and client. Bind consent, code, tokens, and prepared images to that connection.
 - Use opaque access tokens lasting five minutes and provider-supported local validation/introspection. Validate issuer, audience/resource, expiry, scopes, current user access, and connection state on every call and refresh.
 - Refresh tokens have a 30-day absolute lifetime, hashed storage, atomic rotation, and family revocation on reuse. Retain consumed-token evidence until family expiry. Disable refresh reuse grace periods.
-- Add `/admin/connections`, protected by NextAuth, to list and revoke only the signed-in user's connections individually or collectively.
+- Use Minha conta (`/admin/account`), protected by NextAuth, to list and revoke only the signed-in user's connections individually or collectively. Linked accounts continue to their own member form; the former `/admin/connections` URL redirects to Minha conta for compatibility.
 - Revocation immediately blocks calls and refresh. Account deletion invalidates internal sessions and connections. Panel logout clears the internal OAuth browser session; CLI grants persist until revocation or expiry.
 
 ## Tools and domain rules

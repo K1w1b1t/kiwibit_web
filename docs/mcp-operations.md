@@ -21,7 +21,7 @@ prevent users from revoking existing grants in their NextAuth account.
 
 ## Member experience
 
-Own-account pages and `/admin/connections` provide separate Codex, Claude Code
+Minha conta (`/admin/account`) provides access to connection controls, redirecting linked accounts to their own member form. These own-account pages provide separate Codex, Claude Code
 and Antigravity setup instructions generated from the current browser origin.
 Users explicitly open each guide. The status means an unexpired authorization
 exists, not that the external program is online. Unknown clients remain visible.

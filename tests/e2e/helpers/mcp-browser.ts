@@ -140,7 +140,14 @@ export async function verifyMcpBrowserFlow(pool: Pool, clientId: string) {
     });
     expect(tokenResponse.status).toBe(200);
     const tokens = (await tokenResponse.json()) as { access_token: string };
-    await navigate(`${BASE_URL}/admin/connections`);
+    await navigate(`${BASE_URL}/admin/account`);
+    const account = await pool.query<{ memberId: string | null }>(
+      'SELECT m.id AS "memberId" FROM users u LEFT JOIN members m ON m.user_id=u.id WHERE u.email=$1',
+      [ADMIN_EMAIL],
+    );
+    const memberId = account.rows[0].memberId;
+    const accountPath = memberId ? `/admin/members/${memberId}/edit` : '/admin/account';
+    expect(await execute<string>('return location.pathname')).toBe(accountPath);
     await waitFor(() =>
       execute<boolean>('return document.body.innerText.includes("Synthetic MCP test client")'),
     );
@@ -179,7 +186,7 @@ export async function verifyMcpBrowserFlow(pool: Pool, clientId: string) {
         })
       ).status,
     ).toBe(401);
-    expect(await execute<string>('return location.pathname')).toBe('/admin/connections');
+    expect(await execute<string>('return location.pathname')).toBe(accountPath);
   } finally {
     if (sessionId)
       await fetch(`http://127.0.0.1:9521/session/${sessionId}`, { method: 'DELETE' }).catch(
