@@ -1,4 +1,8 @@
 import { composeLinkedInBlogPost, type LinkedInBlogPost } from './linkedin';
+import {
+  DEFAULT_LINKEDIN_BLOG_HASHTAGS,
+  LINKEDIN_PERSONAL_CHARACTER_LIMIT,
+} from './linkedin-commentary';
 
 const post: LinkedInBlogPost = {
   id: 'xss',
@@ -89,13 +93,16 @@ describe('bilingual LinkedIn announcement', () => {
     expect(text).not.toContain('<p>');
     expect(text).not.toContain('**');
   });
-  it('preserves titles and links under the escaped budget', () => {
+  it('preserves titles and links while reserving space for hashtags in the personal budget', () => {
     const text = compose({
       ...post,
       contentPt: '*'.repeat(4000),
       contentEn: '😀'.repeat(4000),
     }).commentary!;
-    expect(text.replace(/[\\|{}@[\]()<>#*_~]/g, String.raw`\$&`).length).toBeLessThanOrEqual(1500);
+    expect(text.length).toBeGreaterThan(1500);
+    expect([text, DEFAULT_LINKEDIN_BLOG_HASHTAGS].join('\n\n').length).toBeLessThanOrEqual(
+      LINKEDIN_PERSONAL_CHARACTER_LIMIT,
+    );
     expect(text).toContain(post.titleEn);
     expect(text).toContain('/en/blog/xss');
   });

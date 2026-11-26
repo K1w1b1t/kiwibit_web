@@ -12,6 +12,7 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 // documented in .env.example / .env; without it, `npm run prisma:seed` always
 // threw for anyone following the documented setup.
 const seedPlainPassword = process.env.SEED_USER_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD;
+const demoAdminEmail = 'admin@kiwibit.test';
 
 if (!seedPlainPassword) {
   throw new Error('SEED_USER_PASSWORD (or SEED_ADMIN_PASSWORD) must be set before seeding.');
@@ -19,7 +20,7 @@ if (!seedPlainPassword) {
 
 const usersSeed = [
   {
-    email: 'admin@kiwibit.dev',
+    email: demoAdminEmail,
     name: 'Gustavo Costa',
     role: 'admin',
     member: {
@@ -111,13 +112,13 @@ const postsSeed = [
     title: 'How We Structure Home Widgets with Feature-Sliced Design',
     content:
       'A practical walkthrough on separating widgets, features, entities, and shared utilities to keep pages maintainable as the product grows.',
-    authorEmail: 'admin@kiwibit.dev',
+    authorEmail: demoAdminEmail,
   },
   {
     title: 'Public API Pagination Patterns for Content Pages',
     content:
       'Learn how we use predictable page, limit, and search parameters to feed blog and member sections on static pages with dynamic fallbacks.',
-    authorEmail: 'admin@kiwibit.dev',
+    authorEmail: demoAdminEmail,
   },
   {
     title: 'Building Team Profiles that Scale Beyond a Landing Page',

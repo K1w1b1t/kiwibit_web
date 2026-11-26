@@ -1,10 +1,12 @@
 import { richTextToText, renderPostContent } from '@/shared/lib/sanitize-rich-text';
 import { absoluteUrl } from '@/shared/lib/seo';
-import { runAfterResponse } from '@/shared/lib/after-response';
-import { reportServerError } from '@/shared/lib/discord';
 import { decryptToken } from '@/shared/lib/token-crypto';
 import { prepareLinkedInCover, uploadLinkedInCover } from '@/shared/lib/linkedin-image';
-import { escapeLinkedInCommentary } from '@/shared/lib/linkedin-commentary';
+import {
+  DEFAULT_LINKEDIN_BLOG_HASHTAGS,
+  escapeLinkedInCommentary,
+  LINKEDIN_PERSONAL_CHARACTER_LIMIT,
+} from '@/shared/lib/linkedin-commentary';
 
 /**
  * "Sign In with LinkedIn using OpenID Connect" OAuth, used to sync a member's
@@ -231,7 +233,7 @@ function ensureLinkedInText(input: LinkedInAutoPostInput): string {
   const baseText = [input.title, input.summary?.trim() || '', input.url]
     .filter(Boolean)
     .join('\n\n');
-  return baseText.trim().slice(0, 3000);
+  return baseText.trim().slice(0, LINKEDIN_PERSONAL_CHARACTER_LIMIT);
 }
 
 function buildPayload(input: LinkedInAutoPostInput, authorUrn: string, imageUrn?: string) {
@@ -476,7 +478,7 @@ export async function triggerPersonalAutoPost(
   return { ...result, target: 'personal' };
 }
 
-/** Builds one language-safe announcement within both destination budgets. */
+/** Builds an editable announcement for the author's LinkedIn profile. */
 export function composeLinkedInBlogPost(
   post: LinkedInBlogPost,
   siteBase: string,
@@ -542,15 +544,15 @@ export function composeLinkedInBlogPost(
       .join('\n\n——— English ———\n\n');
   // Reserve room for editable hashtags, and prefer complete sentences.
   let low = 0;
-  let high = 1200;
+  const budget = LINKEDIN_PERSONAL_CHARACTER_LIMIT - DEFAULT_LINKEDIN_BLOG_HASHTAGS.length - 2;
+  let high = budget;
   while (low < high) {
     const middle = Math.ceil((low + high) / 2);
-    if (escapeLinkedInCommentary(render(middle)).length <= 1400) low = middle;
+    if (render(middle).length <= budget) low = middle;
     else high = middle - 1;
   }
   const commentary = render(low);
-  if (!blocks.some((block) => block.manual) && escapeLinkedInCommentary(commentary).length > 1500)
-    return null;
+  if (!blocks.some((block) => block.manual) && commentary.length > budget) return null;
   return {
     title: blocks[0].title,
     summary: summarize(blocks[0].summary, 180),
@@ -558,45 +560,6 @@ export function composeLinkedInBlogPost(
     imageUrl: post.coverImageUrl,
     commentary,
   };
-}
-
-/**
- * Fans a freshly published blog post out to every enabled LinkedIn destination:
- * the company page (global env config) and the author's own profile (their
- * per-member connection, when passed). Both are independent — either, both, or
- * neither may fire. Failures are reported to Discord and never block publishing.
- */
-export async function triggerLinkedInAutoPostForBlog(
-  post: LinkedInBlogPost,
-  authorConnection: LinkedinAutoPostConnection | null = null,
-): Promise<LinkedInAutoPostResult[]> {
-  if (post.status !== 'published') return [];
-
-  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
-  const input = composeLinkedInBlogPost(post, siteBase);
-  if (!input) return [{ ok: false, code: 'LINKEDIN_TEXT_TOO_LONG' }];
-
-  const results: LinkedInAutoPostResult[] = [
-    await triggerLinkedInAutoPost('company', input),
-    authorConnection
-      ? await triggerPersonalAutoPost(authorConnection, input)
-      : { ok: false, skipped: true, target: 'personal' },
-  ];
-
-  for (const result of results) {
-    if (result.ok || result.skipped) continue;
-
-    runAfterResponse(() =>
-      reportServerError({
-        source: 'linkedinAutoPost',
-        code: result.code ?? 'LINKEDIN_POST_FAILED',
-        message: `LinkedIn ${result.target ?? 'unknown'} auto-post failed for blog post ${post.id}. ${result.detail ?? 'No response body returned.'}`,
-        status: result.status,
-      }),
-    );
-  }
-
-  return results;
 }
 
 export const publishLinkedInPost = triggerLinkedInAutoPost;

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/cn';
 
 type Props = {
   open: boolean;
@@ -16,6 +17,7 @@ type Props = {
   children?: ReactNode;
   confirmVariant?: 'solid' | 'danger';
   confirmDisabled?: boolean;
+  width?: 'default' | 'wide';
 };
 
 /**
@@ -35,6 +37,7 @@ export function ConfirmDialog({
   children,
   confirmVariant = 'danger',
   confirmDisabled = false,
+  width = 'default',
 }: Readonly<Props>) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -65,7 +68,10 @@ export function ConfirmDialog({
         event.preventDefault();
         if (!isBusy) onCancel();
       }}
-      className="card-glow m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#0e0e0e] p-6 text-white backdrop:bg-black/70"
+      className={cn(
+        'card-glow m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl border border-white/10 bg-[#0e0e0e] text-white backdrop:bg-black/70',
+        width === 'wide' ? 'max-w-5xl p-4 sm:p-6' : 'max-w-md p-6',
+      )}
     >
       <h2 id={titleId} className="text-lg font-black uppercase tracking-[-0.02em]">
         {title}

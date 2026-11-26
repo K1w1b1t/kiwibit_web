@@ -1,6 +1,8 @@
+import { LINKEDIN_PERSONAL_CHARACTER_LIMIT } from '@/shared/lib/linkedin-commentary';
+
 export type LinkedInReviewComposition =
-  | { valid: true; text: string; hashtags: string; companyLength: number }
-  | { valid: false; error: string };
+  | { valid: true; text: string; hashtags: string; length: number }
+  | { valid: false; error: string; length?: number };
 
 /** Compose exactly the text reviewed by the publisher, without truncating it. */
 export function composeLinkedInReview(text: string, hashtags: string): LinkedInReviewComposition {
@@ -23,19 +25,14 @@ export function composeLinkedInReview(text: string, hashtags: string): LinkedInR
 
   const formattedTags = normalized.join(' ');
   const finalText = [body, formattedTags].filter(Boolean).join('\n\n');
-  if (finalText.length > 3000) {
+  const length = finalText.length;
+  const excess = length - LINKEDIN_PERSONAL_CHARACTER_LIMIT;
+  if (excess > 0) {
     return {
       valid: false,
-      error: 'O texto final excede o limite do perfil pessoal (3.000 caracteres).',
+      error: `Remova ${excess.toLocaleString('pt-BR')} ${excess === 1 ? 'caractere' : 'caracteres'} para publicar.`,
+      length,
     };
   }
-  const companyLength = escapeLinkedInCommentary(finalText).length;
-  if (companyLength > 1500) {
-    return {
-      valid: false,
-      error: 'O texto final excede o limite da página da empresa (1.500 caracteres).',
-    };
-  }
-  return { valid: true, text: finalText, hashtags: formattedTags, companyLength };
+  return { valid: true, text: finalText, hashtags: formattedTags, length };
 }
-import { escapeLinkedInCommentary } from '@/shared/lib/linkedin-commentary';

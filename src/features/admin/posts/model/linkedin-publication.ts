@@ -3,26 +3,19 @@ import { prisma } from '@/shared/lib/prisma';
 import {
   composeLinkedInBlogPost,
   scopeAllowsAutoPost,
-  triggerLinkedInAutoPost,
   triggerPersonalAutoPost,
-  type LinkedInAutoPostInput,
   type LinkedInAutoPostResult,
 } from '@/shared/lib/linkedin';
+import { DEFAULT_LINKEDIN_BLOG_HASHTAGS } from '@/shared/lib/linkedin-commentary';
 import { composeLinkedInReview } from './linkedin-review';
 
-const DEFAULT_HASHTAGS = '#Kiwibit #CyberSecurity #OffensiveSecurity';
 const siteBase = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.kiwibit.com.br';
+const personalTarget = 'personal';
+const personalDeliveries = { where: { target: personalTarget } };
 
 async function lockReview(tx: Prisma.TransactionClient, postId: string) {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${postId}, 144))`;
   await tx.$queryRaw`SELECT id FROM posts WHERE id = ${postId}::uuid FOR UPDATE`;
-}
-
-function companyOwner() {
-  const enabled = ['true', '1'].includes(process.env.LINKEDIN_COMPANY_AUTO_POST_ENABLED ?? '');
-  const owner = process.env.LINKEDIN_COMPANY_AUTHOR_URN?.trim();
-  const token = process.env.LINKEDIN_COMPANY_ACCESS_TOKEN?.trim();
-  return enabled && token && owner && /^urn:li:organization:\d+$/.test(owner) ? owner : null;
 }
 
 async function connectionFor(authorId: string | null) {
@@ -44,28 +37,32 @@ function personalOwner(connection: Awaited<ReturnType<typeof connectionFor>>) {
     : null;
 }
 
+export async function hasLinkedInPublicationProfile(authorId: string | null): Promise<boolean> {
+  return Boolean(personalOwner(await connectionFor(authorId)));
+}
+
 export async function getLinkedInReview(postId: string) {
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.status !== 'published') return null;
   const [review, member] = await Promise.all([
-    prisma.linkedinBlogReview.findUnique({ where: { postId }, include: { deliveries: true } }),
+    prisma.linkedinBlogReview.findUnique({
+      where: { postId },
+      include: { deliveries: personalDeliveries },
+    }),
     connectionFor(post.authorId),
   ]);
   const suggestion = composeLinkedInBlogPost(post, siteBase());
   return {
     text: review?.text ?? suggestion?.commentary ?? '',
     suggestedText: suggestion?.commentary ?? '',
-    hashtags: review?.hashtags ?? DEFAULT_HASHTAGS,
+    hashtags: review?.hashtags ?? DEFAULT_LINKEDIN_BLOG_HASHTAGS,
     version: review?.version ?? 0,
     postUpdatedAt: post.updatedAt.toISOString(),
     stale: review ? review.postUpdatedAt.getTime() !== post.updatedAt.getTime() : false,
     coverImageUrl: post.coverImageUrl,
     coverImageAlt:
       post.coverImageAltPt || post.coverImageAlt || post.coverImageAltEn || 'Capa do artigo',
-    destinations: {
-      company: Boolean(companyOwner()),
-      personal: Boolean(personalOwner(member)),
-    },
+    destinations: { personal: Boolean(personalOwner(member)) },
     deliveries: (review?.deliveries ?? []).map(({ target, status, errorCode, updatedAt }) => ({
       target,
       status:
@@ -74,6 +71,8 @@ export async function getLinkedInReview(postId: string) {
     })),
   };
 }
+
+export type LinkedInReview = NonNullable<Awaited<ReturnType<typeof getLinkedInReview>>>;
 
 export async function saveLinkedInReview(
   postId: string,
@@ -95,7 +94,7 @@ export async function saveLinkedInReview(
       } as const;
     const existing = await tx.linkedinBlogReview.findUnique({
       where: { postId },
-      include: { deliveries: true },
+      include: { deliveries: personalDeliveries },
     });
     if ((existing?.version ?? 0) !== version)
       return {
@@ -126,9 +125,6 @@ export async function saveLinkedInReview(
   });
 }
 
-type Target = 'company' | 'personal';
-type Claim = { target: Target; owner: string; input: LinkedInAutoPostInput; version: number };
-
 export async function confirmLinkedInReview(
   postId: string,
   version: number,
@@ -154,13 +150,13 @@ export async function confirmLinkedInReview(
       data: { autoPostEnabled: false },
     });
   }
-  const owners = { company: companyOwner(), personal: personalOwner(member) };
+  const owner = personalOwner(member);
   const claimed = await prisma.$transaction(async (tx) => {
     await lockReview(tx, postId);
     const currentPost = await tx.post.findUnique({ where: { id: postId } });
     const review = await tx.linkedinBlogReview.findUnique({
       where: { postId },
-      include: { deliveries: true },
+      include: { deliveries: personalDeliveries },
     });
     if (
       !currentPost ||
@@ -181,79 +177,55 @@ export async function confirmLinkedInReview(
     if (review.deliveries.some((item) => item.status === 'sending' || item.status === 'unknown')) {
       return { error: 'Há um envio em andamento ou com resultado incerto.', status: 409 } as const;
     }
-    const claims: Claim[] = [];
-    for (const target of ['company', 'personal'] as const) {
-      const owner = owners[target];
-      const delivery = review.deliveries.find((item) => item.target === target);
-      if (!owner || delivery?.status === 'succeeded') continue;
-      const input = { ...base, commentary: composed.text };
-      await tx.linkedinBlogDelivery.upsert({
-        where: { postId_target: { postId, target } },
-        create: {
-          postId,
-          target,
-          ownerUrn: owner,
-          version,
-          status: 'sending',
-          phase: 'preparing',
-          snapshotText: composed.text,
-          snapshotImageUrl: currentPost.coverImageUrl,
-        },
-        update: {
-          ownerUrn: owner,
-          version,
-          status: 'sending',
-          phase: 'preparing',
-          errorCode: null,
-          snapshotText: composed.text,
-          snapshotImageUrl: currentPost.coverImageUrl,
-        },
-      });
-      claims.push({ target, owner, input, version });
-    }
-    if (!claims.length)
-      return { error: 'Não há destinos disponíveis para envio.', status: 409 } as const;
-    return { claims } as const;
+    if (review.deliveries.some((item) => item.status === 'succeeded'))
+      return { error: 'A publicação já foi enviada ao perfil do autor.', status: 409 } as const;
+    if (!owner)
+      return { error: 'O perfil do autor está indisponível para envio.', status: 409 } as const;
+
+    const snapshot = {
+      ownerUrn: owner,
+      version,
+      status: 'sending',
+      phase: 'preparing',
+      snapshotText: composed.text,
+      snapshotImageUrl: currentPost.coverImageUrl,
+    } as const;
+    await tx.linkedinBlogDelivery.upsert({
+      where: { postId_target: { postId, target: personalTarget } },
+      create: { postId, target: personalTarget, ...snapshot },
+      update: { ...snapshot, errorCode: null },
+    });
+    return { owner, input: { ...base, commentary: composed.text } } as const;
   });
   if ('error' in claimed) return claimed;
 
-  for (const claim of claimed.claims) {
-    let result: LinkedInAutoPostResult;
-    try {
-      const latestMember = claim.target === 'personal' ? await connectionFor(post.authorId) : null;
-      const owner = claim.target === 'company' ? companyOwner() : personalOwner(latestMember);
-      if (owner !== claim.owner) {
-        result = { ok: false, code: 'LINKEDIN_DESTINATION_CHANGED' };
-      } else if (claim.target === 'company') {
-        result = await triggerLinkedInAutoPost('company', claim.input);
-      } else if (latestMember?.linkedinConnection) {
-        result = await triggerPersonalAutoPost(latestMember.linkedinConnection, claim.input);
-        if (
-          (result.expired || result.reconnectRequired) &&
-          latestMember.linkedinConnection.autoPostEnabled
-        ) {
-          await prisma.linkedinConnection.updateMany({
-            where: {
-              memberId: latestMember.id,
-              accessTokenEnc: latestMember.linkedinConnection.accessTokenEnc,
-            },
-            data: { autoPostEnabled: false },
-          });
-        }
-      } else result = { ok: false, code: 'LINKEDIN_DESTINATION_CHANGED' };
-    } catch {
-      result = { ok: false, uncertain: true, code: 'LINKEDIN_RESULT_UNKNOWN' };
+  let result: LinkedInAutoPostResult;
+  try {
+    const latestMember = await connectionFor(post.authorId);
+    const latestConnection = latestMember?.linkedinConnection;
+    if (!latestConnection || personalOwner(latestMember) !== claimed.owner) {
+      result = { ok: false, code: 'LINKEDIN_DESTINATION_CHANGED' };
+    } else {
+      result = await triggerPersonalAutoPost(latestConnection, claimed.input);
+      if ((result.expired || result.reconnectRequired) && latestConnection.autoPostEnabled) {
+        await prisma.linkedinConnection.updateMany({
+          where: { memberId: latestMember.id, accessTokenEnc: latestConnection.accessTokenEnc },
+          data: { autoPostEnabled: false },
+        });
+      }
     }
-    await prisma.linkedinBlogDelivery.updateMany({
-      where: { postId, target: claim.target, status: 'sending', version: claim.version },
-      data: {
-        status: result.ok && result.sent ? 'succeeded' : result.uncertain ? 'unknown' : 'failed',
-        phase: 'finished',
-        errorCode: result.code ?? null,
-        postUrn: result.postUrn ?? null,
-        imageUrn: result.imageUrn ?? null,
-      },
-    });
+  } catch {
+    result = { ok: false, uncertain: true, code: 'LINKEDIN_RESULT_UNKNOWN' };
   }
+  await prisma.linkedinBlogDelivery.updateMany({
+    where: { postId, target: personalTarget, status: 'sending', version },
+    data: {
+      status: result.ok && result.sent ? 'succeeded' : result.uncertain ? 'unknown' : 'failed',
+      phase: 'finished',
+      errorCode: result.code ?? null,
+      postUrn: result.postUrn ?? null,
+      imageUrn: result.imageUrn ?? null,
+    },
+  });
   return { review: await getLinkedInReview(postId) } as const;
 }

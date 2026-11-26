@@ -6,7 +6,7 @@ describe('composeLinkedInReview', () => {
       valid: true,
       text: 'Texto\n\n#Kiwibit #CyberSecurity',
       hashtags: '#Kiwibit #CyberSecurity',
-      companyLength: 30,
+      length: 30,
     });
   });
 
@@ -15,7 +15,7 @@ describe('composeLinkedInReview', () => {
       valid: true,
       text: 'Texto',
       hashtags: '',
-      companyLength: 5,
+      length: 5,
     });
   });
 
@@ -30,14 +30,13 @@ describe('composeLinkedInReview', () => {
     });
   });
 
-  it('checks the company budget after escaping special characters', () => {
-    expect(composeLinkedInReview('#'.repeat(751), '')).toEqual({
+  it('counts the personal payload exactly, including emoji, newlines and hashtags', () => {
+    const body = `${'*'.repeat(2992)}😀`;
+    expect(composeLinkedInReview(body, '#tag')).toMatchObject({ valid: true, length: 3000 });
+    expect(composeLinkedInReview(`${body}a`, '#tag')).toEqual({
       valid: false,
-      error: 'O texto final excede o limite da página da empresa (1.500 caracteres).',
-    });
-    expect(composeLinkedInReview('a'.repeat(3001), '')).toEqual({
-      valid: false,
-      error: 'O texto final excede o limite do perfil pessoal (3.000 caracteres).',
+      error: 'Remova 1 caractere para publicar.',
+      length: 3001,
     });
   });
 });
