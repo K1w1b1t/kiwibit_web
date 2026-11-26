@@ -82,8 +82,18 @@ describe('Post creation and LinkedIn review in the browser', () => {
         value: selector,
       });
       const path = `/session/${sessionId}/element/${element['element-6066-11e4-a52e-4f735466cecf']}`;
-      await webdriver(`${path}/clear`, {});
-      await webdriver(`${path}/value`, { text });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await webdriver(`${path}/clear`, {});
+        await execute(
+          `const e = document.querySelector(${JSON.stringify(selector)}); e.focus(); e.select();`,
+        );
+        await webdriver(`${path}/value`, { text });
+        const value = await execute<string>(
+          `return document.querySelector(${JSON.stringify(selector)}).value`,
+        );
+        if (value === text) return;
+      }
+      throw new Error(`Could not fill ${selector}`);
     }
 
     async function mockAvailableProfile(outcome?: 'unknown') {
