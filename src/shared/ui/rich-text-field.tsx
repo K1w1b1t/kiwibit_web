@@ -2,8 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { EmojiStyle } from 'emoji-picker-react';
+import { ImagePlus, Smile } from 'lucide-react';
+import { Button } from './button';
 import { ImageUploadField, type ImageValue } from './image-upload-field';
 import { TextField } from './text-field';
+import { TextPreviewField } from './text-preview-field';
 import { isHttpUrl } from '@/shared/lib/url';
 
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
@@ -27,13 +30,14 @@ export function RichTextField({
   postId,
   onUploadingChange,
 }: Readonly<Props>) {
-  const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [panel, setPanel] = useState<'image' | 'emoji' | null>(null);
   const [image, setImage] = useState<ImageValue>({ url: '', path: '' });
   const [alt, setAlt] = useState('');
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState('');
-  const [previewError, setPreviewError] = useState('');
+  const [preview, setPreview] = useState<
+    (({ html: string } | { error: string }) & { source: string }) | null
+  >(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const selection = useRef({ start: 0, end: 0 });
@@ -42,7 +46,7 @@ export function RichTextField({
     else dialog.current?.close();
   }, [panel]);
   useEffect(() => {
-    if (tab !== 'preview') return;
+    if (!previewOpen) return;
     const controller = new AbortController();
     fetch('/api/admin/posts/preview', {
       method: 'POST',
@@ -55,18 +59,18 @@ export function RichTextField({
         return res.json() as Promise<{ html: string }>;
       })
       .then((result) => {
-        if (!controller.signal.aborted) setPreview(result.html);
+        if (!controller.signal.aborted) setPreview({ ...result, source: value });
       })
       .catch(() => {
-        if (!controller.signal.aborted) setPreviewError('Não foi possível carregar a prévia.');
+        if (!controller.signal.aborted)
+          setPreview({ error: 'Não foi possível carregar a prévia.', source: value });
       });
     return () => controller.abort();
-  }, [tab, value]);
+  }, [previewOpen, value]);
   function insert(text: string) {
     const { start, end } = selection.current;
     onChange(value.slice(0, start) + text + value.slice(end));
     setPanel(null);
-    setTab('edit');
     requestAnimationFrame(() => {
       input.current?.focus();
       input.current?.setSelectionRange(start + text.length, start + text.length);
@@ -79,88 +83,58 @@ export function RichTextField({
     };
     setPanel(next);
   }
-  const button =
-    'rounded border border-white/20 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-40';
   return (
-    <div className="space-y-2">
-      <label htmlFor={id} className="block text-sm font-semibold">
-        {label}
-      </label>
-      <div className="rounded-xl border border-white/20">
-        <div
-          role="tablist"
-          aria-label={`${label}: edição e prévia`}
-          className="flex flex-wrap gap-2 border-b border-white/10 p-3"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'edit'}
-            className={button}
-            onClick={() => setTab('edit')}
-          >
-            Editar
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'preview'}
-            className={button}
-            onClick={() => {
-              if (tab !== 'preview') {
-                setPreview('');
-                setPreviewError('');
-                setTab('preview');
-              }
-            }}
-          >
-            Prévia
-          </button>
-          <button
-            type="button"
-            className={button}
-            disabled={disabled || tab !== 'edit'}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => open('image')}
-          >
-            Imagem
-          </button>
-          <button
-            type="button"
-            className={button}
-            disabled={disabled || tab !== 'edit'}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => open('emoji')}
-          >
-            Emoji
-          </button>
-        </div>
-        <textarea
-          ref={input}
-          id={id}
-          hidden={tab !== 'edit'}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          disabled={disabled}
-          aria-invalid={Boolean(error)}
-          className="min-h-64 w-full resize-y bg-transparent p-4 font-mono text-sm outline-none"
-          placeholder="Escreva em Markdown ou HTML"
-        />
-        {tab === 'preview' && (
-          <div role="tabpanel" className="post-rich-content min-h-64 p-4">
-            {previewError ? (
-              <p role="alert">{previewError}</p>
-            ) : (
-              <div dangerouslySetInnerHTML={{ __html: preview }} />
-            )}
+    <>
+      <TextPreviewField
+        inputRef={input}
+        id={id}
+        label={label}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        error={error}
+        placeholder="Escreva em Markdown ou HTML"
+        variant="article"
+        onPreviewChange={(next) => {
+          setPreview(null);
+          setPreviewOpen(next);
+        }}
+        toolbar={
+          <div className="flex min-w-0 flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-10 gap-2"
+              disabled={disabled}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => open('image')}
+            >
+              <ImagePlus aria-hidden size={18} className="shrink-0" />
+              Inserir imagem no texto
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-10 gap-2"
+              disabled={disabled}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => open('emoji')}
+            >
+              <Smile aria-hidden size={18} className="shrink-0" />
+              Emoji
+            </Button>
           </div>
-        )}
-      </div>
-      {error && (
-        <p role="alert" className="text-sm text-amber-200">
-          {error}
-        </p>
-      )}
+        }
+        preview={
+          preview?.source !== value ? (
+            <p role="status">Carregando prévia...</p>
+          ) : 'error' in preview ? (
+            <p role="alert">{preview.error}</p>
+          ) : (
+            <div className="post-rich-content" dangerouslySetInnerHTML={{ __html: preview.html }} />
+          )
+        }
+      />
       <dialog
         ref={dialog}
         aria-label={panel === 'image' ? 'Inserir imagem' : 'Escolher emoji'}
@@ -190,9 +164,8 @@ export function RichTextField({
               value={alt}
               onChange={(event) => setAlt(event.target.value)}
             />
-            <button
-              type="button"
-              className={button}
+            <Button
+              size="sm"
               disabled={busy || !isHttpUrl(image.url)}
               onClick={() => {
                 insert(
@@ -203,7 +176,7 @@ export function RichTextField({
               }}
             >
               Inserir imagem
-            </button>
+            </Button>
           </>
         )}
         {panel === 'emoji' && (
@@ -213,10 +186,10 @@ export function RichTextField({
             onEmojiClick={(emoji) => insert(emoji.emoji)}
           />
         )}
-        <button type="button" className={button} disabled={busy} onClick={() => setPanel(null)}>
+        <Button variant="outline" size="sm" disabled={busy} onClick={() => setPanel(null)}>
           Fechar
-        </button>
+        </Button>
       </dialog>
-    </div>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 name: Supabase Migrations Deploy
 
-# Applies Prisma migrations and ensures the admin user after a merged pull request to
+# Applies Prisma migrations after a merged pull request to
 # `release` (staging DB) and `main` (production DB).
 #
 # Secrets are read from GitHub Environments:
@@ -10,9 +10,6 @@ name: Supabase Migrations Deploy
 # Per-environment secrets (same names in both environments):
 #   SUPABASE_DB_URL  - DB connection string (Session pooler, port 5432).
 #   SSL is enforced by the workflow even if sslmode was omitted from the secret.
-#   ADMIN_PASSWORD   - admin password
-# Optional per-environment secret:
-#   ADMIN_EMAIL      - admin email (defaults to admin@kiwibit.dev)
 
 on:
   pull_request:
@@ -26,14 +23,12 @@ permissions:
 
 jobs:
   migrate-release:
-    name: Migrate + ensure admin (staging)
+    name: Migrate staging database
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release'
     runs-on: ubuntu-latest
     environment: Preview
     env:
       DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
-      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
 
     steps:
       - name: Checkout repository
@@ -51,9 +46,7 @@ jobs:
         run: npm ci
 
       - name: Check required secrets
-        run: |
-          test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Preview env)"; exit 1; }
-          test -n "$ADMIN_PASSWORD" || { echo "Missing ADMIN_PASSWORD (Preview env)"; exit 1; }
+        run: test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Preview env)"; exit 1; }
 
       - name: Require SSL for database connections
         run: &requireDatabaseSsl |
@@ -73,18 +66,13 @@ jobs:
       - name: Apply migrations
         run: npx prisma migrate deploy
 
-      - name: Ensure admin user
-        run: npm run prisma:seed:admin
-
   migrate-prod:
-    name: Migrate + ensure admin (production)
+    name: Migrate production database
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     environment: Production
     env:
       DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
-      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
 
     steps:
       - name: Checkout repository
@@ -102,9 +90,7 @@ jobs:
         run: npm ci
 
       - name: Check required secrets
-        run: |
-          test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Production env)"; exit 1; }
-          test -n "$ADMIN_PASSWORD" || { echo "Missing ADMIN_PASSWORD (Production env)"; exit 1; }
+        run: test -n "$DATABASE_URL" || { echo "Missing SUPABASE_DB_URL (Production env)"; exit 1; }
 
       - name: Require SSL for database connections
         run: *requireDatabaseSsl
@@ -114,6 +100,3 @@ jobs:
 
       - name: Apply migrations
         run: npx prisma migrate deploy
-
-      - name: Ensure admin user
-        run: npm run prisma:seed:admin

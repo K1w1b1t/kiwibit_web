@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { PostTranslations } from '@/entities/post/model/localized-post';
 import type { PostStatus } from '@prisma/client';
 import {
@@ -21,6 +22,8 @@ import { FormStatus } from '@/shared/ui/form-status';
 import { ImageUploadField } from '@/shared/ui/image-upload-field';
 import { SelectField } from '@/shared/ui/select-field';
 import { RichTextField } from '@/shared/ui/rich-text-field';
+import { TextPreviewField } from '@/shared/ui/text-preview-field';
+import { LINKEDIN_PERSONAL_CHARACTER_LIMIT } from '@/shared/lib/linkedin-commentary';
 import { textToHtml } from '@/shared/lib/rich-text';
 import { TextField } from '@/shared/ui/text-field';
 import { LinkedInReviewDialog } from './linkedin-review-dialog';
@@ -71,6 +74,7 @@ function toFormValues(initial?: PostInitial): PostFormValues {
 }
 
 export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
+  const router = useRouter();
   const [uploads, setUploads] = useState<Record<string, boolean>>({});
   const isUploading = Object.values(uploads).some(Boolean);
   const isEdit = initial !== undefined;
@@ -123,7 +127,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
   const idPrefix = isEdit ? 'edit-post' : 'new-post';
 
   return (
-    <div className="card-glow animate-fade-up delay-100 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm">
+    <div className="card-glow animate-fade-up delay-100 rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-sm sm:p-6">
       <FormStatus status={status} message={message} />
 
       <form
@@ -138,7 +142,10 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
           Preencha título e conteúdo em pelo menos um idioma. A tradução ausente usa o outro idioma.
         </p>
         {(['Pt', 'En'] as const).map((language) => (
-          <fieldset key={language} className="space-y-4 rounded-xl border border-white/10 p-4">
+          <fieldset
+            key={language}
+            className="min-w-0 space-y-4 rounded-xl border border-white/10 p-3 sm:p-4"
+          >
             <legend className="px-2 font-semibold">
               {language === 'Pt' ? 'Português' : 'Inglês'}
             </legend>
@@ -162,21 +169,20 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
               disabled={isSubmitting}
               error={fieldErrors[`content${language}`]}
             />
-            <label
-              className="block text-sm text-white/80"
-              htmlFor={`${idPrefix}-linkedin-${language}`}
-            >
-              Chamada para o LinkedIn ({language === 'Pt' ? 'português' : 'inglês'}) — opcional
-              <textarea
-                id={`${idPrefix}-linkedin-${language}`}
-                className="mt-1 w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white"
-                rows={5}
-                maxLength={3000}
-                value={form[`linkedinIntro${language}`] ?? ''}
-                onChange={(event) => update(`linkedinIntro${language}`, event.target.value)}
-                disabled={isSubmitting}
-              />
-            </label>
+            <TextPreviewField
+              id={`${idPrefix}-linkedin-${language}`}
+              label={`Chamada para o LinkedIn (${language === 'Pt' ? 'português' : 'inglês'}) — opcional`}
+              maxLength={LINKEDIN_PERSONAL_CHARACTER_LIMIT}
+              value={form[`linkedinIntro${language}`] ?? ''}
+              onChange={(value) => update(`linkedinIntro${language}`, value)}
+              disabled={isSubmitting}
+              error={fieldErrors[`linkedinIntro${language}`]}
+              preview={
+                <p className="whitespace-pre-wrap">
+                  {form[`linkedinIntro${language}`] || 'Nenhuma chamada escrita.'}
+                </p>
+              }
+            />
             <TextField
               id={`${idPrefix}-alt-${language}`}
               label="Texto alternativo da capa"
@@ -256,6 +262,10 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
         <LinkedInReviewDialog
           postId={savedPostId}
           open
+          onPublished={() => {
+            setReviewOpen(false);
+            router.replace('/admin/posts');
+          }}
           onClose={() => {
             setReviewOpen(false);
             requestAnimationFrame(() => {

@@ -7,7 +7,7 @@ import { useAdminClient } from './helpers/crud';
 describe('LinkedIn review when publishing a draft in the browser', () => {
   const admin = useAdminClient();
 
-  it('opens the editable review, preserves the blog publication on Escape and does not send', async () => {
+  it('previews the article, saves the review on Escape and returns to the list after a confirmed send', async () => {
     const created = await admin.client.post('/api/admin/posts', {
       titlePt: 'Segurança que começa na revisão',
       contentPt:
@@ -75,7 +75,13 @@ describe('LinkedIn review when publishing a draft in the browser', () => {
         },
       });
       sessionId = browser.sessionId;
-      await navigate(`${BASE_URL}/login`);
+      await navigate(`${BASE_URL}/kiwi.png`);
+      await waitFor(() =>
+        execute<boolean>(`
+          return location.origin === ${JSON.stringify(new URL(BASE_URL).origin)}
+            && document.querySelector('img')?.naturalWidth > 0;
+        `),
+      );
       const session = admin.client.getCookie('next-auth.session-token');
       if (!session) throw new Error('Test administrator session was not established');
       await webdriver(`/session/${sessionId}/cookie`, {
@@ -85,6 +91,34 @@ describe('LinkedIn review when publishing a draft in the browser', () => {
       await waitFor(() => execute<boolean>('return !!document.querySelector("#edit-post-status")'));
       await execute(
         'const b=Array.from(document.querySelectorAll("button")).find(x=>x.textContent.includes("No, thanks"));if(b)b.click()',
+      );
+      expect(
+        await execute<boolean>(`
+          const input = document.querySelector('#edit-post-content-Pt');
+          return input.clientWidth > innerWidth * 0.75 && input.clientHeight >= innerHeight * 0.5;
+        `),
+      ).toBe(true);
+      await execute(`
+        const input = document.querySelector('#edit-post-content-Pt');
+        input.focus();
+        input.setSelectionRange(4, 8);
+        input.parentElement.querySelector('button[aria-label="Abrir prévia"]').click();
+      `);
+      await waitFor(() =>
+        execute<boolean>(`
+          return document.querySelector('#edit-post-content-Pt').parentElement
+            .querySelector('.post-rich-content')?.textContent.includes('Uma publicação clara');
+        `),
+      );
+      await execute(`
+        document.querySelector('#edit-post-content-Pt').parentElement
+          .querySelector('button[aria-label="Fechar prévia"]').click();
+      `);
+      await waitFor(() =>
+        execute<boolean>(`
+          const input = document.querySelector('#edit-post-content-Pt');
+          return document.activeElement === input && input.selectionStart === 4 && input.selectionEnd === 8;
+        `),
       );
       await execute('document.querySelector("#edit-post-status").scrollIntoView({block:"center"})');
       await screenshot('01-rascunho.png');
@@ -110,6 +144,9 @@ describe('LinkedIn review when publishing a draft in the browser', () => {
           'return document.querySelector("dialog[open] input:not([type=checkbox])").value',
         ),
       ).toContain('#Kiwibit');
+      await execute(`
+        document.querySelector('dialog[open] button[aria-label="Abrir prévia"]').click();
+      `);
       await waitFor(() =>
         execute<boolean>(
           'const img=document.querySelector("dialog[open] img");return !!img && img.complete && img.naturalWidth>0',
@@ -121,6 +158,9 @@ describe('LinkedIn review when publishing a draft in the browser', () => {
         ),
       ).toBe(true);
       await screenshot('02-modal-texto-hashtags.png');
+      await execute(`
+        document.querySelector('dialog[open] button[aria-label="Fechar prévia"]').click();
+      `);
       const revised = `Este texto foi revisado antes da publicação. A mensagem fica completa e pode ser alterada no modal.\n\nLeia o post no meu blog: https://www.kiwibit.com.br/pt/blog/${post.id}`;
       for (const [selector, text] of [
         ['dialog[open] textarea', revised],
@@ -136,7 +176,7 @@ describe('LinkedIn review when publishing a draft in the browser', () => {
       }
       await execute('document.querySelector("dialog[open] input[type=checkbox]").click()');
       const available = await execute<boolean>(
-        'return document.querySelector("dialog[open]").textContent.includes("Página da empresa: disponível") || document.querySelector("dialog[open]").textContent.includes("Perfil do autor: disponível")',
+        'return document.querySelector("dialog[open]").textContent.includes("Perfil pessoal do autor: disponível")',
       );
       expect(
         await execute<boolean>(
@@ -183,6 +223,42 @@ describe('LinkedIn review when publishing a draft in the browser', () => {
       expect(review.text).toBe(revised);
       await waitFor(() =>
         execute<boolean>('return !!document.activeElement?.matches("form button[type=submit]")'),
+      );
+
+      await execute(`
+        const request = window.fetch;
+        window.fetch = async (url, options) => {
+          if (url !== '/api/admin/posts/${post.id}/linkedin' || options.method === 'PUT') {
+            return request(url, options);
+          }
+          if (options.method === 'POST') {
+            return Response.json({ review: { deliveries: [{ target: 'personal', status: 'succeeded' }] } });
+          }
+          const response = await request(url, options);
+          const review = await response.json();
+          return Response.json({ ...review, destinations: { personal: true } });
+        };
+        Array.from(document.querySelectorAll('button'))
+          .find((button) => button.textContent === 'Publicar no LinkedIn').click();
+      `);
+      await waitFor(() =>
+        execute<boolean>('return !!document.querySelector("dialog[open] input[type=checkbox]")'),
+      );
+      await execute(`document.querySelector('dialog[open] input[type=checkbox]').click();`);
+      await waitFor(() =>
+        execute<boolean>(`
+          return Array.from(document.querySelectorAll('dialog[open] button'))
+            .some((button) => button.textContent === 'Confirmar envio' && !button.disabled);
+        `),
+      );
+      await execute(`
+        Array.from(document.querySelectorAll('dialog[open] button'))
+          .find((button) => button.textContent === 'Confirmar envio').click();
+      `);
+      await waitFor(() =>
+        execute<boolean>(
+          'return location.pathname === "/admin/posts" && !document.querySelector("dialog[open]")',
+        ),
       );
     } finally {
       if (sessionId)

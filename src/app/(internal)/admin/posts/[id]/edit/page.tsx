@@ -43,7 +43,7 @@ export default async function EditPostPage({ params }: Readonly<Params>) {
   return (
     <AdminPageShell
       title="Editar Post"
-      width="form"
+      width="full"
       action={
         session.user.role !== 'member' && (
           <DeleteButton

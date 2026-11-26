@@ -3,22 +3,15 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { apiClient } from '@/shared/api/api-client';
+import { LINKEDIN_PERSONAL_CHARACTER_LIMIT } from '@/shared/lib/linkedin-commentary';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { Button } from '@/shared/ui/button';
+import { TextField } from '@/shared/ui/text-field';
+import { TextPreviewField } from '@/shared/ui/text-preview-field';
+import type { getLinkedInReview } from '@/features/admin/posts/model/linkedin-publication';
 import { composeLinkedInReview } from '@/features/admin/posts/model/linkedin-review';
 
-type Review = {
-  text: string;
-  suggestedText: string;
-  hashtags: string;
-  version: number;
-  postUpdatedAt: string;
-  stale: boolean;
-  coverImageUrl: string | null;
-  coverImageAlt: string;
-  destinations: { company: boolean; personal: boolean };
-  deliveries: { target: string; status: string; errorCode: string | null }[];
-};
+type Review = NonNullable<Awaited<ReturnType<typeof getLinkedInReview>>>;
 
 const ERROR_MESSAGES: Record<string, string> = {
   LINKEDIN_IMAGE_FAILED:
@@ -39,10 +32,12 @@ export function LinkedInReviewDialog({
   postId,
   open,
   onClose,
+  onPublished,
 }: Readonly<{
   postId: string;
   open: boolean;
   onClose: () => void;
+  onPublished: () => void;
 }>) {
   const [review, setReview] = useState<Review | null>(null);
   const [busy, setBusy] = useState(false);
@@ -64,7 +59,10 @@ export function LinkedInReviewDialog({
 
   const composition = review ? composeLinkedInReview(review.text, review.hashtags) : null;
   const blocked = review?.deliveries.some(
-    (delivery) => delivery.status === 'sending' || delivery.status === 'unknown',
+    (delivery) =>
+      delivery.status === 'sending' ||
+      delivery.status === 'unknown' ||
+      delivery.status === 'succeeded',
   );
 
   async function save() {
@@ -99,30 +97,47 @@ export function LinkedInReviewDialog({
   }
 
   async function confirm() {
-    if (!review || !composition?.valid || !acknowledged || busy) return;
+    if (!review?.destinations.personal || !composition?.valid || !acknowledged || busy || blocked)
+      return;
     setBusy(true);
     setError('');
     try {
       const saved = await save();
       if (!saved) return;
-      const result = await apiClient.post<{ review: Review }>(
+      const result = await apiClient.post<{ review: Review | null }>(
         `/api/admin/posts/${postId}/linkedin`,
         {
           version: saved.version,
           acknowledged,
         },
       );
-      if (!result.ok) setError(result.message);
-      else setReview(result.data.review);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      const nextReview = result.data?.review;
+      if (!nextReview) {
+        setError('Não foi possível confirmar o envio. Verifique a publicação no LinkedIn.');
+        return;
+      }
+      if (
+        nextReview.deliveries.some(
+          (delivery) => delivery.target === 'personal' && delivery.status === 'succeeded',
+        )
+      ) {
+        onPublished();
+        return;
+      }
+      setReview(nextReview);
     } finally {
       setBusy(false);
     }
   }
 
-  const inputClass = 'mt-1 w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white';
   return (
     <ConfirmDialog
       open={open}
+      width="wide"
       title="Revisar publicação no LinkedIn"
       description="O artigo já está publicado no blog. Cancelar não envia ao LinkedIn."
       confirmLabel="Confirmar envio"
@@ -131,11 +146,7 @@ export function LinkedInReviewDialog({
       confirmVariant="solid"
       isBusy={busy}
       confirmDisabled={
-        !review ||
-        !composition?.valid ||
-        !acknowledged ||
-        blocked ||
-        (!review.destinations.company && !review.destinations.personal)
+        !review || !composition?.valid || !acknowledged || blocked || !review.destinations.personal
       }
       onCancel={() => void cancel()}
       onConfirm={() => void confirm()}
@@ -147,54 +158,51 @@ export function LinkedInReviewDialog({
       )}
       {review && (
         <div className="mt-4 space-y-4">
-          {review.coverImageUrl ? (
-            <Image
-              unoptimized
-              width={900}
-              height={400}
-              src={review.coverImageUrl}
-              alt={review.coverImageAlt}
-              className="max-h-48 w-full rounded-lg object-cover"
-            />
-          ) : (
-            <p>Esta publicação será enviada sem imagem.</p>
-          )}
-          <label className="block">
-            Texto
-            <textarea
-              autoFocus
-              rows={8}
-              className={inputClass}
-              value={review.text}
-              aria-describedby="linkedin-validation"
-              disabled={busy || blocked}
-              onChange={(event) => setReview({ ...review, text: event.target.value })}
-            />
-          </label>
-          <label className="block">
-            Hashtags
-            <input
-              className={inputClass}
-              value={review.hashtags}
-              aria-describedby="linkedin-validation"
-              disabled={busy || blocked}
-              onChange={(event) => setReview({ ...review, hashtags: event.target.value })}
-            />
-          </label>
-          <div id="linkedin-validation" aria-live="polite">
+          <TextPreviewField
+            id="linkedin-review-text"
+            label="Texto"
+            autoFocus
+            value={review.text}
+            describedBy="linkedin-validation"
+            disabled={busy || blocked}
+            onChange={(text) => setReview({ ...review, text })}
+            preview={
+              <div className="space-y-4">
+                {composition?.valid && <p className="whitespace-pre-wrap">{composition.text}</p>}
+                {review.coverImageUrl ? (
+                  <Image
+                    unoptimized
+                    width={900}
+                    height={400}
+                    src={review.coverImageUrl}
+                    alt={review.coverImageAlt}
+                    className="max-h-72 w-full rounded-lg bg-black/30 object-contain"
+                  />
+                ) : (
+                  <p className="text-sm text-white/60">Esta publicação será enviada sem imagem.</p>
+                )}
+              </div>
+            }
+          />
+          <TextField
+            id="linkedin-review-hashtags"
+            label="Hashtags"
+            value={review.hashtags}
+            aria-describedby="linkedin-validation"
+            disabled={busy || blocked}
+            onChange={(event) => setReview({ ...review, hashtags: event.target.value })}
+          />
+          <p
+            id="linkedin-validation"
+            aria-live="polite"
+            className={composition?.valid ? 'text-sm text-white/70' : 'text-sm text-amber-200'}
+          >
             {composition?.valid
-              ? `${composition.companyLength}/1500 caracteres para a página da empresa`
+              ? `${composition.length.toLocaleString('pt-BR')} de ${LINKEDIN_PERSONAL_CHARACTER_LIMIT.toLocaleString('pt-BR')} caracteres`
               : composition?.error}
-          </div>
-          {composition?.valid && (
-            <div>
-              <p>Prévia final:</p>
-              <p className="whitespace-pre-wrap rounded-lg bg-black/30 p-3">{composition.text}</p>
-            </div>
-          )}
-          <p>
-            Página da empresa: {review.destinations.company ? 'disponível' : 'indisponível'} ·
-            Perfil do autor: {review.destinations.personal ? 'disponível' : 'indisponível'}
+          </p>
+          <p className="text-sm">
+            Perfil pessoal do autor: {review.destinations.personal ? 'disponível' : 'indisponível'}
           </p>
           {review.stale && (
             <div role="status">
@@ -214,7 +222,7 @@ export function LinkedInReviewDialog({
           )}
           {review.deliveries.map((delivery) => (
             <p key={delivery.target} role="status">
-              {delivery.target === 'company' ? 'Empresa' : 'Perfil'}:{' '}
+              Perfil pessoal:{' '}
               {(
                 {
                   succeeded: 'enviado',

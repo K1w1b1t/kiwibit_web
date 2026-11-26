@@ -9,7 +9,6 @@ import {
   redirectUri,
   scopeAllowsAutoPost,
   triggerLinkedInAutoPost,
-  triggerLinkedInAutoPostForBlog,
   triggerPersonalAutoPost,
   type LinkedinAutoPostConnection,
 } from './linkedin';
@@ -311,104 +310,6 @@ describe('triggerPersonalAutoPost', () => {
     const [, requestInit] = fetchMock.mock.calls[0];
     expect(requestInit.headers.Authorization).toBe('Bearer member-token');
     expect(JSON.parse(requestInit.body).author).toBe('urn:li:person:person-123');
-  });
-});
-
-describe('triggerLinkedInAutoPostForBlog', () => {
-  const originalEnv = { ...process.env };
-  const TEST_KEY = Buffer.alloc(32, 7).toString('base64');
-
-  const post = {
-    id: 'post-1',
-    title: 'Hello',
-    content: 'Body',
-    coverImageUrl: null,
-    status: 'published' as const,
-  };
-
-  beforeEach(() => {
-    process.env = { ...originalEnv, LINKEDIN_TOKEN_ENC_KEY: TEST_KEY };
-    delete (global as { fetch?: unknown }).fetch;
-  });
-
-  afterAll(() => {
-    process.env = originalEnv;
-  });
-
-  it('returns nothing for a non-published post', async () => {
-    const results = await triggerLinkedInAutoPostForBlog({ ...post, status: 'draft' });
-    expect(results).toEqual([]);
-  });
-
-  it('skips both targets when nothing is configured or connected', async () => {
-    const results = await triggerLinkedInAutoPostForBlog(post, null);
-    expect(results).toHaveLength(2);
-    expect(results.every((r) => r.skipped)).toBe(true);
-    expect(results.map((r) => r.target)).toEqual(['company', 'personal']);
-  });
-
-  it('posts to the author profile independently of the company config', async () => {
-    const fetchMock = jest
-      .fn()
-      .mockResolvedValue({ ok: true, status: 201, headers: new Headers() });
-    global.fetch = fetchMock as unknown as typeof fetch;
-
-    const results = await triggerLinkedInAutoPostForBlog(post, {
-      linkedinSub: 'sub-9',
-      linkedinPersonId: 'person-9',
-      scope: 'openid profile email w_member_social',
-      autoPostEnabled: true,
-      accessTokenEnc: encryptToken('tok'),
-      accessTokenExpiry: new Date(Date.now() + 60_000),
-    });
-
-    const personal = results.find((r) => r.target === 'personal');
-    const company = results.find((r) => r.target === 'company');
-    expect(personal).toMatchObject({ ok: true, sent: true });
-    expect(company).toMatchObject({ skipped: true });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('sends the bilingual announcement to both destinations', async () => {
-    process.env.LINKEDIN_COMPANY_AUTO_POST_ENABLED = 'true';
-    process.env.LINKEDIN_COMPANY_ACCESS_TOKEN = 'company-token';
-    process.env.LINKEDIN_COMPANY_AUTHOR_URN = 'urn:li:organization:123';
-    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com';
-    const fetchMock = jest
-      .fn()
-      .mockResolvedValue({ ok: true, status: 201, headers: new Headers() });
-    global.fetch = fetchMock as unknown as typeof fetch;
-
-    await triggerLinkedInAutoPostForBlog(
-      {
-        ...post,
-        titlePt: 'Título português',
-        contentPt: 'Conteúdo português',
-        titleEn: 'English title',
-        contentEn: 'English content',
-      },
-      {
-        linkedinSub: 'sub-9',
-        linkedinPersonId: 'person-9',
-        scope: 'openid profile w_member_social',
-        autoPostEnabled: true,
-        accessTokenEnc: encryptToken('tok'),
-        accessTokenExpiry: new Date(Date.now() + 60_000),
-      },
-    );
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const company = JSON.parse(fetchMock.mock.calls[0][1].body);
-    const personal = JSON.parse(fetchMock.mock.calls[1][1].body);
-    const companyText = company.commentary as string;
-    const personalText = personal.specificContent['com.linkedin.ugc.ShareContent'].shareCommentary
-      .text as string;
-    for (const text of [companyText, personalText]) {
-      expect(text).toContain('Título português');
-      expect(text).toContain('English content');
-      expect(text).toContain('https://example.com/pt/blog/post-1');
-      expect(text).toContain('https://example.com/en/blog/post-1');
-    }
-    expect(company.content.article.source).toBe('https://example.com/pt/blog/post-1');
   });
 });
 

@@ -389,35 +389,34 @@ Verify the actual target profile and photo, plus expired-token and rejected-scop
 behavior. OAuth requires the member's interactive consent; mocked tests do not prove
 that the application has the required LinkedIn product access.
 
-Organization publication remains an independent environment-configured destination.
+Organization publication is an independent environment-configured destination for projects.
 It requires `w_organization_social`, approved API access, and an authorized page role;
 the two self-service products alone do not establish this access. Organization live
 validation remains pending until those credentials and page permissions are available.
-Neither organization nor personal failures may block blog publication. Diagnostics
+Personal LinkedIn failures leave the published blog article available. Diagnostics
 must contain only allowlisted error classifications and HTTP statuses, never provider
 response bodies, OAuth parameters, tokens, or personal data.
 
 ## Blog review and covers (issue #144)
 
 Publishing a blog post opens a review dialog after the blog is saved. The
-administrator may edit the announcement and hashtags, confirm the available
-destinations, or cancel while leaving the article published. A published article
+administrator may edit the announcement and hashtags, confirm sending to the author's
+connected profile, or cancel while leaving the article published. A published article
 can be reviewed later from its editor. Optional Portuguese and English LinkedIn
 introductions can be entered in the editor or supplied as `linkedinIntroPt` and
 `linkedinIntroEn` to MCP `create_post_draft`; MCP still creates drafts only.
 When these fields are empty, the default announcement selects complete sentences
 from each available translation and links to the article.
 
-An existing cover is uploaded independently for each destination using the
-destination's token and owner; failures are displayed rather than falling back
-to a text-only post. Without a cover, the dialog explicitly indicates that no
-image will be sent. Deliveries are recorded per destination. A confirmed success
-is not resent; an uncertain outcome is blocked and must be checked manually on
-LinkedIn. Do not manually reset its database state without first verifying the
-destination and the publication result.
+The preview shows the final text and hashtags, which share the 3,000-character
+personal limit. A cover is uploaded using the author's connection. The preview
+indicates when the post has no image, and upload failures remain visible in the
+review. A confirmed send returns the administrator to the posts list. Successful
+deliveries are protected against duplicate sends. Check uncertain outcomes on
+LinkedIn before changing their database state.
 
 Apply the Prisma migrations before deploying the application. Live acceptance
-requires a controlled publication to each configured destination with valid
+requires a controlled publication to a connected author profile with valid
 LinkedIn permissions, then checking the visible text, hashtags, cover and link.
 Record only sanitized evidence. Historical Vercel logs should be checked against
 the reported publication time; the earlier connector lookup returned no teams.
