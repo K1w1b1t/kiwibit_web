@@ -9,10 +9,30 @@ describe('Post creation and LinkedIn review in the browser', () => {
 
   it('returns to the list after creating posts and completing the LinkedIn flow', async () => {
     const creationCases = [
-      { title: 'Novo rascunho pelo painel', status: 'draft', reviewOutcome: 'skip' },
-      { title: 'Novo post sem perfil disponível', status: 'published', reviewOutcome: 'skip' },
-      { title: 'Novo post com revisão cancelada', status: 'published', reviewOutcome: 'cancel' },
-      { title: 'Novo post com resultado incerto', status: 'published', reviewOutcome: 'unknown' },
+      {
+        title: 'Novo rascunho pelo painel',
+        status: 'draft',
+        reviewOutcome: 'skip',
+        evidence: '19-criar-rascunho-volta-listagem',
+      },
+      {
+        title: 'Novo post sem perfil disponível',
+        status: 'published',
+        reviewOutcome: 'skip',
+        evidence: '22-linkedin-sem-perfil-volta-listagem',
+      },
+      {
+        title: 'Novo post com revisão cancelada',
+        status: 'published',
+        reviewOutcome: 'cancel',
+        evidence: '36-linkedin-cancelar-volta-listagem',
+      },
+      {
+        title: 'Novo post com resultado incerto',
+        status: 'published',
+        reviewOutcome: 'unknown',
+        evidence: '31-linkedin-resultado-incerto-volta-listagem',
+      },
     ] as const;
     const created = await admin.client.post('/api/admin/posts', {
       titlePt: 'Segurança que começa na revisão',
@@ -89,9 +109,27 @@ describe('Post creation and LinkedIn review in the browser', () => {
 
     async function screenshot(name: string) {
       if (!process.env.LINKEDIN_EVIDENCE_DIR) return;
+      await execute(`
+        document.querySelectorAll('nextjs-portal').forEach((element) => element.remove());
+        const decline = [...document.querySelectorAll('button')]
+          .find((button) => button.textContent.includes('No, thanks'));
+        if (decline) decline.click();
+      `);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       const data = await webdriver<string>(`/session/${sessionId}/screenshot`);
       await mkdir(process.env.LINKEDIN_EVIDENCE_DIR, { recursive: true });
       await writeFile(join(process.env.LINKEDIN_EVIDENCE_DIR, name), Buffer.from(data, 'base64'));
+    }
+    async function screenshotBothViewports(name: string) {
+      if (!process.env.LINKEDIN_EVIDENCE_DIR) return;
+      await screenshot(`${name}-desktop.png`);
+      const rect = (width: number, height: number) =>
+        webdriver(`/session/${sessionId}/window/rect`, { width, height });
+      await rect(390, 844);
+      await delay();
+      await screenshot(`${name}-mobile.png`);
+      await rect(1440, 1400);
+      await delay();
     }
 
     try {
@@ -125,7 +163,7 @@ describe('Post creation and LinkedIn review in the browser', () => {
         cookie: { name: 'next-auth.session-token', value: session, path: '/', httpOnly: true },
       });
       await navigate(`${BASE_URL}/admin/posts`);
-      for (const { title, status, reviewOutcome } of creationCases) {
+      for (const { title, status, reviewOutcome, evidence } of creationCases) {
         await execute(`document.querySelector('a[href="/admin/posts/new"]').click()`);
         await waitFor(() =>
           execute<boolean>('return !!document.getElementById("new-post-title-Pt")'),
@@ -153,6 +191,19 @@ describe('Post creation and LinkedIn review in the browser', () => {
             execute<boolean>('return !!document.querySelector("dialog[open] textarea")'),
           );
           expect(await execute<string>('return location.pathname')).toBe('/admin/posts/new');
+          if (reviewOutcome === 'cancel') {
+            const original = await execute<string>(
+              'return document.querySelector("dialog[open] textarea").value',
+            );
+            await fill('dialog[open] textarea', 'Texto longo demais. '.repeat(160));
+            await waitFor(() =>
+              execute<boolean>(
+                'return document.querySelector("dialog[open] #linkedin-validation").textContent.includes("Remova")',
+              ),
+            );
+            await screenshotBothViewports('27-linkedin-limite-excedido');
+            await fill('dialog[open] textarea', original);
+          }
           if (reviewOutcome === 'unknown') {
             await execute('document.querySelector("dialog[open] input[type=checkbox]").click()');
           }
@@ -177,6 +228,7 @@ describe('Post creation and LinkedIn review in the browser', () => {
         expect(await execute<boolean>('return window.linkedinReviewWasOpened === true')).toBe(
           reviewOutcome !== 'skip',
         );
+        await screenshotBothViewports(evidence);
       }
 
       await navigate(`${BASE_URL}/admin/posts/${post.id}/edit`);
