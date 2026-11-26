@@ -8,13 +8,14 @@ type Props = {
   /** Right-aligned slot for the primary action of the screen. */
   action?: ReactNode;
   /** `form` narrows the column for single-column forms. */
-  width?: 'wide' | 'form';
+  width?: 'wide' | 'form' | 'full';
   children: ReactNode;
 };
 
 const WIDTHS = {
   wide: 'mx-auto max-w-5xl',
   form: 'mx-auto max-w-xl',
+  full: 'w-full',
 } as const;
 
 /**
@@ -34,7 +35,9 @@ export function AdminPageShell({
   children,
 }: Readonly<Props>) {
   return (
-    <div className="px-6 py-12 sm:px-10 lg:px-16">
+    <div
+      className={width === 'full' ? 'px-4 py-8 sm:px-8 lg:px-12' : 'px-6 py-12 sm:px-10 lg:px-16'}
+    >
       <div className={WIDTHS[width]}>
         <div className="animate-fade-up mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>

@@ -8,7 +8,7 @@ export default async function NewPostPage() {
   return (
     <AdminPageShell
       title="Novo Post"
-      width="form"
+      width="full"
       description="Salva como rascunho por padrão. Publique quando estiver pronto."
     >
       <AdminPostForm />

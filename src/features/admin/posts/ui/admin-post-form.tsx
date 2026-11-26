@@ -1,8 +1,11 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { PostTranslations } from '@/entities/post/model/localized-post';
 import type { PostStatus } from '@prisma/client';
+import { apiClient } from '@/shared/api/api-client';
+import type { LinkedInReview } from '@/features/admin/posts/model/linkedin-publication';
 import {
   EMPTY_POST_FIELD_ERRORS,
   validatePost,
@@ -21,6 +24,8 @@ import { FormStatus } from '@/shared/ui/form-status';
 import { ImageUploadField } from '@/shared/ui/image-upload-field';
 import { SelectField } from '@/shared/ui/select-field';
 import { RichTextField } from '@/shared/ui/rich-text-field';
+import { TextPreviewField } from '@/shared/ui/text-preview-field';
+import { LINKEDIN_PERSONAL_CHARACTER_LIMIT } from '@/shared/lib/linkedin-commentary';
 import { textToHtml } from '@/shared/lib/rich-text';
 import { TextField } from '@/shared/ui/text-field';
 import { LinkedInReviewDialog } from './linkedin-review-dialog';
@@ -41,6 +46,7 @@ export type PostInitial = PostTranslations & {
 type Props = {
   initial?: PostInitial;
   canPublish?: boolean;
+  hasLinkedInProfile?: boolean;
 };
 
 function toFormValues(initial?: PostInitial): PostFormValues {
@@ -70,14 +76,21 @@ function toFormValues(initial?: PostInitial): PostFormValues {
   };
 }
 
-export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
+export function AdminPostForm({
+  initial,
+  canPublish = true,
+  hasLinkedInProfile = false,
+}: Readonly<Props>) {
+  const router = useRouter();
   const [uploads, setUploads] = useState<Record<string, boolean>>({});
   const isUploading = Object.values(uploads).some(Boolean);
   const isEdit = initial !== undefined;
   const [form, setForm] = useState<PostFormValues>(() => toFormValues(initial));
-  const [savedPostId, setSavedPostId] = useState(initial?.id ?? '');
   const [lastStatus, setLastStatus] = useState<PostStatus>(initial?.status ?? 'draft');
-  const [reviewOpen, setReviewOpen] = useState(false);
+  const [profileAvailability, setProfileAvailability] = useState<boolean>();
+  const [review, setReview] = useState<{ postId: string; data: LinkedInReview } | null>(null);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const saveButtonRef = useRef<HTMLButtonElement>(null);
   const reviewButtonRef = useRef<HTMLButtonElement>(null);
   const reviewTriggerRef = useRef<'save' | 'review'>('save');
@@ -86,6 +99,33 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
     label: POST_STATUS_LABELS[status],
     disabled: status === 'published' && !canPublish,
   }));
+
+  async function openLinkedInReview(postId: string, trigger: 'save' | 'review') {
+    setReviewError('');
+    setIsReviewLoading(true);
+    try {
+      const result = await apiClient.get<LinkedInReview>(`/api/admin/posts/${postId}/linkedin`);
+      if (result.ok) {
+        setProfileAvailability(result.data.destinations.personal);
+        if (result.data.deliveries.some((delivery) => delivery.status === 'unknown')) {
+          router.replace('/admin/posts');
+          return;
+        }
+        if (result.data.destinations.personal) {
+          reviewTriggerRef.current = trigger;
+          setReview({ postId, data: result.data });
+          return;
+        }
+        if (trigger === 'save') router.replace('/admin/posts');
+      } else if (!isEdit) {
+        router.replace('/admin/posts');
+      } else {
+        setReviewError(result.message);
+      }
+    } finally {
+      setIsReviewLoading(false);
+    }
+  }
 
   const { status, message, fieldErrors, isSubmitting, submit } = useResourceForm<
     PostFormValues,
@@ -103,18 +143,18 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
     successMessage: isEdit ? 'Alterações salvas.' : 'Post criado com sucesso.',
     emptyFieldErrors: EMPTY_POST_FIELD_ERRORS,
     onSuccess: (post) => {
-      setSavedPostId(post.id);
-      if (form.status === 'published' && (!isEdit || lastStatus !== 'published')) {
-        reviewTriggerRef.current = 'save';
-        setReviewOpen(true);
-      }
-      setLastStatus(form.status as PostStatus);
-      if (!isEdit) {
-        setForm(toFormValues());
-        captureAnalyticsEvent('post_created');
+      setLastStatus(post.status);
+      if (!isEdit) captureAnalyticsEvent('post_created');
+
+      if (canPublish && post.status === 'published' && lastStatus !== 'published') {
+        void openLinkedInReview(post.id, 'save');
+      } else if (!isEdit) {
+        router.replace('/admin/posts');
       }
     },
   });
+
+  const isFormLocked = isSubmitting || isReviewLoading || (!isEdit && status === 'success');
 
   function update<K extends keyof PostFormValues>(field: K, value: PostFormValues[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -123,14 +163,22 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
   const idPrefix = isEdit ? 'edit-post' : 'new-post';
 
   return (
-    <div className="card-glow animate-fade-up delay-100 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm">
+    <div className="card-glow animate-fade-up delay-100 rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-sm sm:p-6">
       <FormStatus status={status} message={message} />
+      {reviewError && (
+        <p role="alert" className="mb-4 text-sm text-amber-200">
+          {reviewError}
+        </p>
+      )}
 
       <form
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          if (!isUploading) void submit(form);
+          if (!isUploading && !isFormLocked) {
+            setReviewError('');
+            void submit(form);
+          }
         }}
         className="space-y-4"
       >
@@ -138,7 +186,10 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
           Preencha título e conteúdo em pelo menos um idioma. A tradução ausente usa o outro idioma.
         </p>
         {(['Pt', 'En'] as const).map((language) => (
-          <fieldset key={language} className="space-y-4 rounded-xl border border-white/10 p-4">
+          <fieldset
+            key={language}
+            className="min-w-0 space-y-4 rounded-xl border border-white/10 p-3 sm:p-4"
+          >
             <legend className="px-2 font-semibold">
               {language === 'Pt' ? 'Português' : 'Inglês'}
             </legend>
@@ -147,7 +198,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
               label="Título"
               value={form[`title${language}`] ?? ''}
               onChange={(event) => update(`title${language}`, event.target.value)}
-              disabled={isSubmitting}
+              disabled={isFormLocked}
               error={fieldErrors[`title${language}`]}
             />
             <RichTextField
@@ -159,30 +210,29 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
               }
               value={form[`content${language}`] ?? ''}
               onChange={(markdown) => update(`content${language}`, markdown)}
-              disabled={isSubmitting}
+              disabled={isFormLocked}
               error={fieldErrors[`content${language}`]}
             />
-            <label
-              className="block text-sm text-white/80"
-              htmlFor={`${idPrefix}-linkedin-${language}`}
-            >
-              Chamada para o LinkedIn ({language === 'Pt' ? 'português' : 'inglês'}) — opcional
-              <textarea
-                id={`${idPrefix}-linkedin-${language}`}
-                className="mt-1 w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white"
-                rows={5}
-                maxLength={3000}
-                value={form[`linkedinIntro${language}`] ?? ''}
-                onChange={(event) => update(`linkedinIntro${language}`, event.target.value)}
-                disabled={isSubmitting}
-              />
-            </label>
+            <TextPreviewField
+              id={`${idPrefix}-linkedin-${language}`}
+              label={`Chamada para o LinkedIn (${language === 'Pt' ? 'português' : 'inglês'}) — opcional`}
+              maxLength={LINKEDIN_PERSONAL_CHARACTER_LIMIT}
+              value={form[`linkedinIntro${language}`] ?? ''}
+              onChange={(value) => update(`linkedinIntro${language}`, value)}
+              disabled={isFormLocked}
+              error={fieldErrors[`linkedinIntro${language}`]}
+              preview={
+                <p className="whitespace-pre-wrap">
+                  {form[`linkedinIntro${language}`] || 'Nenhuma chamada escrita.'}
+                </p>
+              }
+            />
             <TextField
               id={`${idPrefix}-alt-${language}`}
               label="Texto alternativo da capa"
               value={form[`coverImageAlt${language}`] ?? ''}
               onChange={(event) => update(`coverImageAlt${language}`, event.target.value)}
-              disabled={isSubmitting}
+              disabled={isFormLocked}
               error={fieldErrors[`coverImageAlt${language}`]}
             />
           </fieldset>
@@ -200,7 +250,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
           options={statusOptions}
           value={form.status}
           onChange={(event) => update('status', event.target.value)}
-          disabled={isSubmitting}
+          disabled={isFormLocked}
           error={fieldErrors.status}
           hint="Rascunho não aparece no blog público."
           className="animate-fade-up delay-200"
@@ -213,7 +263,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
             scope="posts"
             postId={initial?.id}
             shape="wide"
-            disabled={isSubmitting}
+            disabled={isFormLocked}
             error={fieldErrors.coverImageUrl}
             value={{ url: form.coverImageUrl, path: form.coverImagePath }}
             onChange={(next) =>
@@ -229,7 +279,7 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
         <div className="animate-fade-up delay-500 pt-2">
           <Button
             ref={saveButtonRef}
-            disabled={isUploading}
+            disabled={isUploading || isFormLocked}
             type="submit"
             isLoading={isSubmitting}
             loadingLabel={isEdit ? 'Salvando...' : 'Criando...'}
@@ -238,26 +288,37 @@ export function AdminPostForm({ initial, canPublish = true }: Readonly<Props>) {
           </Button>
         </div>
       </form>
-      {canPublish && savedPostId && lastStatus === 'published' && (
-        <div className="mt-4">
-          <Button
-            ref={reviewButtonRef}
-            variant="outline"
-            onClick={() => {
-              reviewTriggerRef.current = 'review';
-              setReviewOpen(true);
-            }}
-          >
-            Publicar no LinkedIn
-          </Button>
-        </div>
-      )}
-      {reviewOpen && savedPostId && (
+      {canPublish &&
+        initial &&
+        lastStatus === 'published' &&
+        (profileAvailability ?? hasLinkedInProfile) && (
+          <div className="mt-4">
+            <Button
+              ref={reviewButtonRef}
+              variant="outline"
+              disabled={isFormLocked}
+              isLoading={isReviewLoading}
+              loadingLabel="Carregando revisão..."
+              onClick={() => void openLinkedInReview(initial.id, 'review')}
+            >
+              Publicar no LinkedIn
+            </Button>
+          </div>
+        )}
+      {review && (
         <LinkedInReviewDialog
-          postId={savedPostId}
-          open
+          postId={review.postId}
+          initialReview={review.data}
+          onReturnToPosts={() => {
+            setReview(null);
+            router.replace('/admin/posts');
+          }}
           onClose={() => {
-            setReviewOpen(false);
+            setReview(null);
+            if (!isEdit) {
+              router.replace('/admin/posts');
+              return;
+            }
             requestAnimationFrame(() => {
               const button =
                 reviewTriggerRef.current === 'review'

@@ -3,6 +3,7 @@ import { prisma } from '@/shared/lib/prisma';
 import { requirePanelPageSession } from '@/shared/lib/page-auth';
 import { AdminPageShell } from '@/shared/ui/admin-page-shell';
 import { AdminPostForm } from '@/features/admin/posts/ui/admin-post-form';
+import { hasLinkedInPublicationProfile } from '@/features/admin/posts/model/linkedin-publication';
 import { DeleteButton } from '@/shared/ui/delete-button';
 
 type Params = { params: Promise<{ id: string }> };
@@ -40,10 +41,16 @@ export default async function EditPostPage({ params }: Readonly<Params>) {
 
   if (session.user.role === 'member' && post.authorId !== session.user.id) redirect('/admin/posts');
 
+  const canPublish = session.user.role !== 'member';
+  const hasLinkedInProfile =
+    canPublish &&
+    post.status === 'published' &&
+    (await hasLinkedInPublicationProfile(post.authorId));
+
   return (
     <AdminPageShell
       title="Editar Post"
-      width="form"
+      width="full"
       action={
         session.user.role !== 'member' && (
           <DeleteButton
@@ -54,7 +61,11 @@ export default async function EditPostPage({ params }: Readonly<Params>) {
         )
       }
     >
-      <AdminPostForm initial={post} canPublish={session.user.role !== 'member'} />
+      <AdminPostForm
+        initial={post}
+        canPublish={canPublish}
+        hasLinkedInProfile={hasLinkedInProfile}
+      />
     </AdminPageShell>
   );
 }
