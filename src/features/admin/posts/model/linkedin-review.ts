@@ -2,7 +2,7 @@ import { LINKEDIN_PERSONAL_CHARACTER_LIMIT } from '@/shared/lib/linkedin-comment
 
 export type LinkedInReviewComposition =
   | { valid: true; text: string; hashtags: string; length: number }
-  | { valid: false; error: string };
+  | { valid: false; error: string; length?: number };
 
 /** Compose exactly the text reviewed by the publisher, without truncating it. */
 export function composeLinkedInReview(text: string, hashtags: string): LinkedInReviewComposition {
@@ -25,11 +25,14 @@ export function composeLinkedInReview(text: string, hashtags: string): LinkedInR
 
   const formattedTags = normalized.join(' ');
   const finalText = [body, formattedTags].filter(Boolean).join('\n\n');
-  if (finalText.length > LINKEDIN_PERSONAL_CHARACTER_LIMIT) {
+  const length = finalText.length;
+  const excess = length - LINKEDIN_PERSONAL_CHARACTER_LIMIT;
+  if (excess > 0) {
     return {
       valid: false,
-      error: 'O texto final excede o limite do perfil pessoal (3.000 caracteres).',
+      error: `Remova ${excess.toLocaleString('pt-BR')} ${excess === 1 ? 'caractere' : 'caracteres'} para publicar.`,
+      length,
     };
   }
-  return { valid: true, text: finalText, hashtags: formattedTags, length: finalText.length };
+  return { valid: true, text: finalText, hashtags: formattedTags, length };
 }

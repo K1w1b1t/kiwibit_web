@@ -35,7 +35,8 @@ describe('composeLinkedInReview', () => {
     expect(composeLinkedInReview(body, '#tag')).toMatchObject({ valid: true, length: 3000 });
     expect(composeLinkedInReview(`${body}a`, '#tag')).toEqual({
       valid: false,
-      error: 'O texto final excede o limite do perfil pessoal (3.000 caracteres).',
+      error: 'Remova 1 caractere para publicar.',
+      length: 3001,
     });
   });
 });

@@ -399,10 +399,12 @@ response bodies, OAuth parameters, tokens, or personal data.
 
 ## Blog review and covers (issue #144)
 
-Publishing a blog post opens a review dialog after the blog is saved. The
-administrator may edit the announcement and hashtags, confirm sending to the author's
-connected profile, or cancel while leaving the article published. A published article
-can be reviewed later from its editor. Optional Portuguese and English LinkedIn
+Publishing a blog post opens a review dialog when the author's personal LinkedIn
+profile is available. The administrator can edit the announcement and hashtags,
+confirm sending, or cancel while leaving the article published. Creating a draft
+or publishing without an available profile returns the administrator to the posts
+list. Closing the review after creating a published post also returns to the list.
+Optional Portuguese and English LinkedIn
 introductions can be entered in the editor or supplied as `linkedinIntroPt` and
 `linkedinIntroEn` to MCP `create_post_draft`; MCP still creates drafts only.
 When these fields are empty, the default announcement selects complete sentences
@@ -411,9 +413,10 @@ from each available translation and links to the article.
 The preview shows the final text and hashtags, which share the 3,000-character
 personal limit. A cover is uploaded using the author's connection. The preview
 indicates when the post has no image, and upload failures remain visible in the
-review. A confirmed send returns the administrator to the posts list. Successful
-deliveries are protected against duplicate sends. Check uncertain outcomes on
-LinkedIn before changing their database state.
+review. A confirmed or uncertain send closes the review and returns the
+administrator to the posts list. Successful and uncertain deliveries are protected
+against duplicate sends. Check uncertain outcomes on LinkedIn before changing their
+database state.
 
 Apply the Prisma migrations before deploying the application. Live acceptance
 requires a controlled publication to a connected author profile with valid

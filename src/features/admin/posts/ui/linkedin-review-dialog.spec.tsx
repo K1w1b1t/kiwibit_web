@@ -4,7 +4,7 @@ import { apiClient } from '@/shared/api/api-client';
 import { LinkedInReviewDialog } from './linkedin-review-dialog';
 
 jest.mock('@/shared/api/api-client', () => ({
-  apiClient: { get: jest.fn(), put: jest.fn(), post: jest.fn() },
+  apiClient: { put: jest.fn(), post: jest.fn() },
 }));
 jest.mock('next/image', () => ({ __esModule: true, default: () => null }));
 
@@ -29,13 +29,19 @@ describe('LinkedIn review dialog', () => {
     HTMLDialogElement.prototype.close = function () {
       this.open = false;
     };
-    jest.mocked(apiClient.get).mockResolvedValue({ ok: true, data: initial });
     jest.mocked(apiClient.put).mockResolvedValue({ ok: true, data: { version: 1 } });
   });
 
   it('saves the draft on cancellation and never sends', async () => {
     const onClose = jest.fn();
-    render(<LinkedInReviewDialog postId="post-1" open onClose={onClose} onPublished={jest.fn()} />);
+    render(
+      <LinkedInReviewDialog
+        postId="post-1"
+        initialReview={initial}
+        onClose={onClose}
+        onReturnToPosts={jest.fn()}
+      />,
+    );
     await screen.findByLabelText('Texto');
     fireEvent.change(screen.getByLabelText('Hashtags'), { target: { value: '#Editada' } });
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
@@ -52,7 +58,12 @@ describe('LinkedIn review dialog', () => {
       .mocked(apiClient.post)
       .mockResolvedValue({ ok: true, data: { review: { ...initial, version: 1 } } });
     render(
-      <LinkedInReviewDialog postId="post-1" open onClose={jest.fn()} onPublished={jest.fn()} />,
+      <LinkedInReviewDialog
+        postId="post-1"
+        initialReview={initial}
+        onClose={jest.fn()}
+        onReturnToPosts={jest.fn()}
+      />,
     );
     await screen.findByLabelText('Texto');
     const send = screen.getByRole('button', { name: 'Confirmar envio' });
@@ -74,25 +85,37 @@ describe('LinkedIn review dialog', () => {
 
   it('shows validation errors and prevents an oversized post', async () => {
     render(
-      <LinkedInReviewDialog postId="post-1" open onClose={jest.fn()} onPublished={jest.fn()} />,
+      <LinkedInReviewDialog
+        postId="post-1"
+        initialReview={initial}
+        onClose={jest.fn()}
+        onReturnToPosts={jest.fn()}
+      />,
     );
     await screen.findByLabelText('Texto');
     fireEvent.change(screen.getByLabelText('Texto'), { target: { value: 'x'.repeat(3001) } });
-    expect(screen.getByText(/excede o limite do perfil/)).toBeTruthy();
+    expect(screen.getByText('3.011 de 3.000 caracteres')).toBeTruthy();
+    expect(screen.getByText('Remova 11 caracteres para publicar.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('checkbox'));
     expect(
       (screen.getByRole('button', { name: 'Confirmar envio' }) as HTMLButtonElement).disabled,
     ).toBe(true);
   });
 
   it('shows the composed preview and notifies the editor after a confirmed personal send', async () => {
-    const onPublished = jest.fn();
+    const onReturnToPosts = jest.fn();
     const onClose = jest.fn();
     jest.mocked(apiClient.post).mockResolvedValue({
       ok: true,
       data: { review: { ...initial, deliveries: [{ target: 'personal', status: 'succeeded' }] } },
     });
     render(
-      <LinkedInReviewDialog postId="post-1" open onClose={onClose} onPublished={onPublished} />,
+      <LinkedInReviewDialog
+        postId="post-1"
+        initialReview={initial}
+        onClose={onClose}
+        onReturnToPosts={onReturnToPosts}
+      />,
     );
     await screen.findByLabelText('Texto');
     fireEvent.click(screen.getByRole('button', { name: 'Abrir prévia' }));
@@ -102,40 +125,82 @@ describe('LinkedIn review dialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Fechar prévia' }));
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar envio' }));
-    await waitFor(() => expect(onPublished).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onReturnToPosts).toHaveBeenCalledTimes(1));
     expect(onClose).not.toHaveBeenCalled();
     expect(apiClient.put).toHaveBeenCalledTimes(1);
   });
 
-  it.each([
-    ['failed', 'LINKEDIN_IMAGE_FAILED', /não foi possível carregar ou enviar a capa/i],
-    ['unknown', 'LINKEDIN_POST_ERROR', /resultado incerto/i],
-  ])('keeps the dialog open for a %s delivery', async (status, errorCode, message) => {
-    const onPublished = jest.fn();
+  it('keeps the dialog open for a confirmed failure and permits a retry', async () => {
+    const onReturnToPosts = jest.fn();
     jest.mocked(apiClient.post).mockResolvedValue({
       ok: true,
-      data: { review: { ...initial, deliveries: [{ target: 'personal', status, errorCode }] } },
+      data: {
+        review: {
+          ...initial,
+          deliveries: [
+            { target: 'personal', status: 'failed', errorCode: 'LINKEDIN_IMAGE_FAILED' },
+          ],
+        },
+      },
     });
     render(
-      <LinkedInReviewDialog postId="post-1" open onClose={jest.fn()} onPublished={onPublished} />,
+      <LinkedInReviewDialog
+        postId="post-1"
+        initialReview={initial}
+        onClose={jest.fn()}
+        onReturnToPosts={onReturnToPosts}
+      />,
     );
-    await screen.findByLabelText('Texto');
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar envio' }));
-    expect(await screen.findByText(message)).toBeTruthy();
-    expect(onPublished).not.toHaveBeenCalled();
+    expect(await screen.findByText(/não foi possível carregar ou enviar a capa/i)).toBeTruthy();
+    expect(onReturnToPosts).not.toHaveBeenCalled();
     expect(
       (screen.getByRole('button', { name: 'Confirmar envio' }) as HTMLButtonElement).disabled,
-    ).toBe(status === 'unknown');
+    ).toBe(false);
   });
 
-  it('lets the editor load the latest post introductions without discarding them silently', async () => {
-    jest.mocked(apiClient.get).mockResolvedValue({
+  it.each([
+    {
       ok: true,
-      data: { ...initial, stale: true, suggestedText: 'Nova chamada do post.' },
-    });
+      data: {
+        review: {
+          ...initial,
+          deliveries: [{ target: 'personal', status: 'unknown', errorCode: 'LINKEDIN_POST_ERROR' }],
+        },
+      },
+    },
+    { ok: true, data: { review: null } },
+    { ok: false, status: 0, code: 'NETWORK', message: 'Erro de conexão.' },
+    { ok: false, status: 500, code: 'INTERNAL', message: 'Erro interno.' },
+  ] as const)(
+    'returns to the list without a modal error after an uncertain send',
+    async (result) => {
+      const onReturnToPosts = jest.fn();
+      jest.mocked(apiClient.post).mockResolvedValue(result);
+      render(
+        <LinkedInReviewDialog
+          postId="post-1"
+          initialReview={initial}
+          onClose={jest.fn()}
+          onReturnToPosts={onReturnToPosts}
+        />,
+      );
+      fireEvent.click(screen.getByRole('checkbox'));
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmar envio' }));
+      await waitFor(() => expect(onReturnToPosts).toHaveBeenCalledTimes(1));
+      expect(screen.queryByRole('alert')).toBeNull();
+    },
+  );
+
+  it('lets the editor load the latest post introductions without discarding them silently', async () => {
     render(
-      <LinkedInReviewDialog postId="post-1" open onClose={jest.fn()} onPublished={jest.fn()} />,
+      <LinkedInReviewDialog
+        postId="post-1"
+        initialReview={{ ...initial, stale: true, suggestedText: 'Nova chamada do post.' }}
+        onClose={jest.fn()}
+        onReturnToPosts={jest.fn()}
+      />,
     );
     await screen.findByLabelText('Texto');
     expect((screen.getByLabelText('Texto') as HTMLTextAreaElement).value).toBe('Texto inicial');

@@ -37,6 +37,10 @@ function personalOwner(connection: Awaited<ReturnType<typeof connectionFor>>) {
     : null;
 }
 
+export async function hasLinkedInPublicationProfile(authorId: string | null): Promise<boolean> {
+  return Boolean(personalOwner(await connectionFor(authorId)));
+}
+
 export async function getLinkedInReview(postId: string) {
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.status !== 'published') return null;
@@ -67,6 +71,8 @@ export async function getLinkedInReview(postId: string) {
     })),
   };
 }
+
+export type LinkedInReview = NonNullable<Awaited<ReturnType<typeof getLinkedInReview>>>;
 
 export async function saveLinkedInReview(
   postId: string,
